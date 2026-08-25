@@ -1,6 +1,3 @@
-## 3. `AGENTS.md`
-
-```md
 # Agent Instructions
 
 This repository contains an interactive regenerative garden-planning application.

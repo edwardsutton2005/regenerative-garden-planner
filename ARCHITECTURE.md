@@ -57,3 +57,14 @@ For example, avoid logic such as:
 if (plant.name === "Tomato" && neighbor.name === "Basil") {
   // ...
 }
+```
+
+Instead, plant data and relationship rules should live in dedicated, framework-independent modules that UI components call into and render the results of.
+
+### 3. Garden Dimensions and State
+
+Grid size (rows and columns) is chosen by the user when a garden is created, so the plot can roughly match the shape of their own garden. Dimensions stay fixed for that garden; changing the size means starting a new garden rather than resizing an occupied one in place.
+
+Represent garden state as an explicit mapping from cell coordinates to placed plants (for example, a map keyed by `"row,col"`) rather than a fixed-size 2D array. This keeps state independent of whatever dimensions a given garden happens to have, and avoids reallocation logic when different gardens use different sizes.
+
+Rule logic (spacing, companion relationships, etc.) should operate on the coordinates of placed plants, not on the grid's dimensions, so the same rules work unchanged regardless of the size the user chose.

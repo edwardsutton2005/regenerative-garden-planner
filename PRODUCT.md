@@ -61,13 +61,15 @@ Feedback should feel responsive and encouraging rather than interrupting the use
 #### Garden Canvas
 
 - Interactive top-down garden grid
+- User-configurable grid size (rows and columns), chosen when a garden is created, so the plot can roughly match the shape of the user's own garden
+- Grid dimensions stay fixed for that garden once set; changing the size starts a new garden rather than resizing an occupied one
 - Place plants onto the garden
 - Remove plants
 - Move or rearrange plants
 - Clear visual distinction between plants
 - Garden state maintained while using the application
 
-The first implementation may use a simple grid rather than a physically precise landscape editor.
+The first implementation may use a simple rectangular grid rather than a physically precise landscape editor. Grid size is an abstract row/column count, not a real-world unit of measurement.
 
 #### Plant Library
 
