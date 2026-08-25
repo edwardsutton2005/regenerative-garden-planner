@@ -63,8 +63,40 @@ Instead, plant data and relationship rules should live in dedicated, framework-i
 
 ### 3. Garden Dimensions and State
 
-Grid size (rows and columns) is chosen by the user when a garden is created, so the plot can roughly match the shape of their own garden. Dimensions stay fixed for that garden; changing the size means starting a new garden rather than resizing an occupied one in place.
+Grid size is chosen by the user when a garden is created so the plot can roughly match the shape of their own garden.
 
-Represent garden state as an explicit mapping from cell coordinates to placed plants (for example, a map keyed by `"row,col"`) rather than a fixed-size 2D array. This keeps state independent of whatever dimensions a given garden happens to have, and avoids reallocation logic when different gardens use different sizes.
+V1 supports bounded rectangular gardens.
 
-Rule logic (spacing, companion relationships, etc.) should operate on the coordinates of placed plants, not on the grid's dimensions, so the same rules work unchanged regardless of the size the user chose.
+Initial bounds:
+
+- minimum: 4 × 4
+
+- maximum: 30 × 30
+
+- default: 10 × 10
+
+Dimensions remain fixed for the lifetime of a garden. Changing dimensions means starting a new garden rather than resizing an occupied garden in place.
+
+The garden lifecycle should distinguish between:
+
+- **Clear Garden** — removes all placed plants while preserving the current dimensions
+
+- **New Garden** — discards the current garden and returns the user to garden-size selection
+
+If a garden contains plants, starting a new garden should require confirmation.
+
+Garden state should explicitly contain both its dimensions and its plant placements.
+
+Conceptually:
+
+```ts
+
+type GardenState = {
+
+  rows: number
+
+  columns: number
+
+  placements: Record<CellKey, PlacedPlant>
+
+}
