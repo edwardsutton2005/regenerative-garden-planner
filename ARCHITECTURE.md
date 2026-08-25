@@ -1,43 +1,59 @@
 # Architecture
 
-## Stack
+## Current Objective
+
+Build the simplest technically sound architecture capable of supporting the V1 companion-planting sandbox described in `PRODUCT.md`.
+
+The architecture should support future expansion without attempting to implement future systems today.
+
+---
+
+## Current Stack
 
 - React
 - TypeScript
 - Vite
 - CSS
-- Local client-side state initially
+- client-side application state
+- Vitest or another lightweight Vite-compatible test setup when rule tests are introduced
 
-## Principles
+Do not add a backend until persistence, accounts, shared data, or another concrete requirement makes one necessary.
 
-Keep the architecture simple.
+Do not add an AI API during V1.
 
-Separate UI rendering from garden logic.
+---
 
-Plant information should be represented as structured data rather than
-hardcoded into React components.
+## Architectural Philosophy
 
-Companion-planting relationships and scoring should live in independent
-rule functions that can be tested without rendering the UI.
+### 1. Prefer Simplicity
 
-## Expected Structure
+Use the simplest implementation that satisfies the current product requirement.
 
-src/
-  components/
-  data/
-  rules/
-  types/
+Do not introduce abstractions solely because they might be useful later.
 
-## Future Considerations
+Avoid unnecessary:
 
-The application may later support:
+- frameworks
+- dependencies
+- service layers
+- factories
+- providers
+- global state libraries
+- premature optimization
 
-- Native plants
-- climate/location data
-- water systems
-- soil systems
-- plant guilds
-- AI planning
-- persistence/backend
+The application is currently a small interactive prototype.
 
-Do not architect these systems until needed.
+Treat it accordingly.
+
+### 2. Separate Domain Logic from Presentation
+
+React components should primarily be responsible for rendering the garden and handling user interaction.
+
+Gardening knowledge should not be embedded throughout UI components.
+
+For example, avoid logic such as:
+
+```ts
+if (plant.name === "Tomato" && neighbor.name === "Basil") {
+  // ...
+}
