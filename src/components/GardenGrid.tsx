@@ -9,14 +9,14 @@ type GardenGridProps = {
 }
 
 function GardenGrid({ garden, plantsById, onCellClick }: GardenGridProps) {
-  const { rows, cols } = garden.dimensions
+  const { rows, columns } = garden
   const rowIndexes = Array.from({ length: rows }, (_, row) => row)
-  const colIndexes = Array.from({ length: cols }, (_, col) => col)
+  const colIndexes = Array.from({ length: columns }, (_, col) => col)
 
   return (
     <div
       className="garden-grid"
-      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+      style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
     >
       {rowIndexes.map((row) =>
         colIndexes.map((col) => {

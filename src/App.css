@@ -84,10 +84,17 @@
   --plant-color: var(--cat-flower);
 }
 
+.garden-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(420px, 100%);
+}
+
 .garden-grid {
   display: grid;
   gap: 4px;
-  width: min(420px, 100%);
+  width: 100%;
 }
 
 .garden-cell {
@@ -127,4 +134,32 @@
 .garden-cell--flower {
   background: color-mix(in srgb, var(--cat-flower) 20%, var(--bg));
   border-color: var(--cat-flower);
+}
+
+.placement-feedback {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.placement-feedback__item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.placement-feedback__item--companion {
+  color: var(--cat-herb);
+  background: color-mix(in srgb, var(--cat-herb) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-herb) 40%, transparent);
+}
+
+.placement-feedback__item--incompatible {
+  color: var(--cat-vegetable);
+  background: color-mix(in srgb, var(--cat-vegetable) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-vegetable) 40%, transparent);
 }

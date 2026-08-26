@@ -164,8 +164,6 @@ The application should know *why* it is making a recommendation.
 
 ## Product Feel
 
-## Product Feel
-
 Even though V1 is simple, it should begin establishing the eventual character of the product.
 
 The garden should feel like a **beautiful illustrated space that users want to spend time designing**, not a traditional software interface with a garden grid placed inside it.

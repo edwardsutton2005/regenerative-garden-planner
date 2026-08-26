@@ -1,29 +1,48 @@
 import { useState } from 'react'
 import GardenGrid from './components/GardenGrid'
+import PlacementFeedback from './components/PlacementFeedback'
 import PlantPicker from './components/PlantPicker'
 import { plants } from './data/plants'
+import { relationshipRules } from './data/relationships'
 import { createGarden, placePlant } from './domain/garden'
 import type { GardenState } from './domain/garden'
 import type { Plant } from './domain/plant'
+import { evaluateNeighbors } from './domain/relationships'
 import './App.css'
-
-const GRID_ROWS = 6
-const GRID_COLS = 6
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
   plants.map((plant) => [plant.id, plant]),
 )
 
+type LastPlacement = {
+  row: number
+  col: number
+  plantId: string
+}
+
 function App() {
-  const [garden, setGarden] = useState<GardenState>(() =>
-    createGarden(GRID_ROWS, GRID_COLS),
-  )
+  const [garden, setGarden] = useState<GardenState>(() => createGarden())
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null)
+  const [lastPlacement, setLastPlacement] = useState<LastPlacement | null>(null)
 
   function handleCellClick(row: number, col: number) {
     if (!selectedPlantId) return
     setGarden((current) => placePlant(current, row, col, selectedPlantId))
+    setLastPlacement({ row, col, plantId: selectedPlantId })
   }
+
+  const lastPlacedPlant = lastPlacement ? plantsById[lastPlacement.plantId] : undefined
+  const neighbors =
+    lastPlacement && lastPlacedPlant
+      ? evaluateNeighbors(
+          garden,
+          lastPlacement.row,
+          lastPlacement.col,
+          lastPlacement.plantId,
+          plantsById,
+          relationshipRules,
+        )
+      : []
 
   return (
     <div className="app">
@@ -37,11 +56,16 @@ function App() {
           selectedPlantId={selectedPlantId}
           onSelectPlant={setSelectedPlantId}
         />
-        <GardenGrid
-          garden={garden}
-          plantsById={plantsById}
-          onCellClick={handleCellClick}
-        />
+        <div className="garden-column">
+          <GardenGrid
+            garden={garden}
+            plantsById={plantsById}
+            onCellClick={handleCellClick}
+          />
+          {lastPlacedPlant && (
+            <PlacementFeedback placedPlant={lastPlacedPlant} neighbors={neighbors} />
+          )}
+        </div>
       </main>
     </div>
   )
