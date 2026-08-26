@@ -61,7 +61,17 @@ if (plant.name === "Tomato" && neighbor.name === "Basil") {
 
 Instead, plant data and relationship rules should live in dedicated, framework-independent modules that UI components call into and render the results of.
 
-### 3. Garden Dimensions and State
+### 3. Keep Visual Representation Replaceable
+
+The garden-state model should represent what exists in the garden, not how it is visually rendered.
+
+For example, a placed tomato should be stored as a tomato placement rather than as an emoji, image path, sprite, or UI-specific component.
+
+The rendering layer may use simple placeholders during early V1 development, but those representations should be replaceable later with illustrated plant and garden assets without changing the underlying garden-state or rule logic.
+
+Avoid coupling plant data or garden rules to a specific visual implementation.
+
+### 4. Garden Dimensions and State
 
 Grid size is chosen by the user when a garden is created so the plot can roughly match the shape of their own garden.
 

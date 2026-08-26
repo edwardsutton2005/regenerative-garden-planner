@@ -67,6 +67,7 @@ Feedback should feel responsive and encouraging rather than interrupting the use
 - Remove plants
 - Move or rearrange plants
 - Clear visual distinction between plants
+- Plant and garden rendering should support eventual illustrated visual assets, even if simple placeholders are used during early V1 development
 - Garden state maintained while using the application
 
 The first implementation may use a simple rectangular grid rather than a physically precise landscape editor. Grid size is an abstract row/column count, not a real-world unit of measurement.
@@ -163,11 +164,24 @@ The application should know *why* it is making a recommendation.
 
 ## Product Feel
 
+## Product Feel
+
 Even though V1 is simple, it should begin establishing the eventual character of the product.
+
+The garden should feel like a **beautiful illustrated space that users want to spend time designing**, not a traditional software interface with a garden grid placed inside it.
+
+The visual direction should combine the warmth, charm, and spatial readability of a garden-building game with the simplicity and clarity of a modern application.
+
+Games such as Stardew Valley are useful inspiration for the feeling of interacting with a garden: plants should be recognizable, the garden should feel alive, and placing or rearranging something should feel satisfying. The product should not attempt to imitate Stardew Valley's specific pixel-art style or game interface.
+
+Over time, plants and garden elements should be represented through cohesive illustrations rather than relying on generic icons, emoji, or text labels as the primary visual representation.
 
 The experience should feel:
 
 - playful
+- beautiful
+- illustrated
+- warm
 - visual
 - calm
 - ecological
@@ -180,10 +194,15 @@ Avoid making the application feel like:
 - a spreadsheet
 - a database browser
 - an enterprise dashboard
+- a generic SaaS application
 - a long gardening questionnaire
 - a generic AI chatbot
 
-Visual polish should follow a working core interaction, but the interaction itself should be designed with the eventual game-like experience in mind.
+The garden should remain the visual focus of the experience. Traditional interface elements such as menus, panels, controls, and metrics should support the garden rather than compete with it.
+
+Visual polish should follow a working core interaction, but the interaction itself should be designed with this eventual illustrated, game-like experience in mind.
+
+Temporary V1 visuals may use simple placeholders while the interaction is being developed. These placeholders should not be treated as the final visual language of the product.
 
 ---
 
