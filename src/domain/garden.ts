@@ -69,6 +69,35 @@ export function getPlantIdAt(
   return garden.placements[cellKey(row, col)]?.plantId
 }
 
+/**
+ * Removes whatever is placed at (row, col), if anything. Calling this on an
+ * already-empty cell is a safe no-op.
+ */
+export function removePlant(
+  garden: GardenState,
+  row: number,
+  col: number,
+): GardenState {
+  const placements = { ...garden.placements }
+  delete placements[cellKey(row, col)]
+  return { ...garden, placements }
+}
+
+/**
+ * Removes all placements while preserving the garden's dimensions.
+ */
+export function clearGarden(garden: GardenState): GardenState {
+  return { ...garden, placements: {} }
+}
+
+/**
+ * Whether the garden has at least one placed plant. Used to decide, for
+ * example, whether starting a new garden needs confirmation.
+ */
+export function hasPlacements(garden: GardenState): boolean {
+  return Object.keys(garden.placements).length > 0
+}
+
 export type CellCoordinate = {
   row: number
   col: number

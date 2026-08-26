@@ -84,6 +84,51 @@
   --plant-color: var(--cat-flower);
 }
 
+.plant-option--eraser {
+  --plant-color: var(--border);
+  color: var(--text);
+}
+
+.garden-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.garden-controls__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.garden-controls__field input {
+  width: 64px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.garden-controls button {
+  padding: 8px 12px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.garden-controls button:hover {
+  border-color: var(--accent-border);
+}
+
 .garden-column {
   display: flex;
   flex-direction: column;
