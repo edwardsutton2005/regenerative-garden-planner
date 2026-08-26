@@ -84,6 +84,34 @@ export function removePlant(
 }
 
 /**
+ * Moves whatever is at (fromRow, fromCol) to (toRow, toCol).
+ *
+ * If the destination is empty, this is a plain move: the source cell
+ * becomes empty. If the destination is occupied, the two plants swap
+ * places rather than the destination's plant being discarded. Moving from
+ * an empty source, or to the same cell, is a safe no-op.
+ */
+export function movePlant(
+  garden: GardenState,
+  fromRow: number,
+  fromCol: number,
+  toRow: number,
+  toCol: number,
+): GardenState {
+  const plantId = getPlantIdAt(garden, fromRow, fromCol)
+  if (!plantId) return garden
+  if (fromRow === toRow && fromCol === toCol) return garden
+
+  const destinationPlantId = getPlantIdAt(garden, toRow, toCol)
+
+  const withPlantMoved = placePlant(garden, toRow, toCol, plantId)
+
+  return destinationPlantId
+    ? placePlant(withPlantMoved, fromRow, fromCol, destinationPlantId)
+    : removePlant(withPlantMoved, fromRow, fromCol)
+}
+
+/**
  * Removes all placements while preserving the garden's dimensions.
  */
 export function clearGarden(garden: GardenState): GardenState {

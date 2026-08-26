@@ -56,7 +56,7 @@
   border: 2px solid transparent;
   border-left: 4px solid var(--plant-color, var(--border));
   border-radius: 6px;
-  cursor: pointer;
+  cursor: grab;
   text-align: left;
   transition:
     border-color 0.2s,
@@ -164,6 +164,11 @@
 
 .garden-cell:hover {
   border-color: var(--accent-border);
+}
+
+.garden-cell--drag-over {
+  border-color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .garden-cell--vegetable {

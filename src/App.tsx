@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import GardenControls from './components/GardenControls'
 import GardenGrid from './components/GardenGrid'
+import type { PlantDragPayload } from './components/GardenGrid'
 import PlacementFeedback from './components/PlacementFeedback'
 import PlantPicker from './components/PlantPicker'
 import { plants } from './data/plants'
@@ -10,6 +11,7 @@ import {
   createGarden,
   getPlantIdAt,
   hasPlacements,
+  movePlant,
   placePlant,
   removePlant,
 } from './domain/garden'
@@ -58,6 +60,17 @@ function App() {
         prev && prev.row === row && prev.col === col ? null : prev,
       )
     }
+  }
+
+  function handleCellDrop(row: number, col: number, payload: PlantDragPayload) {
+    if (payload.source) {
+      const { row: fromRow, col: fromCol } = payload.source
+      if (fromRow === row && fromCol === col) return
+      setGarden((current) => movePlant(current, fromRow, fromCol, row, col))
+    } else {
+      setGarden((current) => placePlant(current, row, col, payload.plantId))
+    }
+    setLastPlacement({ row, col, plantId: payload.plantId })
   }
 
   function handleClearGarden() {
@@ -114,6 +127,7 @@ function App() {
             garden={garden}
             plantsById={plantsById}
             onCellClick={handleCellClick}
+            onCellDrop={handleCellDrop}
           />
           {lastPlacedPlant && (
             <PlacementFeedback placedPlant={lastPlacedPlant} neighbors={neighbors} />

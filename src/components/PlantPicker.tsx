@@ -23,11 +23,19 @@ function PlantPicker({
           <li key={plant.id}>
             <button
               type="button"
+              draggable
               className={`plant-option plant-option--${plant.category}${
                 plant.id === selectedPlantId ? ' plant-option--selected' : ''
               }`}
               aria-pressed={plant.id === selectedPlantId}
               onClick={() => onSelectPlant(plant.id)}
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'copy'
+                e.dataTransfer.setData(
+                  'text/plain',
+                  JSON.stringify({ plantId: plant.id }),
+                )
+              }}
             >
               {plant.name}
             </button>

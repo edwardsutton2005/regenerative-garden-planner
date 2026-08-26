@@ -7,6 +7,7 @@ import {
   getAdjacentCoordinates,
   getPlantIdAt,
   hasPlacements,
+  movePlant,
   placePlant,
   removePlant,
 } from './garden'
@@ -129,6 +130,46 @@ describe('removePlant', () => {
     const original = placePlant(createGarden(), 0, 0, 'tomato')
     removePlant(original, 0, 0)
     expect(getPlantIdAt(original, 0, 0)).toBe('tomato')
+  })
+})
+
+describe('movePlant', () => {
+  it('moves a plant from an occupied source to an empty destination', () => {
+    let garden = placePlant(createGarden(), 1, 1, 'tomato')
+    garden = movePlant(garden, 1, 1, 3, 3)
+    expect(getPlantIdAt(garden, 1, 1)).toBeUndefined()
+    expect(getPlantIdAt(garden, 3, 3)).toBe('tomato')
+  })
+
+  it('swaps both plants when the destination is occupied', () => {
+    let garden = createGarden()
+    garden = placePlant(garden, 1, 1, 'tomato')
+    garden = placePlant(garden, 3, 3, 'basil')
+    garden = movePlant(garden, 1, 1, 3, 3)
+    expect(getPlantIdAt(garden, 3, 3)).toBe('tomato')
+    expect(getPlantIdAt(garden, 1, 1)).toBe('basil')
+  })
+
+  it('is a no-op when the source is empty', () => {
+    let garden = placePlant(createGarden(), 3, 3, 'basil')
+    garden = movePlant(garden, 1, 1, 3, 3)
+    expect(getPlantIdAt(garden, 3, 3)).toBe('basil')
+    expect(getPlantIdAt(garden, 1, 1)).toBeUndefined()
+  })
+
+  it('is a no-op when moving a cell onto itself', () => {
+    let garden = placePlant(createGarden(), 1, 1, 'tomato')
+    garden = movePlant(garden, 1, 1, 1, 1)
+    expect(getPlantIdAt(garden, 1, 1)).toBe('tomato')
+  })
+
+  it('does not mutate the original garden state', () => {
+    let original = createGarden()
+    original = placePlant(original, 1, 1, 'tomato')
+    original = placePlant(original, 3, 3, 'basil')
+    movePlant(original, 1, 1, 3, 3)
+    expect(getPlantIdAt(original, 1, 1)).toBe('tomato')
+    expect(getPlantIdAt(original, 3, 3)).toBe('basil')
   })
 })
 
