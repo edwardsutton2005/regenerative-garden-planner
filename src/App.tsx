@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import GardenControls from './components/GardenControls'
 import GardenGrid from './components/GardenGrid'
-import type { PlantDragPayload } from './components/GardenGrid'
+import type { PlantDragPayload } from './components/dragPayload'
 import PlacementFeedback from './components/PlacementFeedback'
 import PlantPicker from './components/PlantPicker'
 import { plants } from './data/plants'
@@ -11,6 +11,7 @@ import {
   createGarden,
   getPlantIdAt,
   hasPlacements,
+  isValidCoordinate,
   movePlant,
   placePlant,
   removePlant,
@@ -27,7 +28,6 @@ const plantsById: Record<string, Plant> = Object.fromEntries(
 type LastPlacement = {
   row: number
   col: number
-  plantId: string
 }
 
 function App() {
@@ -49,7 +49,7 @@ function App() {
   function handleCellClick(row: number, col: number) {
     if (selectedPlantId) {
       setGarden((current) => placePlant(current, row, col, selectedPlantId))
-      setLastPlacement({ row, col, plantId: selectedPlantId })
+      setLastPlacement({ row, col })
       return
     }
 
@@ -63,14 +63,23 @@ function App() {
   }
 
   function handleCellDrop(row: number, col: number, payload: PlantDragPayload) {
-    if (payload.source) {
-      const { row: fromRow, col: fromCol } = payload.source
-      if (fromRow === row && fromCol === col) return
-      setGarden((current) => movePlant(current, fromRow, fromCol, row, col))
-    } else {
+    if (payload.kind === 'picker') {
+      if (!plantsById[payload.plantId]) return // unknown plant id — ignore
       setGarden((current) => placePlant(current, row, col, payload.plantId))
+      setLastPlacement({ row, col })
+      return
     }
-    setLastPlacement({ row, col, plantId: payload.plantId })
+
+    // payload.kind === 'garden': never trust a caller-supplied plant id for
+    // an existing placement — validate the source cell and let movePlant
+    // derive the actual plant from current garden state.
+    const { row: fromRow, col: fromCol } = payload.source
+    if (!isValidCoordinate(garden, fromRow, fromCol)) return
+    if (getPlantIdAt(garden, fromRow, fromCol) === undefined) return
+    if (fromRow === row && fromCol === col) return
+
+    setGarden((current) => movePlant(current, fromRow, fromCol, row, col))
+    setLastPlacement({ row, col })
   }
 
   function handleClearGarden() {
@@ -89,14 +98,17 @@ function App() {
     setLastPlacement(null)
   }
 
-  const lastPlacedPlant = lastPlacement ? plantsById[lastPlacement.plantId] : undefined
+  const lastPlacedPlantId = lastPlacement
+    ? getPlantIdAt(garden, lastPlacement.row, lastPlacement.col)
+    : undefined
+  const lastPlacedPlant = lastPlacedPlantId ? plantsById[lastPlacedPlantId] : undefined
   const neighbors =
-    lastPlacement && lastPlacedPlant
+    lastPlacement && lastPlacedPlantId && lastPlacedPlant
       ? evaluateNeighbors(
           garden,
           lastPlacement.row,
           lastPlacement.col,
-          lastPlacement.plantId,
+          lastPlacedPlantId,
           plantsById,
           relationshipRules,
         )

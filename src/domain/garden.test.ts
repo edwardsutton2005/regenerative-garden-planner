@@ -7,6 +7,7 @@ import {
   getAdjacentCoordinates,
   getPlantIdAt,
   hasPlacements,
+  isValidCoordinate,
   movePlant,
   placePlant,
   removePlant,
@@ -35,6 +36,40 @@ describe('createGarden', () => {
     expect(() => createGarden(GARDEN_MIN_SIZE - 1, 10)).toThrow()
     expect(() => createGarden(10, GARDEN_MAX_SIZE + 1)).toThrow()
   })
+
+  it('rejects non-finite dimensions', () => {
+    expect(() => createGarden(Number.NaN, 10)).toThrow()
+    expect(() => createGarden(10, Number.POSITIVE_INFINITY)).toThrow()
+    expect(() => createGarden(Number.NEGATIVE_INFINITY, 10)).toThrow()
+  })
+
+  it('rejects non-integer dimensions', () => {
+    expect(() => createGarden(5.5, 10)).toThrow()
+    expect(() => createGarden(10, 6.1)).toThrow()
+  })
+})
+
+describe('isValidCoordinate', () => {
+  const garden = createGarden(5, 5)
+
+  it('accepts coordinates within bounds', () => {
+    expect(isValidCoordinate(garden, 0, 0)).toBe(true)
+    expect(isValidCoordinate(garden, 4, 4)).toBe(true)
+  })
+
+  it('rejects negative coordinates', () => {
+    expect(isValidCoordinate(garden, -1, 0)).toBe(false)
+  })
+
+  it('rejects coordinates at or beyond the garden size', () => {
+    expect(isValidCoordinate(garden, 5, 0)).toBe(false)
+    expect(isValidCoordinate(garden, 0, 5)).toBe(false)
+  })
+
+  it('rejects non-integer and non-finite coordinates', () => {
+    expect(isValidCoordinate(garden, 1.5, 0)).toBe(false)
+    expect(isValidCoordinate(garden, Number.NaN, 0)).toBe(false)
+  })
 })
 
 describe('placePlant / getPlantIdAt', () => {
@@ -59,6 +94,18 @@ describe('placePlant / getPlantIdAt', () => {
     const original = createGarden()
     placePlant(original, 0, 0, 'tomato')
     expect(getPlantIdAt(original, 0, 0)).toBeUndefined()
+  })
+
+  it('placing at an out-of-bounds coordinate is a no-op', () => {
+    const garden = createGarden(5, 5)
+    expect(placePlant(garden, 5, 0, 'tomato')).toEqual(garden)
+    expect(placePlant(garden, -1, 0, 'tomato')).toEqual(garden)
+  })
+
+  it('reading an out-of-bounds coordinate returns undefined', () => {
+    const garden = createGarden(5, 5)
+    expect(getPlantIdAt(garden, 5, 0)).toBeUndefined()
+    expect(getPlantIdAt(garden, 0, -1)).toBeUndefined()
   })
 })
 
@@ -102,6 +149,12 @@ describe('getAdjacentCoordinates', () => {
       expect.arrayContaining([{ row: 1, col: 1 }]),
     )
   })
+
+  it('returns an empty array for an out-of-bounds coordinate', () => {
+    const garden = createGarden(5, 5)
+    expect(getAdjacentCoordinates(garden, 5, 0)).toEqual([])
+    expect(getAdjacentCoordinates(garden, -1, 0)).toEqual([])
+  })
 })
 
 describe('removePlant', () => {
@@ -130,6 +183,11 @@ describe('removePlant', () => {
     const original = placePlant(createGarden(), 0, 0, 'tomato')
     removePlant(original, 0, 0)
     expect(getPlantIdAt(original, 0, 0)).toBe('tomato')
+  })
+
+  it('removing at an out-of-bounds coordinate is a no-op', () => {
+    const garden = createGarden(5, 5)
+    expect(removePlant(garden, 5, 0)).toEqual(garden)
   })
 })
 
@@ -170,6 +228,16 @@ describe('movePlant', () => {
     movePlant(original, 1, 1, 3, 3)
     expect(getPlantIdAt(original, 1, 1)).toBe('tomato')
     expect(getPlantIdAt(original, 3, 3)).toBe('basil')
+  })
+
+  it('is a no-op when the source coordinate is out of bounds', () => {
+    const garden = createGarden(5, 5)
+    expect(movePlant(garden, 5, 0, 0, 0)).toEqual(garden)
+  })
+
+  it('is a no-op when the destination coordinate is out of bounds', () => {
+    const garden = placePlant(createGarden(5, 5), 1, 1, 'tomato')
+    expect(movePlant(garden, 1, 1, 5, 0)).toEqual(garden)
   })
 })
 

@@ -33,17 +33,41 @@ export function createGarden(
   columns: number = GARDEN_DEFAULT_SIZE,
 ): GardenState {
   if (
+    !Number.isInteger(rows) ||
+    !Number.isInteger(columns) ||
     rows < GARDEN_MIN_SIZE ||
     rows > GARDEN_MAX_SIZE ||
     columns < GARDEN_MIN_SIZE ||
     columns > GARDEN_MAX_SIZE
   ) {
     throw new Error(
-      `Garden dimensions must be between ${GARDEN_MIN_SIZE} and ${GARDEN_MAX_SIZE} (got ${rows}x${columns}).`,
+      `Garden dimensions must be whole numbers between ${GARDEN_MIN_SIZE} and ${GARDEN_MAX_SIZE} (got ${rows}x${columns}).`,
     )
   }
 
   return { rows, columns, placements: {} }
+}
+
+/**
+ * Whether (row, col) is an addressable cell in this garden: a pair of
+ * integers within [0, rows) x [0, columns). Every operation below treats an
+ * invalid coordinate as a no-op (or returns "nothing there"), rather than
+ * throwing — consistent with how these operations already treat an empty or
+ * unchanged cell.
+ */
+export function isValidCoordinate(
+  garden: GardenState,
+  row: number,
+  col: number,
+): boolean {
+  return (
+    Number.isInteger(row) &&
+    Number.isInteger(col) &&
+    row >= 0 &&
+    row < garden.rows &&
+    col >= 0 &&
+    col < garden.columns
+  )
 }
 
 export function placePlant(
@@ -52,6 +76,8 @@ export function placePlant(
   col: number,
   plantId: string,
 ): GardenState {
+  if (!isValidCoordinate(garden, row, col)) return garden
+
   return {
     ...garden,
     placements: {
@@ -66,18 +92,20 @@ export function getPlantIdAt(
   row: number,
   col: number,
 ): string | undefined {
+  if (!isValidCoordinate(garden, row, col)) return undefined
   return garden.placements[cellKey(row, col)]?.plantId
 }
 
 /**
  * Removes whatever is placed at (row, col), if anything. Calling this on an
- * already-empty cell is a safe no-op.
+ * already-empty or out-of-bounds cell is a safe no-op.
  */
 export function removePlant(
   garden: GardenState,
   row: number,
   col: number,
 ): GardenState {
+  if (!isValidCoordinate(garden, row, col)) return garden
   const placements = { ...garden.placements }
   delete placements[cellKey(row, col)]
   return { ...garden, placements }
@@ -89,7 +117,7 @@ export function removePlant(
  * If the destination is empty, this is a plain move: the source cell
  * becomes empty. If the destination is occupied, the two plants swap
  * places rather than the destination's plant being discarded. Moving from
- * an empty source, or to the same cell, is a safe no-op.
+ * an empty or out-of-bounds source, or to the same cell, is a safe no-op.
  */
 export function movePlant(
   garden: GardenState,
@@ -98,6 +126,13 @@ export function movePlant(
   toRow: number,
   toCol: number,
 ): GardenState {
+  if (
+    !isValidCoordinate(garden, fromRow, fromCol) ||
+    !isValidCoordinate(garden, toRow, toCol)
+  ) {
+    return garden
+  }
+
   const plantId = getPlantIdAt(garden, fromRow, fromCol)
   if (!plantId) return garden
   if (fromRow === toRow && fromCol === toCol) return garden
@@ -134,13 +169,16 @@ export type CellCoordinate = {
 /**
  * Immediately-adjacent (orthogonal: up/down/left/right) cells for a given
  * coordinate, clipped to the garden's bounds. Diagonal neighbors are not
- * considered adjacent.
+ * considered adjacent. Returns an empty array if (row, col) itself is not a
+ * valid coordinate in this garden.
  */
 export function getAdjacentCoordinates(
   garden: GardenState,
   row: number,
   col: number,
 ): CellCoordinate[] {
+  if (!isValidCoordinate(garden, row, col)) return []
+
   const candidates: CellCoordinate[] = [
     { row: row - 1, col },
     { row: row + 1, col },
@@ -148,8 +186,5 @@ export function getAdjacentCoordinates(
     { row, col: col + 1 },
   ]
 
-  return candidates.filter(
-    (c) =>
-      c.row >= 0 && c.row < garden.rows && c.col >= 0 && c.col < garden.columns,
-  )
+  return candidates.filter((c) => isValidCoordinate(garden, c.row, c.col))
 }

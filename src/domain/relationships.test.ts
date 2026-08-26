@@ -46,9 +46,31 @@ describe('getRelationship', () => {
       { plantAId: 'a', plantBId: 'b', relationship: 'companion' },
       { plantAId: 'a', plantBId: 'b', relationship: 'incompatible' },
     ]
-    // `find` returns the first match, so this test also documents that
-    // authoring order matters if a pair is ever (incorrectly) double-listed.
-    expect(getRelationship('a', 'b', conflictingRules)).toBe('companion')
+    expect(getRelationship('a', 'b', conflictingRules)).toBe('incompatible')
+  })
+
+  it('incompatible takes precedence regardless of array order', () => {
+    const incompatibleFirst: PlantRelationshipRule[] = [
+      { plantAId: 'a', plantBId: 'b', relationship: 'incompatible' },
+      { plantAId: 'a', plantBId: 'b', relationship: 'companion' },
+    ]
+    const companionFirst: PlantRelationshipRule[] = [
+      { plantAId: 'a', plantBId: 'b', relationship: 'companion' },
+      { plantAId: 'a', plantBId: 'b', relationship: 'incompatible' },
+    ]
+    expect(getRelationship('a', 'b', incompatibleFirst)).toBe('incompatible')
+    expect(getRelationship('a', 'b', companionFirst)).toBe('incompatible')
+    expect(getRelationship('a', 'b', incompatibleFirst)).toBe(
+      getRelationship('a', 'b', companionFirst),
+    )
+  })
+
+  it('incompatible takes precedence even when the conflicting rule reverses the pair', () => {
+    const reversedConflict: PlantRelationshipRule[] = [
+      { plantAId: 'a', plantBId: 'b', relationship: 'companion' },
+      { plantAId: 'b', plantBId: 'a', relationship: 'incompatible' },
+    ]
+    expect(getRelationship('a', 'b', reversedConflict)).toBe('incompatible')
   })
 })
 

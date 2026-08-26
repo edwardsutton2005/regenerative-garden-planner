@@ -22,13 +22,21 @@ export function getRelationship(
 ): PlantRelationshipType | 'neutral' {
   if (plantAId === plantBId) return 'neutral'
 
-  const rule = rules.find(
+  const matching = rules.filter(
     (r) =>
       (r.plantAId === plantAId && r.plantBId === plantBId) ||
       (r.plantAId === plantBId && r.plantBId === plantAId),
   )
 
-  return rule?.relationship ?? 'neutral'
+  if (matching.length === 0) return 'neutral'
+
+  // If a pair is ever declared as both companion and incompatible (it
+  // shouldn't be — the seed data is validated separately to catch that),
+  // incompatible wins, order-independently. This is a defensive runtime
+  // fallback, not license for the source data to actually conflict.
+  return matching.some((r) => r.relationship === 'incompatible')
+    ? 'incompatible'
+    : 'companion'
 }
 
 export type NeighborRelationship = {

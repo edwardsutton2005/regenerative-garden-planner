@@ -1,4 +1,6 @@
 import type { Plant } from '../domain/plant'
+import type { PlantDragPayload } from './dragPayload'
+import { PLANT_DRAG_MIME_TYPE } from './dragPayload'
 
 type PlantPickerProps = {
   plants: Plant[]
@@ -31,10 +33,8 @@ function PlantPicker({
               onClick={() => onSelectPlant(plant.id)}
               onDragStart={(e) => {
                 e.dataTransfer.effectAllowed = 'copy'
-                e.dataTransfer.setData(
-                  'text/plain',
-                  JSON.stringify({ plantId: plant.id }),
-                )
+                const payload: PlantDragPayload = { kind: 'picker', plantId: plant.id }
+                e.dataTransfer.setData(PLANT_DRAG_MIME_TYPE, JSON.stringify(payload))
               }}
             >
               {plant.name}

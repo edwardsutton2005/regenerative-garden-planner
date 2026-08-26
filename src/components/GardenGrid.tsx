@@ -2,11 +2,8 @@ import { useState } from 'react'
 import type { GardenState } from '../domain/garden'
 import { getPlantIdAt } from '../domain/garden'
 import type { Plant } from '../domain/plant'
-
-export type PlantDragPayload = {
-  plantId: string
-  source?: { row: number; col: number }
-}
+import type { PlantDragPayload } from './dragPayload'
+import { PLANT_DRAG_MIME_TYPE, isPlantDragPayload } from './dragPayload'
 
 type GardenGridProps = {
   garden: GardenState
@@ -44,10 +41,8 @@ function GardenGrid({ garden, plantsById, onCellClick, onCellDrop }: GardenGridP
               onDragStart={(e) => {
                 if (!plantId) return
                 e.dataTransfer.effectAllowed = 'move'
-                e.dataTransfer.setData(
-                  'text/plain',
-                  JSON.stringify({ plantId, source: { row, col } }),
-                )
+                const payload: PlantDragPayload = { kind: 'garden', source: { row, col } }
+                e.dataTransfer.setData(PLANT_DRAG_MIME_TYPE, JSON.stringify(payload))
               }}
               onDragOver={(e) => {
                 e.preventDefault()
@@ -59,16 +54,16 @@ function GardenGrid({ garden, plantsById, onCellClick, onCellDrop }: GardenGridP
               onDrop={(e) => {
                 e.preventDefault()
                 setDragOverKey(null)
-                const raw = e.dataTransfer.getData('text/plain')
+                const raw = e.dataTransfer.getData(PLANT_DRAG_MIME_TYPE)
                 if (!raw) return
-                let payload: PlantDragPayload
+                let parsed: unknown
                 try {
-                  payload = JSON.parse(raw)
+                  parsed = JSON.parse(raw)
                 } catch {
                   return
                 }
-                if (!payload?.plantId) return
-                onCellDrop(row, col, payload)
+                if (!isPlantDragPayload(parsed)) return
+                onCellDrop(row, col, parsed)
               }}
             >
               {plant ? plant.name : ''}

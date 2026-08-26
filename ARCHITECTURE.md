@@ -110,3 +110,16 @@ type GardenState = {
   placements: Record<CellKey, PlacedPlant>
 
 }
+```
+
+### 5. Placement, Adjacency, and Validation Policy
+
+Placing a plant on an already-occupied cell replaces what was there, whether by click or by dragging a new plant from the picker.
+
+Dragging an existing plant from one garden cell onto another: if the destination is empty, the plant moves there. If the destination is occupied, the two plants swap places rather than either being discarded.
+
+"Adjacent," for companion/incompatible feedback, means the four orthogonal neighbors (up, down, left, right) of a cell. Diagonal neighbors are not considered adjacent for this purpose.
+
+Garden creation rejects non-integer, non-finite, or out-of-bounds dimensions. Operations that accept a cell coordinate on an existing garden (placing, removing, moving, reading) treat an out-of-bounds or non-integer coordinate as a no-op rather than an error, consistent with how these operations already treat an empty or unchanged cell.
+
+When plant relationship data contains conflicting entries for the same pair, an incompatible rule always wins over a companion rule, regardless of authoring order. This is a defensive runtime fallback, not license for the underlying data to actually contain conflicts — the seed data is validated separately to catch that.
