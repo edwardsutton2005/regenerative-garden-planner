@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createGarden, placePlant } from './garden'
-import { evaluateNeighbors, getRelationship } from './relationships'
+import {
+  evaluateNeighbors,
+  evaluateNeighborsForFocuses,
+  getRelationship,
+} from './relationships'
 import type { Plant } from './plant'
 import type { PlantRelationshipRule } from './relationships'
 
@@ -130,5 +134,94 @@ describe('evaluateNeighbors', () => {
     const garden = placePlant(createGarden(5, 5), 2, 2, 'tomato')
 
     expect(evaluateNeighbors(garden, 2, 2, 'tomato', plantsById, rules)).toEqual([])
+  })
+})
+
+describe('evaluateNeighborsForFocuses', () => {
+  const plantsById: Record<string, Plant> = {
+    tomato: { id: 'tomato', name: 'Tomato', category: 'vegetable', minimumSpacingCells: 4 },
+    basil: { id: 'basil', name: 'Basil', category: 'herb', minimumSpacingCells: 2 },
+    mint: { id: 'mint', name: 'Mint', category: 'herb', minimumSpacingCells: 3 },
+    carrot: { id: 'carrot', name: 'Carrot', category: 'vegetable', minimumSpacingCells: 1 },
+  }
+
+  it('matches a single-focus call to evaluateNeighbors for the ordinary (non-swap) case', () => {
+    let garden = createGarden(5, 5)
+    garden = placePlant(garden, 2, 2, 'tomato')
+    garden = placePlant(garden, 2, 3, 'basil')
+
+    const single = evaluateNeighbors(garden, 2, 2, 'tomato', plantsById, rules)
+    const multi = evaluateNeighborsForFocuses(
+      garden,
+      [{ coordinate: { row: 2, col: 2 }, plantId: 'tomato' }],
+      plantsById,
+      rules,
+    )
+
+    expect(multi).toEqual(
+      single.map((r) => ({
+        ...r,
+        focusCoordinate: { row: 2, col: 2 },
+        focusPlant: plantsById.tomato,
+      })),
+    )
+  })
+
+  it('reports findings from two non-adjacent focuses independently', () => {
+    let garden = createGarden(6, 6)
+    garden = placePlant(garden, 0, 0, 'tomato')
+    garden = placePlant(garden, 0, 1, 'basil')
+    garden = placePlant(garden, 5, 5, 'carrot')
+    garden = placePlant(garden, 5, 4, 'mint')
+
+    const result = evaluateNeighborsForFocuses(
+      garden,
+      [
+        { coordinate: { row: 0, col: 0 }, plantId: 'tomato' },
+        { coordinate: { row: 5, col: 5 }, plantId: 'carrot' },
+      ],
+      plantsById,
+      rules,
+    )
+
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ coordinate: { row: 0, col: 1 }, relationship: 'companion' }),
+        expect.objectContaining({ coordinate: { row: 5, col: 4 }, relationship: 'incompatible' }),
+      ]),
+    )
+    expect(result).toHaveLength(2)
+  })
+
+  it('reports a mutual finding between two adjacent focuses only once', () => {
+    let garden = createGarden(5, 5)
+    garden = placePlant(garden, 2, 2, 'tomato')
+    garden = placePlant(garden, 2, 3, 'basil')
+
+    const result = evaluateNeighborsForFocuses(
+      garden,
+      [
+        { coordinate: { row: 2, col: 2 }, plantId: 'tomato' },
+        { coordinate: { row: 2, col: 3 }, plantId: 'basil' },
+      ],
+      plantsById,
+      rules,
+    )
+
+    expect(result).toHaveLength(1)
+    expect(result[0].relationship).toBe('companion')
+  })
+
+  it('skips a focus whose plant id is not in the catalogue', () => {
+    const garden = placePlant(createGarden(5, 5), 2, 2, 'tomato')
+
+    const result = evaluateNeighborsForFocuses(
+      garden,
+      [{ coordinate: { row: 2, col: 2 }, plantId: 'unknown-plant' }],
+      plantsById,
+      rules,
+    )
+
+    expect(result).toEqual([])
   })
 })

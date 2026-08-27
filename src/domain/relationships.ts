@@ -72,3 +72,59 @@ export function evaluateNeighbors(
     })
     .filter((entry): entry is NeighborRelationship => entry !== null)
 }
+
+export type FocusedNeighborRelationship = NeighborRelationship & {
+  focusCoordinate: CellCoordinate
+  focusPlant: Plant
+}
+
+/**
+ * Like evaluateNeighbors, but for more than one focus placement at once —
+ * e.g. both cells changed by a garden-to-garden swap, which each may have
+ * gained a new companion/incompatible consequence. Composes the existing
+ * single-focus evaluateNeighbors rather than reimplementing it.
+ *
+ * If two focus coordinates are themselves adjacent, evaluating both would
+ * independently rediscover the same real pair from each side. That's
+ * deduplicated by an identity of (relationship type + the unordered pair of
+ * cells involved) so a genuinely different finding between the same two
+ * cells is never possible to conflate with it.
+ */
+export function evaluateNeighborsForFocuses(
+  garden: GardenState,
+  focuses: { coordinate: CellCoordinate; plantId: string }[],
+  plantsById: Record<string, Plant>,
+  rules: PlantRelationshipRule[],
+): FocusedNeighborRelationship[] {
+  const seen = new Set<string>()
+  const combined: FocusedNeighborRelationship[] = []
+
+  for (const focus of focuses) {
+    const focusPlant = plantsById[focus.plantId]
+    if (!focusPlant) continue
+
+    const results = evaluateNeighbors(
+      garden,
+      focus.coordinate.row,
+      focus.coordinate.col,
+      focus.plantId,
+      plantsById,
+      rules,
+    )
+
+    for (const result of results) {
+      const pair = [
+        `${focus.coordinate.row},${focus.coordinate.col}`,
+        `${result.coordinate.row},${result.coordinate.col}`,
+      ]
+        .sort()
+        .join('|')
+      const key = `${result.relationship}:${pair}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      combined.push({ ...result, focusCoordinate: focus.coordinate, focusPlant })
+    }
+  }
+
+  return combined
+}

@@ -1,40 +1,34 @@
-import type { NeighborRelationship } from '../domain/relationships'
-import type { SpacingViolation } from '../domain/spacing'
-import type { Plant } from '../domain/plant'
+import type { FocusedNeighborRelationship } from '../domain/relationships'
+import type { FocusedSpacingViolation } from '../domain/spacing'
 
 type PlacementFeedbackProps = {
-  placedPlant: Plant
-  neighbors: NeighborRelationship[]
-  spacingViolations: SpacingViolation[]
+  neighbors: FocusedNeighborRelationship[]
+  spacingViolations: FocusedSpacingViolation[]
 }
 
-function PlacementFeedback({
-  placedPlant,
-  neighbors,
-  spacingViolations,
-}: PlacementFeedbackProps) {
+function PlacementFeedback({ neighbors, spacingViolations }: PlacementFeedbackProps) {
   const notableNeighbors = neighbors.filter((n) => n.relationship !== 'neutral')
 
   if (notableNeighbors.length === 0 && spacingViolations.length === 0) return null
 
   return (
     <ul className="placement-feedback">
-      {notableNeighbors.map(({ plant, relationship, coordinate }) => (
+      {notableNeighbors.map(({ plant, relationship, coordinate, focusCoordinate, focusPlant }) => (
         <li
-          key={`relationship-${coordinate.row},${coordinate.col}`}
+          key={`relationship-${focusCoordinate.row},${focusCoordinate.col}-${coordinate.row},${coordinate.col}`}
           className={`placement-feedback__item placement-feedback__item--${relationship}`}
         >
           {relationship === 'companion'
-            ? `Great pairing: ${placedPlant.name} + ${plant.name}`
-            : `${placedPlant.name} and ${plant.name} may not grow well together.`}
+            ? `Great pairing: ${focusPlant.name} + ${plant.name}`
+            : `${focusPlant.name} and ${plant.name} may not grow well together.`}
         </li>
       ))}
-      {spacingViolations.map(({ coordinate, requiredDistance }) => (
+      {spacingViolations.map(({ coordinate, requiredDistance, focusCoordinate, focusPlant }) => (
         <li
-          key={`spacing-${coordinate.row},${coordinate.col}`}
+          key={`spacing-${focusCoordinate.row},${focusCoordinate.col}-${coordinate.row},${coordinate.col}`}
           className="placement-feedback__item placement-feedback__item--spacing"
         >
-          {`Two ${placedPlant.name} plants are too close together — keep at least ${requiredDistance} cells apart.`}
+          {`Two ${focusPlant.name} plants are too close together — keep at least ${requiredDistance} cells apart.`}
         </li>
       ))}
     </ul>

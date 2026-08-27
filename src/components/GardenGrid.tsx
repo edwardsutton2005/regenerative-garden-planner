@@ -21,7 +21,7 @@ function GardenGrid({ garden, plantsById, onCellClick, onCellDrop }: GardenGridP
   return (
     <div
       className="garden-grid"
-      style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(44px, 1fr))` }}
     >
       {rowIndexes.map((row) =>
         colIndexes.map((col) => {

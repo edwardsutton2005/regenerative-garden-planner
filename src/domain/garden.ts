@@ -28,18 +28,23 @@ function cellKey(row: number, col: number): CellKey {
   return `${row},${col}`
 }
 
+/**
+ * Whether a single value (rows or columns) is a valid garden dimension: a
+ * whole number from GARDEN_MIN_SIZE through GARDEN_MAX_SIZE. Shared by
+ * createGarden's validation and any UI that wants to validate a dimension
+ * before submitting it, so the rule can't drift between the two.
+ */
+export function isValidGardenDimension(value: number): boolean {
+  return (
+    Number.isInteger(value) && value >= GARDEN_MIN_SIZE && value <= GARDEN_MAX_SIZE
+  )
+}
+
 export function createGarden(
   rows: number = GARDEN_DEFAULT_SIZE,
   columns: number = GARDEN_DEFAULT_SIZE,
 ): GardenState {
-  if (
-    !Number.isInteger(rows) ||
-    !Number.isInteger(columns) ||
-    rows < GARDEN_MIN_SIZE ||
-    rows > GARDEN_MAX_SIZE ||
-    columns < GARDEN_MIN_SIZE ||
-    columns > GARDEN_MAX_SIZE
-  ) {
+  if (!isValidGardenDimension(rows) || !isValidGardenDimension(columns)) {
     throw new Error(
       `Garden dimensions must be whole numbers between ${GARDEN_MIN_SIZE} and ${GARDEN_MAX_SIZE} (got ${rows}x${columns}).`,
     )

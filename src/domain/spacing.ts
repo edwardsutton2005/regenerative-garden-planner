@@ -51,3 +51,52 @@ export function evaluateSpacing(
 
   return violations
 }
+
+export type FocusedSpacingViolation = SpacingViolation & {
+  focusCoordinate: CellCoordinate
+  focusPlant: Plant
+}
+
+/**
+ * Like evaluateSpacing, but for more than one focus placement at once — e.g.
+ * both cells changed by a garden-to-garden swap. Composes the existing
+ * single-focus evaluateSpacing rather than reimplementing it.
+ *
+ * Swapping two same-species plants with each other leaves that species' set
+ * of positions unchanged, so evaluating both resulting focuses can
+ * independently rediscover the same violation. That's deduplicated by an
+ * identity of ("spacing" + the unordered pair of cells involved), separate
+ * from the relationship-finding identity used elsewhere, so a spacing
+ * finding is never conflated with a companion/incompatible one.
+ */
+export function evaluateSpacingForFocuses(
+  garden: GardenState,
+  focuses: { coordinate: CellCoordinate; plant: Plant }[],
+): FocusedSpacingViolation[] {
+  const seen = new Set<string>()
+  const combined: FocusedSpacingViolation[] = []
+
+  for (const focus of focuses) {
+    const violations = evaluateSpacing(
+      garden,
+      focus.coordinate.row,
+      focus.coordinate.col,
+      focus.plant,
+    )
+
+    for (const violation of violations) {
+      const pair = [
+        `${focus.coordinate.row},${focus.coordinate.col}`,
+        `${violation.coordinate.row},${violation.coordinate.col}`,
+      ]
+        .sort()
+        .join('|')
+      const key = `spacing:${pair}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      combined.push({ ...violation, focusCoordinate: focus.coordinate, focusPlant: focus.plant })
+    }
+  }
+
+  return combined
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createGarden, placePlant } from './garden'
-import { evaluateSpacing } from './spacing'
+import { evaluateSpacing, evaluateSpacingForFocuses } from './spacing'
 import type { Plant } from './plant'
 
 const tomato: Plant = {
@@ -93,5 +93,57 @@ describe('evaluateSpacing', () => {
   it('excludes the focus cell itself', () => {
     const garden = placePlant(createGarden(10, 10), 3, 3, 'tomato')
     expect(evaluateSpacing(garden, 3, 3, tomato)).toEqual([])
+  })
+})
+
+describe('evaluateSpacingForFocuses', () => {
+  it('matches a single-focus call to evaluateSpacing', () => {
+    let garden = createGarden(10, 10)
+    garden = placePlant(garden, 0, 0, 'tomato')
+    garden = placePlant(garden, 0, 2, 'tomato')
+
+    const single = evaluateSpacing(garden, 0, 0, tomato)
+    const multi = evaluateSpacingForFocuses(garden, [
+      { coordinate: { row: 0, col: 0 }, plant: tomato },
+    ])
+
+    expect(multi).toEqual(
+      single.map((v) => ({
+        ...v,
+        focusCoordinate: { row: 0, col: 0 },
+        focusPlant: tomato,
+      })),
+    )
+  })
+
+  it('reports violations from two independent focuses', () => {
+    let garden = createGarden(10, 10)
+    garden = placePlant(garden, 0, 0, 'tomato')
+    garden = placePlant(garden, 0, 2, 'tomato')
+    garden = placePlant(garden, 8, 8, 'basil')
+    garden = placePlant(garden, 8, 9, 'basil')
+
+    const result = evaluateSpacingForFocuses(garden, [
+      { coordinate: { row: 0, col: 0 }, plant: tomato },
+      { coordinate: { row: 8, col: 8 }, plant: basil },
+    ])
+
+    expect(result).toHaveLength(2)
+  })
+
+  it('reports a violation between two same-species swapped focuses only once', () => {
+    // Two tomatoes swapping with each other leaves the set of tomato
+    // positions unchanged, so evaluating both resulting focuses would
+    // otherwise rediscover the same violation from each side.
+    let garden = createGarden(10, 10)
+    garden = placePlant(garden, 0, 0, 'tomato')
+    garden = placePlant(garden, 0, 2, 'tomato')
+
+    const result = evaluateSpacingForFocuses(garden, [
+      { coordinate: { row: 0, col: 0 }, plant: tomato },
+      { coordinate: { row: 0, col: 2 }, plant: tomato },
+    ])
+
+    expect(result).toHaveLength(1)
   })
 })

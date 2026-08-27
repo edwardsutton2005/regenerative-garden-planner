@@ -20,8 +20,8 @@ import {
 } from './domain/garden'
 import type { GardenState } from './domain/garden'
 import type { Plant } from './domain/plant'
-import { evaluateNeighbors } from './domain/relationships'
-import { evaluateSpacing } from './domain/spacing'
+import { evaluateNeighborsForFocuses } from './domain/relationships'
+import { evaluateSpacingForFocuses } from './domain/spacing'
 import './App.css'
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
@@ -48,7 +48,9 @@ function App() {
   })
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null)
   const [eraserSelected, setEraserSelected] = useState(false)
-  const [lastPlacement, setLastPlacement] = useState<LastPlacement | null>(null)
+  // Coordinates to show feedback for. Usually one (the cell just placed or
+  // moved to); a garden-to-garden swap changes two cells, so both go here.
+  const [lastPlacements, setLastPlacements] = useState<LastPlacement[]>([])
 
   function handleCreateGarden(rows: number, columns: number) {
     setGarden(createGarden(rows, columns))
@@ -69,16 +71,14 @@ function App() {
 
     if (selectedPlantId) {
       setGarden((current) => (current ? placePlant(current, row, col, selectedPlantId) : current))
-      setLastPlacement({ row, col })
+      setLastPlacements([{ row, col }])
       return
     }
 
     if (eraserSelected) {
       if (getPlantIdAt(garden, row, col) === undefined) return
       setGarden((current) => (current ? removePlant(current, row, col) : current))
-      setLastPlacement((prev) =>
-        prev && prev.row === row && prev.col === col ? null : prev,
-      )
+      setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
     }
   }
 
@@ -88,7 +88,7 @@ function App() {
     if (payload.kind === 'picker') {
       if (!plantsById[payload.plantId]) return // unknown plant id — ignore
       setGarden((current) => (current ? placePlant(current, row, col, payload.plantId) : current))
-      setLastPlacement({ row, col })
+      setLastPlacements([{ row, col }])
       return
     }
 
@@ -100,13 +100,19 @@ function App() {
     if (getPlantIdAt(garden, fromRow, fromCol) === undefined) return
     if (fromRow === row && fromCol === col) return
 
+    // A swap (destination already occupied) changes both cells; an ordinary
+    // move-to-empty only changes the destination.
+    const isSwap = getPlantIdAt(garden, row, col) !== undefined
+
     setGarden((current) => (current ? movePlant(current, fromRow, fromCol, row, col) : current))
-    setLastPlacement({ row, col })
+    setLastPlacements(
+      isSwap ? [{ row, col }, { row: fromRow, col: fromCol }] : [{ row, col }],
+    )
   }
 
   function handleClearGarden() {
     setGarden((current) => (current ? clearGarden(current) : current))
-    setLastPlacement(null)
+    setLastPlacements([])
   }
 
   function handleNewGarden() {
@@ -123,7 +129,7 @@ function App() {
     // rather than immediately creating a replacement.
     setSetupDimensions({ rows: garden.rows, columns: garden.columns })
     setGarden(null)
-    setLastPlacement(null)
+    setLastPlacements([])
   }
 
   if (!garden) {
@@ -142,25 +148,28 @@ function App() {
     )
   }
 
-  const lastPlacedPlantId = lastPlacement
-    ? getPlantIdAt(garden, lastPlacement.row, lastPlacement.col)
-    : undefined
-  const lastPlacedPlant = lastPlacedPlantId ? plantsById[lastPlacedPlantId] : undefined
-  const neighbors =
-    lastPlacement && lastPlacedPlantId && lastPlacedPlant
-      ? evaluateNeighbors(
-          garden,
-          lastPlacement.row,
-          lastPlacement.col,
-          lastPlacedPlantId,
-          plantsById,
-          relationshipRules,
-        )
-      : []
-  const spacingViolations =
-    lastPlacement && lastPlacedPlant
-      ? evaluateSpacing(garden, lastPlacement.row, lastPlacement.col, lastPlacedPlant)
-      : []
+  const focusEntries = lastPlacements
+    .map((p) => {
+      const plantId = getPlantIdAt(garden, p.row, p.col)
+      return plantId ? { coordinate: p, plantId } : null
+    })
+    .filter((f): f is { coordinate: LastPlacement; plantId: string } => f !== null)
+
+  const neighbors = evaluateNeighborsForFocuses(
+    garden,
+    focusEntries,
+    plantsById,
+    relationshipRules,
+  )
+
+  const spacingFocusEntries = focusEntries
+    .map((f) => {
+      const plant = plantsById[f.plantId]
+      return plant ? { coordinate: f.coordinate, plant } : null
+    })
+    .filter((f): f is { coordinate: LastPlacement; plant: Plant } => f !== null)
+
+  const spacingViolations = evaluateSpacingForFocuses(garden, spacingFocusEntries)
 
   return (
     <div className="app">
@@ -178,19 +187,15 @@ function App() {
           onSelectEraser={handleSelectEraser}
         />
         <div className="garden-column">
-          <GardenGrid
-            garden={garden}
-            plantsById={plantsById}
-            onCellClick={handleCellClick}
-            onCellDrop={handleCellDrop}
-          />
-          {lastPlacedPlant && (
-            <PlacementFeedback
-              placedPlant={lastPlacedPlant}
-              neighbors={neighbors}
-              spacingViolations={spacingViolations}
+          <div className="garden-grid-viewport">
+            <GardenGrid
+              garden={garden}
+              plantsById={plantsById}
+              onCellClick={handleCellClick}
+              onCellDrop={handleCellDrop}
             />
-          )}
+          </div>
+          <PlacementFeedback neighbors={neighbors} spacingViolations={spacingViolations} />
         </div>
       </main>
     </div>

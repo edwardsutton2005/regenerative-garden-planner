@@ -10,6 +10,7 @@ import {
   getPlantIdAt,
   hasPlacements,
   isValidCoordinate,
+  isValidGardenDimension,
   movePlant,
   placePlant,
   removePlant,
@@ -48,6 +49,27 @@ describe('createGarden', () => {
   it('rejects non-integer dimensions', () => {
     expect(() => createGarden(5.5, 10)).toThrow()
     expect(() => createGarden(10, 6.1)).toThrow()
+  })
+})
+
+describe('isValidGardenDimension', () => {
+  it('accepts the minimum and maximum bounds', () => {
+    expect(isValidGardenDimension(GARDEN_MIN_SIZE)).toBe(true)
+    expect(isValidGardenDimension(GARDEN_MAX_SIZE)).toBe(true)
+  })
+
+  it('rejects values outside the documented bounds', () => {
+    expect(isValidGardenDimension(GARDEN_MIN_SIZE - 1)).toBe(false)
+    expect(isValidGardenDimension(GARDEN_MAX_SIZE + 1)).toBe(false)
+  })
+
+  it('rejects non-integer values', () => {
+    expect(isValidGardenDimension(5.5)).toBe(false)
+  })
+
+  it('rejects non-finite values', () => {
+    expect(isValidGardenDimension(Number.NaN)).toBe(false)
+    expect(isValidGardenDimension(Number.POSITIVE_INFINITY)).toBe(false)
   })
 })
 
