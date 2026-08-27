@@ -30,9 +30,9 @@ The user should feel like they are designing and improving a living system rathe
 
 ---
 
-## V1: Companion Planting Sandbox
+# V1 — Companion Planting Sandbox
 
-### Goal
+## Goal
 
 The first version should answer one simple question:
 
@@ -42,7 +42,7 @@ V1 should prove the core interaction before adding more sophisticated ecological
 
 ---
 
-### Core User Loop
+## Core User Loop
 
 1. View an empty garden plot.
 2. Browse available plants.
@@ -56,100 +56,121 @@ Feedback should feel responsive and encouraging rather than interrupting the use
 
 ---
 
-### V1 Features
+## V1 Features
 
-#### Garden Canvas
+### Garden Canvas
 
 - Interactive top-down garden grid
-- User-configurable grid size (rows and columns), chosen when a garden is created, so the plot can roughly match the shape of the user's own garden
-- Grid dimensions stay fixed for that garden once set; changing the size starts a new garden rather than resizing an occupied one
-- Place plants onto the garden
+- User-configurable grid size chosen when a garden is created
+- Grid dimensions stay fixed for the lifetime of that garden
+- Place plants
+- Replace plants
 - Remove plants
-- Move or rearrange plants
+- Move and rearrange plants
+- Clear the current garden
+- Start a new garden
 - Clear visual distinction between plants
-- Plant and garden rendering should support eventual illustrated visual assets, even if simple placeholders are used during early V1 development
+- Rendering that can later support illustrated visual assets
 - Garden state maintained while using the application
 
-The first implementation may use a simple rectangular grid rather than a physically precise landscape editor. Grid size is an abstract row/column count, not a real-world unit of measurement.
+The V1 grid is a bounded rectangular abstraction rather than a physically precise landscape editor.
 
-#### Plant Library
+Grid cells are abstract row/column units and do not represent an exact real-world measurement.
 
-Start with approximately 15–20 familiar garden plants across useful categories such as:
+### Plant Library
+
+V1 contains approximately 15–20 familiar garden plants across useful categories such as:
 
 - vegetables
 - herbs
 - flowers
 
-Each plant should be represented by structured data rather than behavior hardcoded into UI components.
+Each plant is represented by structured data rather than behavior hardcoded into UI components.
 
-#### Plant Information
+### Plant Information
 
-V1 plant data should support properties needed for current features, including:
+V1 plant data supports properties needed by current features, including:
 
 - unique identifier
 - display name
 - category
-- spacing requirement
-- companion relationships
-- incompatible relationships
+- same-species spacing requirement
+
+Companion and incompatible relationships are stored separately in a normalized relationship dataset rather than duplicated directly on each plant.
 
 Additional properties should only be added when the application actually uses them.
 
-#### Companion Planting
+### Companion Planting
 
-The application should understand positive and negative plant relationships.
+The application understands positive and negative plant relationships.
 
 Examples:
 
-- compatible plants placed within an appropriate interaction distance can produce positive feedback
+- compatible plants placed within the defined interaction distance can produce positive feedback
 - known poor pairings can produce warnings
-- the relationship should work regardless of which plant was placed first
+- relationships work regardless of which plant was placed first
 
-The exact interaction-distance model should be explicitly defined and testable rather than inferred inconsistently by UI components.
+For V1, companion/incompatible interaction distance means immediate orthogonal adjacency:
 
-#### Spacing
+- up
+- down
+- left
+- right
 
-Plants should have basic spacing requirements.
+Diagonal neighbors are not considered adjacent for companion/incompatible evaluation.
 
-The application should identify plants that have been placed too close together and communicate the problem clearly.
+### Spacing
 
-V1 does not need physically perfect horticultural simulation.
+Plants have basic same-species spacing requirements.
 
-#### Feedback
+Spacing values are expressed as abstract grid-cell tiers rather than physical units.
 
-The interface should explain why a placement is beneficial or problematic.
+V1 spacing rules:
+
+- apply only between plants with the same plant ID
+- use Chebyshev distance
+- treat diagonal proximity as physically relevant
+- do not infer unsupported cross-species spacing requirements
+
+The application identifies same-species plants that are too close together and communicates the problem clearly.
+
+V1 does not attempt physically perfect horticultural simulation.
+
+### Feedback
+
+The interface explains why a placement is beneficial or problematic.
 
 Examples:
 
 > Great pairing: Tomato + Basil
 
-> These plants may compete when grown this close together.
+> Tomato and Potato may not grow well together.
 
-> This tomato needs more space.
+> Two Tomato plants are too close together.
 
 Feedback should help teach the user rather than simply displaying a score.
 
-#### Garden Score
+### Garden Score
 
-V1 may include a simple compatibility/health score that responds to the current layout.
+A Garden Score is optional.
 
-The score should summarize underlying rules rather than becoming the product itself.
+If introduced, it should summarize underlying rules rather than becoming the product itself.
 
-Users should be able to understand why their score changed.
+Users should be able to understand why any score changes.
 
 ---
 
 ## V1 Intelligence Model
 
-V1 should **not use an LLM to determine gardening facts or plant compatibility**.
+V1 does **not use an LLM to determine gardening facts or plant compatibility**.
 
-The initial intelligence should come from:
+The intelligence comes from:
 
 **structured plant data + deterministic rules**
 
 For example:
 
-plant data → spatial relationship → rule evaluation → feedback
+**plant data → spatial relationship → rule evaluation → feedback**
 
 This makes recommendations:
 
@@ -162,15 +183,364 @@ The application should know *why* it is making a recommendation.
 
 ---
 
-## Product Feel
+# Part 2 — Plant Roles & Structure
 
-Even though V1 is simple, it should begin establishing the eventual character of the product.
+## Goal
+
+Part 2 should answer:
+
+> Can richer plant identity and ecological roles make garden design more strategic and understandable?
+
+V1 taught the application primarily about relationships between placements.
+
+Part 2 begins teaching it:
+
+- what kind of organism each plant is
+- how plants differ structurally
+- what ecological roles plants contribute
+- what roles are represented across the garden as a whole
+
+Part 2 should expand the intelligence of the garden without turning the product into a plant database, questionnaire, or generalized recommendation engine.
+
+---
+
+## Part 2 Product Principle: Immediate Feedback vs. Persistent Status
+
+Immediate feedback and persistent inspection serve different purposes.
+
+### Immediate Feedback
+
+Immediate feedback explains:
+
+> What just changed?
+
+Examples:
+
+> Great pairing: Tomato + Basil
+
+> These Tomato plants are too close together.
+
+This feedback should remain lightweight and responsive.
+
+### Persistent Inspection
+
+Persistent inspection explains:
+
+> What is true about this placement or garden right now?
+
+Persistent status should reflect the current garden rather than preserve historical feedback from earlier actions.
+
+If the user rearranges the garden, the inspected status should update accordingly.
+
+This creates a consistent and transparent way to understand the garden without removing the satisfying immediate feedback of V1.
+
+---
+
+# Part 2A — Persistent Inspection
+
+## Goal
+
+Allow the user to revisit a placed plant and understand its current state at any time.
+
+The first version of inspection should use intelligence already available from V1, including:
+
+- current companion relationships
+- current incompatible relationships
+- current spacing status
+
+The inspected subject should represent a particular placement in the garden, not merely the plant species in the abstract.
+
+Inspection should be contextual and support the garden rather than dominate it.
+
+It should not become a large encyclopedia-style interface.
+
+Part 2A should establish a consistent place for future plant and garden intelligence to appear.
+
+---
+
+# Part 2B — Rich Plant Identity & Physical Structure
+
+## Goal
+
+Make plants meaningfully different organisms rather than differently named grid tokens.
+
+Likely useful plant traits include:
+
+- lifecycle
+- mature height
+- mature spread
+- growth habit
+
+The exact field structure, units, and growth-habit taxonomy should be finalized before implementation.
+
+### Physical Dimensions
+
+Real mature dimensions may be stored using real-world units when supported by reliable horticultural sources.
+
+However:
+
+> Real plant dimensions must not be silently converted into garden-cell dimensions while the grid remains physically abstract.
+
+For example, knowing that a plant may mature to 60 inches tall is valid plant information.
+
+Concluding that 60 inches equals a particular number of garden cells is not valid until the application has an explicit physical scale.
+
+In Part 2, physical structure may support:
+
+- plant identity
+- inspection
+- qualitative structural understanding
+- later visual differentiation
+
+Part 2 does not require exact geometric plant simulation.
+
+---
+
+# Part 2C — Ecological Roles
+
+## Goal
+
+Teach the planner what individual plants contribute to the garden beyond pairwise companion relationships.
+
+Potential roles may include concepts such as:
+
+- pollinator support
+- nitrogen fixation
+- beneficial-insect support
+- ground cover
+- habitat
+- biomass or soil-building
+- food production
+
+This is not yet the final production taxonomy.
+
+The taxonomy should be deliberately small, evidence-backed, understandable, and useful before implementation.
+
+The product should distinguish between:
+
+- **intrinsic plant roles**
+- **pairwise plant relationships**
+
+For example:
+
+> Bush Bean contributes nitrogen-fixing function.
+
+is conceptually different from:
+
+> Basil is a companion of Tomato.
+
+Do not create new relationship types when the concept is more accurately represented as an intrinsic ecological role.
+
+---
+
+# Part 2D — Garden Composition
+
+## Goal
+
+Begin understanding the garden as a collection rather than only a set of independent placements and pairs.
+
+The application should be able to describe which ecological roles or relevant structural characteristics are represented in the current garden.
+
+For example:
+
+> Nitrogen fixation — Pea, Bush Bean
+
+> Pollinator support — Marigold, Sunflower
+
+Initial composition feedback should be primarily descriptive rather than judgmental.
+
+The absence of a particular role should not automatically mean that a garden is bad or incomplete.
+
+Part 2D should first answer:
+
+> What is represented in this garden?
+
+before attempting to answer:
+
+> What should this garden add?
+
+---
+
+# Part 2E — Opportunities
+
+## Goal
+
+Once garden composition can be described reliably, the planner may begin surfacing strategies the user could explore.
+
+Examples:
+
+> Opportunity: Add pollinator support.
+
+> Consider introducing a nitrogen-fixing plant.
+
+Opportunities should be framed as possibilities rather than failures unless there is a genuine rule violation.
+
+Where several plants could serve the same purpose, the product should generally recommend the function or strategy before implying that one specific plant is required.
+
+Part 2 should therefore use a mix of:
+
+- positive reinforcement for beneficial choices
+- warnings for genuine problems
+- optional opportunities for further improvement
+
+The application should not assume that every garden requires every ecological role.
+
+---
+
+## Optional Future Part 2 Direction — Garden Areas / Beds
+
+Whole-garden composition may eventually prove too coarse.
+
+If testing demonstrates a real need, the application may later allow the user to inspect or reason about smaller garden areas or beds.
+
+This is **not currently a required Part 2 feature**.
+
+Do not build garden sections simply because they may be useful later.
+
+---
+
+## Explicitly Not Part 2
+
+Do not implement these during Part 2 unless the product scope is deliberately updated:
+
+- sunlight compatibility
+- spatial sunlight modeling
+- water compatibility
+- water-flow simulation
+- irrigation planning
+- soil-condition evaluation
+- soil simulation
+- planting-season evaluation
+- ZIP/location input
+- hardiness zones
+- climate compatibility
+- real-time weather
+- native plant recommendations
+- regional native alternatives
+- invasive-species regional logic
+- geographic/ecoregion matching
+- physical cell-to-feet conversion
+- exact mature-footprint collision simulation
+- canopy/shade simulation
+- complex garden-boundary or GIS editing
+- plant guild generation
+- AI-generated garden recommendations
+- opaque garden scoring
+- user accounts
+- authentication
+- backend/database infrastructure
+- multiplayer/social functionality
+- mobile-native application
+- 3D graphics
+
+These remain future opportunities.
+
+---
+
+## Part 2 Development Sequence
+
+The current intended sequence is:
+
+**2A — Persistent Inspection**  
+What is true about this placement now?
+
+**2B — Plant Identity & Physical Structure**  
+What kind of organism is this?
+
+**2C — Ecological Roles**  
+What does this plant contribute?
+
+**2D — Garden Composition**  
+What functions are represented across this garden?
+
+**2E — Opportunities**  
+What additional strategies could the user explore?
+
+This sequence should guide development without forcing later Part 2 systems to be fully specified before earlier systems are validated.
+
+---
+
+# Part 3 — Garden Conditions & Local Ecology
+
+## Goal
+
+Part 3 begins answering:
+
+> What plants and strategies actually make sense in this garden and this place?
+
+Potential capabilities include:
+
+- sunlight requirements and spatial sunlight conditions
+- water requirements and garden water conditions
+- soil preferences and compatibility
+- ZIP/location input
+- hardiness zone
+- climate compatibility
+- frost dates
+- planting-season guidance
+- native plant identification
+- regional native alternatives
+- invasive-species warnings
+- local pollinator support
+
+Environmental conditions should remain spatial where doing so materially improves the garden-planning experience.
+
+The goal should not merely be to label plants "native" or "non-native," but eventually to help users choose plants appropriate for the ecosystem they are designing within.
+
+---
+
+# Part 4 — Regenerative Systems
+
+The planner can expand beyond individual plants and local conditions toward interactions between ecological systems.
+
+Potential systems include:
+
+- biodiversity
+- soil health
+- water use
+- hydrozones
+- rain capture
+- pollinator habitat
+- canopy and shade
+- plant guilds
+- perennial systems
+- nitrogen cycling
+- ecological-function diversity
+- food productivity
+
+At this stage the product begins moving from a companion-planting and composition tool toward a genuine regenerative garden planner.
+
+---
+
+# Part 5 — Systems-Level Planning
+
+The long-term product should be capable of reasoning about the garden as a whole.
+
+Instead of only saying:
+
+> Basil is a good companion for tomatoes.
+
+the system could eventually recognize:
+
+> This sunny, dry section of the garden could support a drought-tolerant pollinator guild that improves habitat while reducing irrigation demand.
+
+This is the direction in which AI may become useful.
+
+---
+
+## Product Feel
 
 The garden should feel like a **beautiful illustrated space that users want to spend time designing**, not a traditional software interface with a garden grid placed inside it.
 
 The visual direction should combine the warmth, charm, and spatial readability of a garden-building game with the simplicity and clarity of a modern application.
 
-Games such as Stardew Valley are useful inspiration for the feeling of interacting with a garden: plants should be recognizable, the garden should feel alive, and placing or rearranging something should feel satisfying. The product should not attempt to imitate Stardew Valley's specific pixel-art style or game interface.
+Games such as Stardew Valley are useful inspiration for the feeling of interacting with a garden:
+
+- plants should be recognizable
+- the garden should feel alive
+- placing or rearranging something should feel satisfying
+
+The product should not attempt to imitate Stardew Valley's specific pixel-art style or interface.
 
 Over time, plants and garden elements should be represented through cohesive illustrations rather than relying on generic icons, emoji, or text labels as the primary visual representation.
 
@@ -196,116 +566,15 @@ Avoid making the application feel like:
 - a long gardening questionnaire
 - a generic AI chatbot
 
-The garden should remain the visual focus of the experience. Traditional interface elements such as menus, panels, controls, and metrics should support the garden rather than compete with it.
+The garden should remain the visual focus.
 
-Visual polish should follow a working core interaction, but the interaction itself should be designed with this eventual illustrated, game-like experience in mind.
-
-Temporary V1 visuals may use simple placeholders while the interaction is being developed. These placeholders should not be treated as the final visual language of the product.
-
----
-
-## Explicitly Not V1
-
-Do not implement these during the initial prototype unless the product scope is deliberately updated:
-
-- AI-generated garden recommendations
-- user accounts
-- authentication
-- backend/database infrastructure
-- real-time weather
-- detailed climate modeling
-- native plant recommendations
-- geographic/ecoregion matching
-- soil simulation
-- water-flow simulation
-- irrigation planning
-- plant guild generation
-- canopy/shade simulation
-- 3D graphics
-- multiplayer/social functionality
-- mobile-native application
-- complex GIS functionality
-
-These are future opportunities, not current requirements.
-
----
-
-## Long-Term Direction
-
-If the core sandbox proves compelling, the product can progressively understand more of the garden as an ecological system.
-
-### Phase 2 — Better Plant Intelligence
-
-Potential additions:
-
-- sunlight requirements
-- water requirements
-- planting seasons
-- soil preferences
-- mature plant size
-- pollinator value
-- ecological functions
-- perennial vs. annual
-- nitrogen fixation
-- additional relationship types
-
-### Phase 3 — Local Ecology
-
-Location can begin affecting recommendations.
-
-Potential capabilities:
-
-- ZIP/location input
-- hardiness zone
-- climate compatibility
-- native plant identification
-- regional native alternatives
-- invasive-species warnings
-- local pollinator support
-- planting-season guidance
-
-The goal should not merely be to label plants "native" or "non-native," but eventually to help users choose plants appropriate for the ecosystem they are designing within.
-
-### Phase 4 — Regenerative Systems
-
-The planner can expand beyond individual plant relationships toward interactions between systems.
-
-Potential systems include:
-
-- biodiversity
-- soil health
-- water use
-- hydrozones
-- rain capture
-- pollinator habitat
-- canopy and shade
-- plant guilds
-- perennial systems
-- nitrogen fixation
-- ecological function
-- food productivity
-
-At this stage the product begins moving from a companion-planting tool toward a genuine regenerative garden planner.
-
-### Phase 5 — Systems-Level Planning
-
-The long-term product should be capable of reasoning about the garden as a whole.
-
-Instead of only saying:
-
-> Basil is a good companion for tomatoes.
-
-the system could eventually recognize:
-
-> This sunny, dry section of the garden could support a drought-tolerant pollinator guild that improves habitat while reducing irrigation demand.
-
-This is the direction in which AI may become useful.
+Traditional interface elements such as panels, inspectors, controls, and metrics should support the garden rather than compete with it.
 
 ---
 
 ## Role of AI
 
-AI is **not required to make the initial product intelligent**.
+AI is **not required to make the product intelligent**.
 
 When AI is eventually introduced, its best role is likely to be:
 
@@ -316,7 +585,7 @@ When AI is eventually introduced, its best role is likely to be:
 - proposing alternative designs
 - translating ecological rules into understandable guidance
 
-AI should reason **over structured garden state and trusted underlying data** rather than inventing the underlying horticultural facts.
+AI should reason **over structured garden state and trusted underlying data** rather than inventing horticultural facts.
 
 A useful long-term principle is:
 
@@ -324,16 +593,51 @@ A useful long-term principle is:
 
 ---
 
-## Product Development Principle
+## Product Development Principles
 
-Build the smallest version that tests whether the core interaction is compelling.
+### Build the Smallest Useful System
 
-The initial success criterion is not:
+Do not implement complexity merely because gardening itself is complex.
 
-> Can we build a comprehensive permaculture planning platform?
+Add complexity only when it enables a user-visible gardening decision.
 
-It is:
+For every new feature or plant property, ask:
 
-> Is placing plants, discovering relationships, and improving a garden layout useful and fun?
+1. What new fact does the system know?
+2. What new decision can the user make because of it?
+3. How does the garden interface communicate that knowledge?
 
-Do not sacrifice that core experience in order to build future infrastructure prematurely.
+If those questions cannot be answered clearly, the feature should probably wait.
+
+### Store Facts, Derive Meaning
+
+Garden state and plant data should store what is actually true.
+
+Current interpretations such as:
+
+- relationship status
+- spacing status
+- ecological composition
+- opportunities
+
+should be derived from current state and structured data rather than stored as stale conclusions.
+
+### Do Not Imply Unsupported Precision
+
+If the model is abstract, feedback must remain appropriately abstract.
+
+Do not silently translate real-world horticultural values into precise spatial claims the current model cannot support.
+
+### Expand Intelligence Gradually
+
+Prefer:
+
+**local → garden-wide → proactive**
+
+First understand an individual placement.
+
+Then understand garden composition.
+
+Then consider recommendations or opportunities.
+
+Do not sacrifice the core spatial interaction in order to build future infrastructure prematurely.
