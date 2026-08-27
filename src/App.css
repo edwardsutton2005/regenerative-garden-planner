@@ -89,6 +89,10 @@
   color: var(--text);
 }
 
+.garden-setup {
+  margin-top: 8px;
+}
+
 .garden-controls {
   display: flex;
   align-items: flex-end;

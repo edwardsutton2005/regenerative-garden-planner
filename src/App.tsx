@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import GardenControls from './components/GardenControls'
 import GardenGrid from './components/GardenGrid'
+import GardenSetup from './components/GardenSetup'
 import type { PlantDragPayload } from './components/dragPayload'
 import PlacementFeedback from './components/PlacementFeedback'
 import PlantPicker from './components/PlantPicker'
 import { plants } from './data/plants'
 import { relationshipRules } from './data/relationships'
 import {
+  GARDEN_DEFAULT_SIZE,
   clearGarden,
   createGarden,
   getPlantIdAt,
@@ -31,11 +33,26 @@ type LastPlacement = {
   col: number
 }
 
+type SetupDimensions = {
+  rows: number
+  columns: number
+}
+
 function App() {
-  const [garden, setGarden] = useState<GardenState>(() => createGarden())
+  // No garden yet means the app is on the setup screen; once created, a
+  // garden's dimensions are fixed for its lifetime (see ARCHITECTURE.md).
+  const [garden, setGarden] = useState<GardenState | null>(null)
+  const [setupDimensions, setSetupDimensions] = useState<SetupDimensions>({
+    rows: GARDEN_DEFAULT_SIZE,
+    columns: GARDEN_DEFAULT_SIZE,
+  })
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null)
   const [eraserSelected, setEraserSelected] = useState(false)
   const [lastPlacement, setLastPlacement] = useState<LastPlacement | null>(null)
+
+  function handleCreateGarden(rows: number, columns: number) {
+    setGarden(createGarden(rows, columns))
+  }
 
   function handleSelectPlant(plantId: string) {
     setSelectedPlantId(plantId)
@@ -48,15 +65,17 @@ function App() {
   }
 
   function handleCellClick(row: number, col: number) {
+    if (!garden) return
+
     if (selectedPlantId) {
-      setGarden((current) => placePlant(current, row, col, selectedPlantId))
+      setGarden((current) => (current ? placePlant(current, row, col, selectedPlantId) : current))
       setLastPlacement({ row, col })
       return
     }
 
     if (eraserSelected) {
       if (getPlantIdAt(garden, row, col) === undefined) return
-      setGarden((current) => removePlant(current, row, col))
+      setGarden((current) => (current ? removePlant(current, row, col) : current))
       setLastPlacement((prev) =>
         prev && prev.row === row && prev.col === col ? null : prev,
       )
@@ -64,9 +83,11 @@ function App() {
   }
 
   function handleCellDrop(row: number, col: number, payload: PlantDragPayload) {
+    if (!garden) return
+
     if (payload.kind === 'picker') {
       if (!plantsById[payload.plantId]) return // unknown plant id — ignore
-      setGarden((current) => placePlant(current, row, col, payload.plantId))
+      setGarden((current) => (current ? placePlant(current, row, col, payload.plantId) : current))
       setLastPlacement({ row, col })
       return
     }
@@ -79,24 +100,46 @@ function App() {
     if (getPlantIdAt(garden, fromRow, fromCol) === undefined) return
     if (fromRow === row && fromCol === col) return
 
-    setGarden((current) => movePlant(current, fromRow, fromCol, row, col))
+    setGarden((current) => (current ? movePlant(current, fromRow, fromCol, row, col) : current))
     setLastPlacement({ row, col })
   }
 
   function handleClearGarden() {
-    setGarden((current) => clearGarden(current))
+    setGarden((current) => (current ? clearGarden(current) : current))
     setLastPlacement(null)
   }
 
-  function handleCreateNewGarden(rows: number, columns: number) {
+  function handleNewGarden() {
+    if (!garden) return
+
     if (hasPlacements(garden)) {
       const confirmed = window.confirm(
         'Start a new garden? This will discard the current layout.',
       )
       if (!confirmed) return
     }
-    setGarden(createGarden(rows, columns))
+
+    // Return to the setup screen, prefilled with the garden just left,
+    // rather than immediately creating a replacement.
+    setSetupDimensions({ rows: garden.rows, columns: garden.columns })
+    setGarden(null)
     setLastPlacement(null)
+  }
+
+  if (!garden) {
+    return (
+      <div className="app">
+        <header className="app-header">
+          <h1>Regenerative Garden Planner</h1>
+          <p>Choose your garden size to get started.</p>
+        </header>
+        <GardenSetup
+          initialRows={setupDimensions.rows}
+          initialColumns={setupDimensions.columns}
+          onCreateGarden={handleCreateGarden}
+        />
+      </div>
+    )
   }
 
   const lastPlacedPlantId = lastPlacement
@@ -125,12 +168,7 @@ function App() {
         <h1>Regenerative Garden Planner</h1>
         <p>Select a plant, then place it in the garden. Select the eraser to remove one.</p>
       </header>
-      <GardenControls
-        rows={garden.rows}
-        columns={garden.columns}
-        onCreateNewGarden={handleCreateNewGarden}
-        onClearGarden={handleClearGarden}
-      />
+      <GardenControls onNewGarden={handleNewGarden} onClearGarden={handleClearGarden} />
       <main className="app-main">
         <PlantPicker
           plants={plants}
