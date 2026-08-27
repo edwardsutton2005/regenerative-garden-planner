@@ -8,11 +8,18 @@ import { PLANT_DRAG_MIME_TYPE, isPlantDragPayload } from './dragPayload'
 type GardenGridProps = {
   garden: GardenState
   plantsById: Record<string, Plant>
+  inspectedCoordinate: { row: number; col: number } | null
   onCellClick: (row: number, col: number) => void
   onCellDrop: (row: number, col: number, payload: PlantDragPayload) => void
 }
 
-function GardenGrid({ garden, plantsById, onCellClick, onCellDrop }: GardenGridProps) {
+function GardenGrid({
+  garden,
+  plantsById,
+  inspectedCoordinate,
+  onCellClick,
+  onCellDrop,
+}: GardenGridProps) {
   const { rows, columns } = garden
   const rowIndexes = Array.from({ length: rows }, (_, row) => row)
   const colIndexes = Array.from({ length: columns }, (_, col) => col)
@@ -28,6 +35,8 @@ function GardenGrid({ garden, plantsById, onCellClick, onCellDrop }: GardenGridP
           const plantId = getPlantIdAt(garden, row, col)
           const plant = plantId ? plantsById[plantId] : undefined
           const key = `${row},${col}`
+          const isInspected =
+            inspectedCoordinate?.row === row && inspectedCoordinate?.col === col
 
           return (
             <button
@@ -36,7 +45,7 @@ function GardenGrid({ garden, plantsById, onCellClick, onCellDrop }: GardenGridP
               draggable={Boolean(plant)}
               className={`garden-cell${plant ? ` garden-cell--${plant.category}` : ''}${
                 dragOverKey === key ? ' garden-cell--drag-over' : ''
-              }`}
+              }${isInspected ? ' garden-cell--inspected' : ''}`}
               onClick={() => onCellClick(row, col)}
               onDragStart={(e) => {
                 if (!plantId) return

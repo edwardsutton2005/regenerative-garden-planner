@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import GardenControls from './components/GardenControls'
 import GardenGrid from './components/GardenGrid'
+import GardenInspector from './components/GardenInspector'
 import GardenSetup from './components/GardenSetup'
 import type { PlantDragPayload } from './components/dragPayload'
 import PlacementFeedback from './components/PlacementFeedback'
@@ -38,6 +39,13 @@ type SetupDimensions = {
   columns: number
 }
 
+// The placement currently being inspected, or null if nothing is (see
+// ARCHITECTURE.md "Inspection Is UI State" — not part of GardenState).
+type InspectedCoordinate = {
+  row: number
+  col: number
+} | null
+
 function App() {
   // No garden yet means the app is on the setup screen; once created, a
   // garden's dimensions are fixed for its lifetime (see ARCHITECTURE.md).
@@ -48,21 +56,29 @@ function App() {
   })
   const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null)
   const [eraserSelected, setEraserSelected] = useState(false)
-  // Coordinates to show feedback for. Usually one (the cell just placed or
-  // moved to); a garden-to-garden swap changes two cells, so both go here.
+  // Coordinates to show transient feedback for. Usually one (the cell just
+  // placed or moved to); a garden-to-garden swap changes two cells, so both
+  // go here.
   const [lastPlacements, setLastPlacements] = useState<LastPlacement[]>([])
+  const [inspectedCoordinate, setInspectedCoordinate] = useState<InspectedCoordinate>(null)
+
+  function isInspected(row: number, col: number): boolean {
+    return inspectedCoordinate?.row === row && inspectedCoordinate?.col === col
+  }
 
   function handleCreateGarden(rows: number, columns: number) {
     setGarden(createGarden(rows, columns))
   }
 
   function handleSelectPlant(plantId: string) {
-    setSelectedPlantId(plantId)
+    // Selecting the already-selected plant returns to the neutral state;
+    // selecting/deselecting never touches inspection.
+    setSelectedPlantId((current) => (current === plantId ? null : plantId))
     setEraserSelected(false)
   }
 
   function handleSelectEraser() {
-    setEraserSelected(true)
+    setEraserSelected((current) => !current)
     setSelectedPlantId(null)
   }
 
@@ -72,6 +88,9 @@ function App() {
     if (selectedPlantId) {
       setGarden((current) => (current ? placePlant(current, row, col, selectedPlantId) : current))
       setLastPlacements([{ row, col }])
+      // A placement landing on the inspected cell is a replace — the
+      // inspected placement no longer exists as it was, so close.
+      if (isInspected(row, col)) setInspectedCoordinate(null)
       return
     }
 
@@ -79,7 +98,14 @@ function App() {
       if (getPlantIdAt(garden, row, col) === undefined) return
       setGarden((current) => (current ? removePlant(current, row, col) : current))
       setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
+      if (isInspected(row, col)) setInspectedCoordinate(null)
+      return
     }
+
+    // Neutral: click an occupied cell to inspect it, an empty cell to clear
+    // inspection.
+    const plantId = getPlantIdAt(garden, row, col)
+    setInspectedCoordinate(plantId ? { row, col } : null)
   }
 
   function handleCellDrop(row: number, col: number, payload: PlantDragPayload) {
@@ -89,6 +115,7 @@ function App() {
       if (!plantsById[payload.plantId]) return // unknown plant id — ignore
       setGarden((current) => (current ? placePlant(current, row, col, payload.plantId) : current))
       setLastPlacements([{ row, col }])
+      if (isInspected(row, col)) setInspectedCoordinate(null)
       return
     }
 
@@ -108,11 +135,23 @@ function App() {
     setLastPlacements(
       isSwap ? [{ row, col }, { row: fromRow, col: fromCol }] : [{ row, col }],
     )
+
+    // Follow the inspected plant through a move or swap rather than closing
+    // inspection — its coordinate changed, its identity didn't.
+    setInspectedCoordinate((current) => {
+      if (!current) return current
+      if (current.row === fromRow && current.col === fromCol) return { row, col }
+      if (isSwap && current.row === row && current.col === col) {
+        return { row: fromRow, col: fromCol }
+      }
+      return current
+    })
   }
 
   function handleClearGarden() {
     setGarden((current) => (current ? clearGarden(current) : current))
     setLastPlacements([])
+    setInspectedCoordinate(null)
   }
 
   function handleNewGarden() {
@@ -130,6 +169,7 @@ function App() {
     setSetupDimensions({ rows: garden.rows, columns: garden.columns })
     setGarden(null)
     setLastPlacements([])
+    setInspectedCoordinate(null)
   }
 
   if (!garden) {
@@ -171,6 +211,28 @@ function App() {
 
   const spacingViolations = evaluateSpacingForFocuses(garden, spacingFocusEntries)
 
+  const inspectedPlantId = inspectedCoordinate
+    ? getPlantIdAt(garden, inspectedCoordinate.row, inspectedCoordinate.col)
+    : undefined
+  const inspectedPlant = inspectedPlantId ? plantsById[inspectedPlantId] : undefined
+
+  const inspectorNeighbors =
+    inspectedCoordinate && inspectedPlantId
+      ? evaluateNeighborsForFocuses(
+          garden,
+          [{ coordinate: inspectedCoordinate, plantId: inspectedPlantId }],
+          plantsById,
+          relationshipRules,
+        )
+      : []
+
+  const inspectorSpacing =
+    inspectedCoordinate && inspectedPlant
+      ? evaluateSpacingForFocuses(garden, [
+          { coordinate: inspectedCoordinate, plant: inspectedPlant },
+        ])
+      : []
+
   return (
     <div className="app">
       <header className="app-header">
@@ -191,12 +253,21 @@ function App() {
             <GardenGrid
               garden={garden}
               plantsById={plantsById}
+              inspectedCoordinate={inspectedCoordinate}
               onCellClick={handleCellClick}
               onCellDrop={handleCellDrop}
             />
           </div>
           <PlacementFeedback neighbors={neighbors} spacingViolations={spacingViolations} />
         </div>
+        {inspectedPlant && (
+          <GardenInspector
+            plant={inspectedPlant}
+            neighbors={inspectorNeighbors}
+            spacingViolations={inspectorSpacing}
+            onClose={() => setInspectedCoordinate(null)}
+          />
+        )}
       </main>
     </div>
   )

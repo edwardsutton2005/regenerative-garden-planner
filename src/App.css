@@ -22,10 +22,10 @@
 }
 
 .app-main {
-  display: flex;
+  display: grid;
+  grid-template-columns: 160px 600px 240px;
   gap: 32px;
   align-items: flex-start;
-  flex-wrap: wrap;
 }
 
 .plant-picker {
@@ -199,6 +199,11 @@
   background: var(--accent-bg);
 }
 
+.garden-cell--inspected {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .garden-cell--vegetable {
   background: color-mix(in srgb, var(--cat-vegetable) 20%, var(--bg));
   border-color: var(--cat-vegetable);
@@ -246,4 +251,109 @@
   color: var(--cat-flower);
   background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
   border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+}
+
+.garden-inspector {
+  box-sizing: border-box;
+  width: 240px;
+  padding: 16px;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.garden-inspector__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.garden-inspector__header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.garden-inspector__close {
+  padding: 2px 8px;
+  font: inherit;
+  line-height: 1;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.garden-inspector__close:hover {
+  border-color: var(--border);
+  color: var(--text-h);
+}
+
+.garden-inspector__section {
+  margin-top: 16px;
+}
+
+.garden-inspector__section h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.garden-inspector__empty,
+.garden-inspector__ok {
+  margin: 0;
+  font-size: 13px;
+}
+
+.garden-inspector__empty {
+  color: var(--text);
+}
+
+.garden-inspector__ok {
+  color: var(--cat-herb);
+}
+
+.garden-inspector__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.garden-inspector__item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+
+.garden-inspector__item--companion {
+  color: var(--cat-herb);
+  background: color-mix(in srgb, var(--cat-herb) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-herb) 40%, transparent);
+}
+
+.garden-inspector__item--incompatible {
+  color: var(--cat-vegetable);
+  background: color-mix(in srgb, var(--cat-vegetable) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-vegetable) 40%, transparent);
+}
+
+.garden-inspector__item--spacing {
+  color: var(--cat-flower);
+  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+}
+
+@media (max-width: 1105px) {
+  .app-main {
+    grid-template-columns: minmax(0, 600px);
+  }
 }
