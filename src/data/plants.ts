@@ -5,9 +5,10 @@ import type { Plant } from '../domain/plant'
 // stated inches-per-cell conversion. It governs spacing between two
 // placements of the SAME plant only (V1 does not apply it across species —
 // see domain/plant.ts and domain/spacing.ts). Where guidance varies by
-// variety, a representative common-garden variety was used. Sources: UMN
-// Extension (https://extension.umn.edu/flowers/sunflowers) where available,
-// otherwise cross-checked spacing charts (Gardening Know How, Blooming
+// variety or planting method, a representative common-garden figure was
+// used. Sources: UMN Extension (https://extension.umn.edu/flowers/sunflowers)
+// where available, otherwise The Old Farmer's Almanac plant guides, Farmers'
+// Almanac, or cross-checked spacing charts (Gardening Know How, Blooming
 // Expert).
 export const plants: Plant[] = [
   // ~24-36 in apart.
@@ -26,4 +27,20 @@ export const plants: Plant[] = [
   { id: 'marigold', name: 'Marigold', category: 'flower', minimumSpacingCells: 2 },
   // ~18 in apart (typical branching garden variety, per UMN Extension).
   { id: 'sunflower', name: 'Sunflower', category: 'flower', minimumSpacingCells: 3 },
+  // ~3-6 in apart.
+  { id: 'onion', name: 'Onion', category: 'vegetable', minimumSpacingCells: 2 },
+  // ~1-4 in apart, depending on planting method/source.
+  { id: 'bush-bean', name: 'Bush Bean', category: 'vegetable', minimumSpacingCells: 1 },
+  // ~2 in apart, per common garden guidance.
+  { id: 'pea', name: 'Pea', category: 'vegetable', minimumSpacingCells: 1 },
+  // ~12-18 in apart.
+  { id: 'bell-pepper', name: 'Bell Pepper', category: 'vegetable', minimumSpacingCells: 3 },
+  // ~12-18 in apart.
+  { id: 'cucumber', name: 'Cucumber', category: 'vegetable', minimumSpacingCells: 3 },
+  // ~15-18 in apart.
+  { id: 'cabbage', name: 'Cabbage', category: 'vegetable', minimumSpacingCells: 3 },
+  // ~12-18 in apart, depending on planting method/type.
+  { id: 'potato', name: 'Potato', category: 'vegetable', minimumSpacingCells: 3 },
+  // ~10-12 in apart.
+  { id: 'dill', name: 'Dill', category: 'herb', minimumSpacingCells: 2 },
 ]

@@ -10,4 +10,10 @@ describe('plants seed data', () => {
       ).toBe(true)
     }
   })
+
+  it('gives every plant a unique id', () => {
+    const ids = plants.map((plant) => plant.id)
+    const uniqueIds = new Set(ids)
+    expect(uniqueIds.size, 'duplicate plant id found in seed data').toBe(ids.length)
+  })
 })

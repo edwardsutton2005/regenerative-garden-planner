@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { plants } from './plants'
 import { relationshipRules } from './relationships'
 
 function pairKey(plantAId: string, plantBId: string): string {
@@ -28,5 +29,17 @@ describe('relationshipRules seed data', () => {
     // in getRelationship is a defensive backstop, not license for the source
     // data to actually contain duplicate or contradictory entries.
     expect(duplicates).toEqual([])
+  })
+
+  it('only references plant ids that exist in the plant catalogue', () => {
+    const knownPlantIds = new Set(plants.map((plant) => plant.id))
+    const unknownIds: string[] = []
+
+    for (const rule of relationshipRules) {
+      if (!knownPlantIds.has(rule.plantAId)) unknownIds.push(rule.plantAId)
+      if (!knownPlantIds.has(rule.plantBId)) unknownIds.push(rule.plantBId)
+    }
+
+    expect(unknownIds).toEqual([])
   })
 })
