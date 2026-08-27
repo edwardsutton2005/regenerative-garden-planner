@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest'
 import {
   GARDEN_MAX_SIZE,
   GARDEN_MIN_SIZE,
+  chebyshevDistance,
   clearGarden,
   createGarden,
   getAdjacentCoordinates,
+  getAllPlacements,
   getPlantIdAt,
   hasPlacements,
   isValidCoordinate,
@@ -277,5 +279,43 @@ describe('hasPlacements', () => {
   it('is false again after clearing', () => {
     const garden = placePlant(createGarden(), 0, 0, 'tomato')
     expect(hasPlacements(clearGarden(garden))).toBe(false)
+  })
+})
+
+describe('chebyshevDistance', () => {
+  it('is 0 for the same coordinate', () => {
+    expect(chebyshevDistance({ row: 2, col: 2 }, { row: 2, col: 2 })).toBe(0)
+  })
+
+  it('is 1 for an orthogonal neighbor', () => {
+    expect(chebyshevDistance({ row: 2, col: 2 }, { row: 2, col: 3 })).toBe(1)
+  })
+
+  it('is 1 for a diagonal neighbor, not 2', () => {
+    expect(chebyshevDistance({ row: 2, col: 2 }, { row: 3, col: 3 })).toBe(1)
+  })
+
+  it('is the larger of the row and column deltas', () => {
+    expect(chebyshevDistance({ row: 0, col: 0 }, { row: 2, col: 5 })).toBe(5)
+    expect(chebyshevDistance({ row: 0, col: 0 }, { row: 5, col: 2 })).toBe(5)
+  })
+})
+
+describe('getAllPlacements', () => {
+  it('returns an empty array for a fresh garden', () => {
+    expect(getAllPlacements(createGarden())).toEqual([])
+  })
+
+  it('decodes coordinates and plant ids for multiple placements', () => {
+    let garden = createGarden()
+    garden = placePlant(garden, 1, 2, 'tomato')
+    garden = placePlant(garden, 3, 4, 'basil')
+
+    expect(getAllPlacements(garden)).toEqual(
+      expect.arrayContaining([
+        { coordinate: { row: 1, col: 2 }, plantId: 'tomato' },
+        { coordinate: { row: 3, col: 4 }, plantId: 'basil' },
+      ]),
+    )
   })
 })

@@ -76,10 +76,10 @@ describe('getRelationship', () => {
 
 describe('evaluateNeighbors', () => {
   const plantsById: Record<string, Plant> = {
-    tomato: { id: 'tomato', name: 'Tomato', category: 'vegetable' },
-    basil: { id: 'basil', name: 'Basil', category: 'herb' },
-    mint: { id: 'mint', name: 'Mint', category: 'herb' },
-    carrot: { id: 'carrot', name: 'Carrot', category: 'vegetable' },
+    tomato: { id: 'tomato', name: 'Tomato', category: 'vegetable', minimumSpacingCells: 4 },
+    basil: { id: 'basil', name: 'Basil', category: 'herb', minimumSpacingCells: 2 },
+    mint: { id: 'mint', name: 'Mint', category: 'herb', minimumSpacingCells: 3 },
+    carrot: { id: 'carrot', name: 'Carrot', category: 'vegetable', minimumSpacingCells: 1 },
   }
 
   it('classifies an adjacent companion', () => {

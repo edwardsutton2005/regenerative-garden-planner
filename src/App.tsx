@@ -19,6 +19,7 @@ import {
 import type { GardenState } from './domain/garden'
 import type { Plant } from './domain/plant'
 import { evaluateNeighbors } from './domain/relationships'
+import { evaluateSpacing } from './domain/spacing'
 import './App.css'
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
@@ -113,6 +114,10 @@ function App() {
           relationshipRules,
         )
       : []
+  const spacingViolations =
+    lastPlacement && lastPlacedPlant
+      ? evaluateSpacing(garden, lastPlacement.row, lastPlacement.col, lastPlacedPlant)
+      : []
 
   return (
     <div className="app">
@@ -142,7 +147,11 @@ function App() {
             onCellDrop={handleCellDrop}
           />
           {lastPlacedPlant && (
-            <PlacementFeedback placedPlant={lastPlacedPlant} neighbors={neighbors} />
+            <PlacementFeedback
+              placedPlant={lastPlacedPlant}
+              neighbors={neighbors}
+              spacingViolations={spacingViolations}
+            />
           )}
         </div>
       </main>

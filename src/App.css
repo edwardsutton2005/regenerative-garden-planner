@@ -213,3 +213,9 @@
   background: color-mix(in srgb, var(--cat-vegetable) 12%, var(--bg));
   border-color: color-mix(in srgb, var(--cat-vegetable) 40%, transparent);
 }
+
+.placement-feedback__item--spacing {
+  color: var(--cat-flower);
+  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+}

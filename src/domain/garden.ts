@@ -167,6 +167,35 @@ export type CellCoordinate = {
 }
 
 /**
+ * Chebyshev distance between two coordinates: the larger of the row and
+ * column deltas. Diagonal neighbors are distance 1, same as orthogonal
+ * neighbors — used for spacing, deliberately unlike the orthogonal-only
+ * adjacency used for companion/incompatible feedback.
+ */
+export function chebyshevDistance(a: CellCoordinate, b: CellCoordinate): number {
+  return Math.max(Math.abs(a.row - b.row), Math.abs(a.col - b.col))
+}
+
+export type PlacedPlantEntry = {
+  coordinate: CellCoordinate
+  plantId: string
+}
+
+/**
+ * All current placements as coordinate + plant id pairs, decoding the
+ * internal cell-key encoding so callers never need to parse it themselves.
+ */
+export function getAllPlacements(garden: GardenState): PlacedPlantEntry[] {
+  return Object.entries(garden.placements).map(([key, placed]) => {
+    const [rowText, colText] = key.split(',')
+    return {
+      coordinate: { row: Number(rowText), col: Number(colText) },
+      plantId: placed.plantId,
+    }
+  })
+}
+
+/**
  * Immediately-adjacent (orthogonal: up/down/left/right) cells for a given
  * coordinate, clipped to the garden's bounds. Diagonal neighbors are not
  * considered adjacent. Returns an empty array if (row, col) itself is not a
