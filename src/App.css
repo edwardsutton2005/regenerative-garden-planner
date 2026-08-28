@@ -352,6 +352,22 @@
   border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
 }
 
+.garden-inspector__lifecycle {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.garden-inspector__list--roles {
+  margin-top: 6px;
+}
+
+.garden-inspector__item--role {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 6%, var(--bg));
+  border-color: var(--border);
+}
+
 @media (max-width: 1105px) {
   .app-main {
     grid-template-columns: minmax(0, 600px);

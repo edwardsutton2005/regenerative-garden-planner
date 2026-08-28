@@ -9,6 +9,13 @@ type GardenInspectorProps = {
   onClose: () => void
 }
 
+// Turns a kebab-case literal like 'tender-perennial' into "Tender perennial"
+// for display. Purely mechanical — no lookup table needed.
+function formatEnumLabel(value: string): string {
+  const spaced = value.replace(/-/g, ' ')
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+}
+
 function GardenInspector({ plant, neighbors, spacingViolations, onClose }: GardenInspectorProps) {
   const notableNeighbors = neighbors.filter((n) => n.relationship !== 'neutral')
 
@@ -25,6 +32,20 @@ function GardenInspector({ plant, neighbors, spacingViolations, onClose }: Garde
           ×
         </button>
       </div>
+
+      <section className="garden-inspector__section">
+        <h3>Plant identity</h3>
+        <p className="garden-inspector__lifecycle">{formatEnumLabel(plant.lifecycle)}</p>
+        {plant.ecologicalRoles.length > 0 && (
+          <ul className="garden-inspector__list garden-inspector__list--roles">
+            {plant.ecologicalRoles.map((role) => (
+              <li key={role} className="garden-inspector__item garden-inspector__item--role">
+                {formatEnumLabel(role)}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="garden-inspector__section">
         <h3>Adjacent relationships</h3>

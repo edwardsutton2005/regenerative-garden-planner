@@ -343,7 +343,6 @@ Do not introduce precise footprint, canopy, collision, or shade simulation durin
 
 `PRODUCT.md` currently anticipates later Part 2 work involving:
 
-- ecological roles
 - garden composition
 - opportunities
 
@@ -359,7 +358,17 @@ When each slice becomes active:
 4. implement the slice
 5. test it before generalizing further
 
-This prevents Part 2A from carrying abstractions created for hypothetical Part 2D or Part 2E needs.
+This prevents Part 2A from carrying abstractions created for hypothetical Part 2C or Part 2D needs.
+
+---
+
+## 16. Ecological Roles Are Curated Plant Data, Not a Rule Engine
+
+Ecological roles are intrinsic, curated facts stored directly on `Plant`, the same as other plant identity data.
+
+A role represents a supported capability, not a claim that the function is occurring in the garden right now.
+
+This does not justify building a generalized ecological-role rule engine.
 
 ---
 

@@ -258,63 +258,35 @@ Part 2A should establish a consistent place for future plant and garden intellig
 
 ---
 
-# Part 2B — Rich Plant Identity & Physical Structure
+# Part 2B — Plant Identity & Ecological Roles
 
 ## Goal
 
-Make plants meaningfully different organisms rather than differently named grid tokens.
+Teach the planner a small amount of meaningful intrinsic information about each plant: its lifecycle, and the ecological roles it can contribute beyond pairwise companion relationships.
 
-Likely useful plant traits include:
+Physical structure (mature height, mature spread, growth habit) is intentionally deferred — see "Future Part 2 Direction — Plant Physical Structure" below.
 
-- lifecycle
-- mature height
-- mature spread
-- growth habit
+### Lifecycle
 
-The exact field structure, units, and growth-habit taxonomy should be finalized before implementation.
+Every plant has exactly one of:
 
-### Physical Dimensions
+- **annual** — completes its normal life cycle within one growing season/year.
+- **biennial** — normally completes its life cycle across two growing seasons; some garden vegetables are normally harvested during the first year.
+- **perennial** — can persist for multiple years under its ordinary intended growing context.
+- **tender-perennial** — biologically capable of persisting for multiple years but frost-sensitive and commonly grown as an annual where winters are too cold.
 
-Real mature dimensions may be stored using real-world units when supported by reliable horticultural sources.
+Tender perennials should not automatically be treated as durable "perennial structure" in later garden composition without climate context.
 
-However:
+### Ecological Roles
 
-> Real plant dimensions must not be silently converted into garden-cell dimensions while the grid remains physically abstract.
+For this slice, the taxonomy is fixed to exactly:
 
-For example, knowing that a plant may mature to 60 inches tall is valid plant information.
+- **pollinator-support** — credible horticultural guidance recognizes the plant as a meaningful floral/resource component for pollinators. This does not mean every plant whose flowers may be visited by bees receives the role — it represents curated strategic usefulness, not simple pollinator visitation.
+- **nitrogen-fixation** — the plant can participate in symbiotic biological nitrogen fixation with appropriate rhizobia. This must not be described as the plant actively giving nitrogen to its neighbors right now.
 
-Concluding that 60 inches equals a particular number of garden cells is not valid until the application has an explicit physical scale.
+Both roles represent a plant's supported capability, not a claim that the function is actively occurring at this exact moment. For example, Basil provides pollinator resources when allowed to flower; the app does not currently model flowering stage.
 
-In Part 2, physical structure may support:
-
-- plant identity
-- inspection
-- qualitative structural understanding
-- later visual differentiation
-
-Part 2 does not require exact geometric plant simulation.
-
----
-
-# Part 2C — Ecological Roles
-
-## Goal
-
-Teach the planner what individual plants contribute to the garden beyond pairwise companion relationships.
-
-Potential roles may include concepts such as:
-
-- pollinator support
-- nitrogen fixation
-- beneficial-insect support
-- ground cover
-- habitat
-- biomass or soil-building
-- food production
-
-This is not yet the final production taxonomy.
-
-The taxonomy should be deliberately small, evidence-backed, understandable, and useful before implementation.
+No other ecological roles are introduced in this slice. A larger taxonomy (beneficial-insect support, ground cover, habitat, biomass/soil-building, food production, etc.) remains a future possibility, to be added only when a slice actively needs it.
 
 The product should distinguish between:
 
@@ -331,9 +303,17 @@ is conceptually different from:
 
 Do not create new relationship types when the concept is more accurately represented as an intrinsic ecological role.
 
+### User-Visible Behavior
+
+The existing persistent Garden Inspector (Part 2A) should expose this identity without becoming an encyclopedia:
+
+- show lifecycle for every inspected plant
+- show ecological roles when the plant has one or more, using clean display labels (e.g. "Tender perennial", "Pollinator support")
+- for a plant with no currently modeled ecological roles, omit the roles list/section rather than implying the plant has no ecological value
+
 ---
 
-# Part 2D — Garden Composition
+# Part 2C — Garden Composition
 
 ## Goal
 
@@ -351,7 +331,7 @@ Initial composition feedback should be primarily descriptive rather than judgmen
 
 The absence of a particular role should not automatically mean that a garden is bad or incomplete.
 
-Part 2D should first answer:
+Part 2C should first answer:
 
 > What is represented in this garden?
 
@@ -361,7 +341,7 @@ before attempting to answer:
 
 ---
 
-# Part 2E — Opportunities
+# Part 2D — Opportunities
 
 ## Goal
 
@@ -384,6 +364,24 @@ Part 2 should therefore use a mix of:
 - optional opportunities for further improvement
 
 The application should not assume that every garden requires every ecological role.
+
+---
+
+## Future Part 2 Direction — Plant Physical Structure
+
+Part 2B deliberately defers mature height, mature spread, and growth habit.
+
+Likely useful plant traits if this becomes active include lifecycle (already implemented), mature height, mature spread, and growth habit. The exact field structure, units, and growth-habit taxonomy should be finalized before implementation.
+
+Real mature dimensions may be stored using real-world units when supported by reliable horticultural sources. However:
+
+> Real plant dimensions must not be silently converted into garden-cell dimensions while the grid remains physically abstract.
+
+For example, knowing that a plant may mature to 60 inches tall is valid plant information. Concluding that 60 inches equals a particular number of garden cells is not valid until the application has an explicit physical scale.
+
+Physical structure may eventually support plant identity, inspection, qualitative structural understanding, and later visual differentiation — it does not require exact geometric plant simulation.
+
+This is **not currently a required Part 2 feature**.
 
 ---
 
@@ -444,16 +442,13 @@ The current intended sequence is:
 **2A — Persistent Inspection**  
 What is true about this placement now?
 
-**2B — Plant Identity & Physical Structure**  
-What kind of organism is this?
+**2B — Plant Identity & Ecological Roles**  
+What kind of organism is this, and what does it contribute?
 
-**2C — Ecological Roles**  
-What does this plant contribute?
-
-**2D — Garden Composition**  
+**2C — Garden Composition**  
 What functions are represented across this garden?
 
-**2E — Opportunities**  
+**2D — Opportunities**  
 What additional strategies could the user explore?
 
 This sequence should guide development without forcing later Part 2 systems to be fully specified before earlier systems are validated.

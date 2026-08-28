@@ -80,10 +80,38 @@ describe('getRelationship', () => {
 
 describe('evaluateNeighbors', () => {
   const plantsById: Record<string, Plant> = {
-    tomato: { id: 'tomato', name: 'Tomato', category: 'vegetable', minimumSpacingCells: 4 },
-    basil: { id: 'basil', name: 'Basil', category: 'herb', minimumSpacingCells: 2 },
-    mint: { id: 'mint', name: 'Mint', category: 'herb', minimumSpacingCells: 3 },
-    carrot: { id: 'carrot', name: 'Carrot', category: 'vegetable', minimumSpacingCells: 1 },
+    tomato: {
+      id: 'tomato',
+      name: 'Tomato',
+      category: 'vegetable',
+      minimumSpacingCells: 4,
+      lifecycle: 'tender-perennial',
+      ecologicalRoles: [],
+    },
+    basil: {
+      id: 'basil',
+      name: 'Basil',
+      category: 'herb',
+      minimumSpacingCells: 2,
+      lifecycle: 'annual',
+      ecologicalRoles: ['pollinator-support'],
+    },
+    mint: {
+      id: 'mint',
+      name: 'Mint',
+      category: 'herb',
+      minimumSpacingCells: 3,
+      lifecycle: 'perennial',
+      ecologicalRoles: ['pollinator-support'],
+    },
+    carrot: {
+      id: 'carrot',
+      name: 'Carrot',
+      category: 'vegetable',
+      minimumSpacingCells: 1,
+      lifecycle: 'biennial',
+      ecologicalRoles: [],
+    },
   }
 
   it('classifies an adjacent companion', () => {
@@ -139,10 +167,38 @@ describe('evaluateNeighbors', () => {
 
 describe('evaluateNeighborsForFocuses', () => {
   const plantsById: Record<string, Plant> = {
-    tomato: { id: 'tomato', name: 'Tomato', category: 'vegetable', minimumSpacingCells: 4 },
-    basil: { id: 'basil', name: 'Basil', category: 'herb', minimumSpacingCells: 2 },
-    mint: { id: 'mint', name: 'Mint', category: 'herb', minimumSpacingCells: 3 },
-    carrot: { id: 'carrot', name: 'Carrot', category: 'vegetable', minimumSpacingCells: 1 },
+    tomato: {
+      id: 'tomato',
+      name: 'Tomato',
+      category: 'vegetable',
+      minimumSpacingCells: 4,
+      lifecycle: 'tender-perennial',
+      ecologicalRoles: [],
+    },
+    basil: {
+      id: 'basil',
+      name: 'Basil',
+      category: 'herb',
+      minimumSpacingCells: 2,
+      lifecycle: 'annual',
+      ecologicalRoles: ['pollinator-support'],
+    },
+    mint: {
+      id: 'mint',
+      name: 'Mint',
+      category: 'herb',
+      minimumSpacingCells: 3,
+      lifecycle: 'perennial',
+      ecologicalRoles: ['pollinator-support'],
+    },
+    carrot: {
+      id: 'carrot',
+      name: 'Carrot',
+      category: 'vegetable',
+      minimumSpacingCells: 1,
+      lifecycle: 'biennial',
+      ecologicalRoles: [],
+    },
   }
 
   it('matches a single-focus call to evaluateNeighbors for the ordinary (non-swap) case', () => {

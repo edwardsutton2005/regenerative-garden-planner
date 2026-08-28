@@ -8,18 +8,24 @@ const tomato: Plant = {
   name: 'Tomato',
   category: 'vegetable',
   minimumSpacingCells: 4,
+  lifecycle: 'tender-perennial',
+  ecologicalRoles: [],
 }
 const carrot: Plant = {
   id: 'carrot',
   name: 'Carrot',
   category: 'vegetable',
   minimumSpacingCells: 1,
+  lifecycle: 'biennial',
+  ecologicalRoles: [],
 }
 const basil: Plant = {
   id: 'basil',
   name: 'Basil',
   category: 'herb',
   minimumSpacingCells: 2,
+  lifecycle: 'annual',
+  ecologicalRoles: ['pollinator-support'],
 }
 
 describe('evaluateSpacing', () => {
