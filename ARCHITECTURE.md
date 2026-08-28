@@ -230,8 +230,31 @@ stored state + structured data
 This ensures that inspection reflects the garden as it exists now rather than feedback from an earlier action.
 
 ---
+## 9. Reasoning Boundaries
 
-## 9. Inspection Is UI State
+The application should separate:
+
+- structured knowledge
+- deterministic reasoning
+- later AI reasoning
+
+These are conceptual boundaries, not a request to introduce framework classes, services, folders, or generalized engines for each layer.
+
+Deterministic reasoning may only derive conclusions justified by explicitly modeled structured knowledge plus the current garden state.
+
+Keep observation separate from judgment.
+
+For example:
+
+- "Nitrogen fixation is not represented" is an observation.
+- "The garden should add a nitrogen-fixing plant" is a recommendation that requires additional product logic.
+
+Do not introduce a generalized reasoning engine merely to represent these boundaries.
+
+For Part 2C, garden composition should remain a small deterministic aggregation over current placements and plant ecological roles.
+
+---
+## 10. Inspection Is UI State
 
 Part 2A introduces persistent inspection.
 
@@ -256,7 +279,7 @@ If the inspected placement moves, is removed, or is replaced, the interface shou
 
 ---
 
-## 10. Immediate Feedback and Inspection Are Separate Concerns
+## 11. Immediate Feedback and Inspection Are Separate Concerns
 
 Immediate feedback answers:
 
@@ -276,7 +299,7 @@ Where practical, both should reuse the same underlying domain logic instead of m
 
 ---
 
-## 11. Reuse Focused Domain Logic
+## 12. Reuse Focused Domain Logic
 
 Part 2 should extend the existing framework-independent domain functions rather than replacing them with a generalized intelligence system.
 
@@ -293,7 +316,7 @@ New domain logic should remain:
 
 ---
 
-## 12. Keep Domain Results Explainable
+## 13. Keep Domain Results Explainable
 
 Domain evaluators should return structured, testable information rather than only opaque scores or UI-specific strings when practical.
 
@@ -303,7 +326,7 @@ Do not create a universal finding model or generalized rule-output schema before
 
 ---
 
-## 13. New Plant Data Must Serve an Active Feature
+## 14. New Plant Data Must Serve an Active Feature
 
 Part 2 is expected to add richer plant information over time.
 
@@ -321,7 +344,7 @@ Do not expand the plant model in advance merely because the information may even
 
 ---
 
-## 14. Physical Plant Data Does Not Define Grid Scale
+## 15. Physical Plant Data Does Not Define Grid Scale
 
 Part 2 may eventually store real physical plant dimensions.
 
@@ -339,7 +362,7 @@ Do not introduce precise footprint, canopy, collision, or shade simulation durin
 
 ---
 
-## 15. Later Part 2 Systems Should Be Architected When They Become Active
+## 16. Later Part 2 Systems Should Be Architected When They Become Active
 
 `PRODUCT.md` currently anticipates later Part 2 work involving:
 
@@ -362,7 +385,7 @@ This prevents Part 2A from carrying abstractions created for hypothetical Part 2
 
 ---
 
-## 16. Ecological Roles Are Curated Plant Data, Not a Rule Engine
+## 17. Ecological Roles Are Curated Plant Data, Not a Rule Engine
 
 Ecological roles are intrinsic, curated facts stored directly on `Plant`, the same as other plant identity data.
 
