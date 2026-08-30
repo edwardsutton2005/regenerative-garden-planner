@@ -253,6 +253,107 @@
   border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
 }
 
+.garden-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.garden-composition {
+  box-sizing: border-box;
+  width: 240px;
+  padding: 16px;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.garden-composition__summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.garden-composition__snapshot {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.garden-composition__empty {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.garden-composition__list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.garden-composition__item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--text) 6%, var(--bg));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.garden-composition__role {
+  color: var(--text-h);
+  font-weight: 600;
+}
+
+.garden-composition__providers {
+  color: var(--text);
+}
+
+.garden-opportunities {
+  box-sizing: border-box;
+  width: 240px;
+  padding: 16px;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.garden-opportunities__title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.garden-opportunities__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.garden-opportunities__item {
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--cat-flower);
+  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--cat-flower) 40%, transparent);
+}
+
 .garden-inspector {
   box-sizing: border-box;
   width: 240px;
@@ -347,6 +448,12 @@
 }
 
 .garden-inspector__item--spacing {
+  color: var(--cat-flower);
+  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+}
+
+.garden-inspector__item--opportunity {
   color: var(--cat-flower);
   background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
   border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);

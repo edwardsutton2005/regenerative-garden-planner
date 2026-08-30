@@ -16,6 +16,13 @@ import type { Plant } from '../domain/plant'
 // and ecologicalRoles record a plant's supported capability (e.g. as a
 // pollinator resource), not a claim that the function is occurring right
 // now. Both are intrinsic plant facts, independent of spacing/category.
+//
+// evidence (Part 2E) records claim-level provenance where it's actually
+// attributable — see domain/plant.ts. Most entries below have none: the
+// comments above predate per-claim citation discipline and only describe a
+// dataset-wide sourcing policy, not a specific source per plant, so
+// attaching one would misrepresent precision we don't have. Sunflower is
+// the one exception with a genuinely specific, linkable source.
 export const plants: Plant[] = [
   // ~24-36 in apart.
   // Lifecycle: tender perennial; commonly grown as an annual in colder
@@ -99,6 +106,9 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
+    // The only current seed plant with a specific, attributable spacing
+    // source — see data/sources.ts.
+    evidence: { spacingGuidance: ['umn-extension-sunflowers'] },
   },
   // ~3-6 in apart.
   // Lifecycle: biennial, though typically harvested in its first year.

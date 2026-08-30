@@ -327,6 +327,10 @@ For example:
 
 > Pollinator support — Marigold, Sunflower
 
+Representation is binary, not a magnitude: a role is either represented by at least one plant type or it is not. Composition does not report counts, strength, percentage, coverage, or quality — one Basil and ten Basil both simply mean pollinator support is represented.
+
+As with the ecological roles introduced in Part 2B, a represented role means a plant with that curated capability is currently placed — it does not claim the function is biologically active in the garden at this exact moment.
+
 Initial composition feedback should be primarily descriptive rather than judgmental.
 
 The absence of a particular role should not automatically mean that a garden is bad or incomplete.
@@ -345,25 +349,44 @@ before attempting to answer:
 
 ## Goal
 
-Once garden composition can be described reliably, the planner may begin surfacing strategies the user could explore.
+Part 2C observes what is currently represented in the garden. Part 2D is the first slice that may recommend a change worth considering, while remaining deterministic, explainable, and grounded only in explicitly modeled knowledge plus current garden state.
 
-Examples:
+Absence is not deficiency by default. A recommendation requires an explicit, deliberately scoped opportunity policy — not a generic rule that surfaces every absent role or condition.
 
-> Opportunity: Add pollinator support.
+### Opportunity Scope
 
-> Consider introducing a nitrogen-fixing plant.
+The precision of a recommendation cannot exceed the precision of its underlying modeled knowledge. Each opportunity family is reasoned at the narrowest spatial scope its underlying rule actually supports:
 
-Opportunities should be framed as possibilities rather than failures unless there is a genuine rule violation.
+- **Garden-wide** — supported when the underlying knowledge only tells us whether something is represented anywhere in the garden, not where.
+- **Placement-local** — supported when the underlying knowledge is itself local (e.g. companion/incompatible adjacency, which V1 already defines only for the orthogonal neighbors of one placement).
 
-Where several plants could serve the same purpose, the product should generally recommend the function or strategy before implying that one specific plant is required.
+V1 does not model spatial coverage, zones, beds, or areas, so no opportunity may claim that a specific area of the garden needs something.
 
-Part 2 should therefore use a mix of:
+### V1 Opportunity Families
 
-- positive reinforcement for beneficial choices
-- warnings for genuine problems
-- optional opportunities for further improvement
+Exactly two families exist for now:
 
-The application should not assume that every garden requires every ecological role.
+1. **Garden-wide pollinator-support opportunity** — if pollinator-support is not represented anywhere in the current garden, surface a garden-wide opportunity to consider adding a pollinator-support plant. This is a specific, deliberate policy, not a generalization: nitrogen-fixation absence is explicitly **not** currently sufficient for a recommendation, and there is no generic "recommend any absent role" rule.
+
+2. **Local companion opportunity** — for the currently inspected placement, if none of its orthogonally adjacent plants have a modeled companion relationship with it, surface the catalogue's other companion options for that plant. Presence of at least one adjacent modeled companion suppresses this opportunity — this is presence-based, not a quantity or quality judgment.
+
+Both families are framed as possibilities ("consider...") rather than as a claim that the current garden is deficient, that a suggested plant is required or best, or that it guarantees improved growth.
+
+Future opportunity families require their own deliberate product decision, not an extension of these two policies.
+
+---
+
+# Part 2E — Knowledge Provenance
+
+## Goal
+
+Establish structured, claim-level provenance for curated horticultural knowledge so future plant and environmental facts remain traceable to supporting sources.
+
+## Boundary
+
+Provenance is internal metadata. It does not affect deterministic reasoning and does not add citation or source UI to the current interaction model. A curated fact without recorded evidence remains a valid, usable fact — absence of evidence means no source has been attributed yet, not that the fact is unsupported.
+
+Facts researched from this point forward should record their supporting source(s) when they're added, rather than provenance being reconstructed after the fact.
 
 ---
 
@@ -450,6 +473,9 @@ What functions are represented across this garden?
 
 **2D — Opportunities**  
 What additional strategies could the user explore?
+
+**2E — Knowledge Provenance**  
+Where did this curated fact come from?
 
 This sequence should guide development without forcing later Part 2 systems to be fully specified before earlier systems are validated.
 
@@ -621,7 +647,7 @@ should be derived from current state and structured data rather than stored as s
 
 If the model is abstract, feedback must remain appropriately abstract.
 
-Do not silently translate real-world horticultural values into precise spatial claims the current model cannot support.
+Do not silently translate real-world horticultural values into precise spatial claims the current model cannot support. The same discipline applies to provenance (see Part 2E): a source that informed an abstract value is not a source that states that value.
 
 ### Expand Intelligence Gradually
 

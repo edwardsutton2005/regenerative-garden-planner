@@ -10,6 +10,12 @@ import type { PlantRelationshipRule } from '../domain/relationships'
 // same bar and kept deliberately conservative — a relationship enters this
 // production data only when it clears that policy, not merely because one
 // chart lists it.
+//
+// None of the rules below carry sourceIds (Part 2E claim-level provenance):
+// the policy above describes the dataset-wide vetting bar, not which
+// specific source backs any one pair, so attaching one would misrepresent
+// precision we don't have. Newly researched rules should record sourceIds
+// going forward.
 export const relationshipRules: PlantRelationshipRule[] = [
   { plantAId: 'tomato', plantBId: 'basil', relationship: 'companion' },
   { plantAId: 'tomato', plantBId: 'marigold', relationship: 'companion' },

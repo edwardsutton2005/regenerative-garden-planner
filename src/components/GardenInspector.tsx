@@ -6,6 +6,7 @@ type GardenInspectorProps = {
   plant: Plant
   neighbors: FocusedNeighborRelationship[]
   spacingViolations: FocusedSpacingViolation[]
+  companionCandidates: Plant[]
   onClose: () => void
 }
 
@@ -16,7 +17,13 @@ function formatEnumLabel(value: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
 
-function GardenInspector({ plant, neighbors, spacingViolations, onClose }: GardenInspectorProps) {
+function GardenInspector({
+  plant,
+  neighbors,
+  spacingViolations,
+  companionCandidates,
+  onClose,
+}: GardenInspectorProps) {
   const notableNeighbors = neighbors.filter((n) => n.relationship !== 'neutral')
 
   return (
@@ -84,6 +91,22 @@ function GardenInspector({ plant, neighbors, spacingViolations, onClose }: Garde
           </ul>
         )}
       </section>
+
+      {companionCandidates.length > 0 && (
+        <section className="garden-inspector__section">
+          <h3>Local opportunities</h3>
+          <ul className="garden-inspector__list">
+            {companionCandidates.map((candidate) => (
+              <li
+                key={candidate.id}
+                className="garden-inspector__item garden-inspector__item--opportunity"
+              >
+                {`Consider a companion option: ${candidate.name}`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

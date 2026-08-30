@@ -1,6 +1,7 @@
 import type { CellCoordinate, GardenState } from './garden'
 import { getAdjacentCoordinates, getPlantIdAt } from './garden'
 import type { Plant } from './plant'
+import type { SourceId } from './source'
 
 export type PlantRelationshipType = 'companion' | 'incompatible'
 
@@ -13,6 +14,14 @@ export type PlantRelationshipRule = {
   plantAId: string
   plantBId: string
   relationship: PlantRelationshipType
+  /**
+   * Claim-level source evidence for this specific pair, present only where
+   * actually recorded. Absence means no source has been attributed yet, not
+   * that the relationship is unsupported. Never read by getRelationship or
+   * evaluateNeighbors — see ARCHITECTURE.md "Knowledge Provenance Is
+   * Separate From Reasoning."
+   */
+  sourceIds?: SourceId[]
 }
 
 export function getRelationship(

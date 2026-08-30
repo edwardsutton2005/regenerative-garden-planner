@@ -1,13 +1,20 @@
 import { useState } from 'react'
+import GardenComposition from './components/GardenComposition'
 import GardenControls from './components/GardenControls'
 import GardenGrid from './components/GardenGrid'
 import GardenInspector from './components/GardenInspector'
+import GardenOpportunities from './components/GardenOpportunities'
 import GardenSetup from './components/GardenSetup'
 import type { PlantDragPayload } from './components/dragPayload'
 import PlacementFeedback from './components/PlacementFeedback'
 import PlantPicker from './components/PlantPicker'
 import { plants } from './data/plants'
 import { relationshipRules } from './data/relationships'
+import { evaluateGardenComposition } from './domain/composition'
+import {
+  evaluateCompanionOpportunityForPlacement,
+  evaluateGardenOpportunities,
+} from './domain/opportunities'
 import {
   GARDEN_DEFAULT_SIZE,
   clearGarden,
@@ -86,6 +93,16 @@ function App() {
     if (!garden) return
 
     if (selectedPlantId) {
+      // Clicking a cell that already holds the selected plant toggles it
+      // off instead of "replacing" it with itself — saves switching to the
+      // eraser for a quick undo of the same plant.
+      if (getPlantIdAt(garden, row, col) === selectedPlantId) {
+        setGarden((current) => (current ? removePlant(current, row, col) : current))
+        setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
+        if (isInspected(row, col)) setInspectedCoordinate(null)
+        return
+      }
+
       setGarden((current) => (current ? placePlant(current, row, col, selectedPlantId) : current))
       setLastPlacements([{ row, col }])
       // A placement landing on the inspected cell is a replace — the
@@ -211,6 +228,9 @@ function App() {
 
   const spacingViolations = evaluateSpacingForFocuses(garden, spacingFocusEntries)
 
+  const composition = evaluateGardenComposition(garden, plantsById)
+  const gardenOpportunities = evaluateGardenOpportunities(garden, plantsById)
+
   const inspectedPlantId = inspectedCoordinate
     ? getPlantIdAt(garden, inspectedCoordinate.row, inspectedCoordinate.col)
     : undefined
@@ -232,6 +252,21 @@ function App() {
           { coordinate: inspectedCoordinate, plant: inspectedPlant },
         ])
       : []
+
+  const localCompanionOpportunity = inspectedCoordinate
+    ? evaluateCompanionOpportunityForPlacement(
+        garden,
+        inspectedCoordinate.row,
+        inspectedCoordinate.col,
+        plantsById,
+        relationshipRules,
+      )
+    : null
+
+  const companionCandidates = (localCompanionOpportunity?.candidatePlantIds ?? [])
+    .map((id) => plantsById[id])
+    .filter((p): p is Plant => p !== undefined)
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <div className="app">
@@ -260,14 +295,19 @@ function App() {
           </div>
           <PlacementFeedback neighbors={neighbors} spacingViolations={spacingViolations} />
         </div>
-        {inspectedPlant && (
-          <GardenInspector
-            plant={inspectedPlant}
-            neighbors={inspectorNeighbors}
-            spacingViolations={inspectorSpacing}
-            onClose={() => setInspectedCoordinate(null)}
-          />
-        )}
+        <div className="garden-rail">
+          <GardenComposition composition={composition} plantsById={plantsById} />
+          <GardenOpportunities opportunities={gardenOpportunities} />
+          {inspectedPlant && (
+            <GardenInspector
+              plant={inspectedPlant}
+              neighbors={inspectorNeighbors}
+              spacingViolations={inspectorSpacing}
+              companionCandidates={companionCandidates}
+              onClose={() => setInspectedCoordinate(null)}
+            />
+          )}
+        </div>
       </main>
     </div>
   )

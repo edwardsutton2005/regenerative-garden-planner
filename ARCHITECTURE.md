@@ -251,7 +251,11 @@ For example:
 
 Do not introduce a generalized reasoning engine merely to represent these boundaries.
 
+The spatial scope of a derived conclusion or recommendation must not be more precise than the spatial scope supported by the underlying modeled knowledge — reason at the narrowest spatial scope the underlying rule actually justifies.
+
 For Part 2C, garden composition should remain a small deterministic aggregation over current placements and plant ecological roles.
+
+For Part 2D, a garden-wide absence may only ground a garden-wide opportunity, and a local adjacency rule may only ground a placement-local opportunity — neither may imply coverage, zones, or areas the application doesn't yet model.
 
 ---
 ## 10. Inspection Is UI State
@@ -364,16 +368,7 @@ Do not introduce precise footprint, canopy, collision, or shade simulation durin
 
 ## 16. Later Part 2 Systems Should Be Architected When They Become Active
 
-`PRODUCT.md` currently anticipates later Part 2 work involving:
-
-- garden composition
-- opportunities
-
-Their product intent belongs in `PRODUCT.md`.
-
-Their exact architecture should **not** be fixed yet.
-
-When each slice becomes active:
+All Part 2 slices currently named in `PRODUCT.md` (2A–2D) are implemented. This rule's process still governs any future slice — a further Part 2 addendum, Part 3, or otherwise — that isn't yet named there:
 
 1. define the product behavior precisely
 2. identify the smallest required data and domain changes
@@ -381,7 +376,7 @@ When each slice becomes active:
 4. implement the slice
 5. test it before generalizing further
 
-This prevents Part 2A from carrying abstractions created for hypothetical Part 2C or Part 2D needs.
+This prevents an earlier slice from carrying abstractions created for hypothetical later needs.
 
 ---
 
@@ -392,6 +387,12 @@ Ecological roles are intrinsic, curated facts stored directly on `Plant`, the sa
 A role represents a supported capability, not a claim that the function is occurring in the garden right now.
 
 This does not justify building a generalized ecological-role rule engine.
+
+---
+
+## 18. Knowledge Provenance Is Separate From Reasoning
+
+Curated knowledge and provenance are separate concerns. Domain reasoning consumes normalized application facts. Evidence metadata records where those facts came from but does not participate in deterministic reasoning unless a future feature explicitly models source confidence.
 
 ---
 

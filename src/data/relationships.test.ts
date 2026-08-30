@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { plants } from './plants'
 import { relationshipRules } from './relationships'
+import { sources } from './sources'
 
 function pairKey(plantAId: string, plantBId: string): string {
   return [plantAId, plantBId].sort().join(' :: ')
@@ -38,6 +39,21 @@ describe('relationshipRules seed data', () => {
     for (const rule of relationshipRules) {
       if (!knownPlantIds.has(rule.plantAId)) unknownIds.push(rule.plantAId)
       if (!knownPlantIds.has(rule.plantBId)) unknownIds.push(rule.plantBId)
+    }
+
+    expect(unknownIds).toEqual([])
+  })
+
+  it('only references registered source ids in sourceIds', () => {
+    const knownSourceIds = new Set(sources.map((source) => source.id))
+    const unknownIds: string[] = []
+
+    for (const rule of relationshipRules) {
+      for (const id of rule.sourceIds ?? []) {
+        if (!knownSourceIds.has(id)) {
+          unknownIds.push(`${rule.plantAId}/${rule.plantBId}: ${id}`)
+        }
+      }
     }
 
     expect(unknownIds).toEqual([])

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EcologicalRole, PlantLifecycle } from '../domain/plant'
 import { plants } from './plants'
+import { sources } from './sources'
 
 describe('plants seed data', () => {
   it('gives every plant a positive integer minimumSpacingCells', () => {
@@ -26,6 +27,28 @@ describe('plants seed data', () => {
         `${plant.name} has a duplicate ecologicalRole: ${plant.ecologicalRoles.join(', ')}`,
       ).toBe(plant.ecologicalRoles.length)
     }
+  })
+
+  it('only references registered source ids in evidence', () => {
+    const knownSourceIds = new Set(sources.map((source) => source.id))
+    const unknownIds: string[] = []
+
+    for (const plant of plants) {
+      const evidence = plant.evidence
+      if (!evidence) continue
+
+      const referencedIds = [
+        ...(evidence.lifecycle ?? []),
+        ...(evidence.spacingGuidance ?? []),
+        ...Object.values(evidence.ecologicalRoles ?? {}).flat(),
+      ]
+
+      for (const id of referencedIds) {
+        if (!knownSourceIds.has(id)) unknownIds.push(`${plant.name}: ${id}`)
+      }
+    }
+
+    expect(unknownIds).toEqual([])
   })
 
   // Regression coverage for the curated Part 2B lifecycle/ecologicalRoles
