@@ -5,6 +5,7 @@ import GardenGrid from './components/GardenGrid'
 import GardenInspector from './components/GardenInspector'
 import GardenOpportunities from './components/GardenOpportunities'
 import GardenSetup from './components/GardenSetup'
+import SunlightPicker from './components/SunlightPicker'
 import type { PlantDragPayload } from './components/dragPayload'
 import PlacementFeedback from './components/PlacementFeedback'
 import PlantPicker from './components/PlantPicker'
@@ -18,6 +19,7 @@ import {
 import {
   GARDEN_DEFAULT_SIZE,
   clearGarden,
+  clearSunlightAt,
   createGarden,
   getPlantIdAt,
   hasPlacements,
@@ -25,8 +27,9 @@ import {
   movePlant,
   placePlant,
   removePlant,
+  setSunlightAt,
 } from './domain/garden'
-import type { GardenState } from './domain/garden'
+import type { GardenState, SunlightLevel } from './domain/garden'
 import type { Plant } from './domain/plant'
 import { evaluateNeighborsForFocuses } from './domain/relationships'
 import { evaluateSpacingForFocuses } from './domain/spacing'
@@ -53,6 +56,17 @@ type InspectedCoordinate = {
   col: number
 } | null
 
+// Exactly one tool is active at a time, and each variant only carries the
+// data that tool actually needs — an invalid combination (e.g. a plant
+// selected and the eraser selected at once) is unrepresentable, rather than
+// tracked as separate booleans that could drift out of sync.
+type ActiveTool =
+  | { type: 'neutral' }
+  | { type: 'plant'; plantId: string }
+  | { type: 'eraser' }
+  | { type: 'sunlight'; level: SunlightLevel }
+  | { type: 'sunlight-clear' }
+
 function App() {
   // No garden yet means the app is on the setup screen; once created, a
   // garden's dimensions are fixed for its lifetime (see ARCHITECTURE.md).
@@ -61,8 +75,7 @@ function App() {
     rows: GARDEN_DEFAULT_SIZE,
     columns: GARDEN_DEFAULT_SIZE,
   })
-  const [selectedPlantId, setSelectedPlantId] = useState<string | null>(null)
-  const [eraserSelected, setEraserSelected] = useState(false)
+  const [activeTool, setActiveTool] = useState<ActiveTool>({ type: 'neutral' })
   // Coordinates to show transient feedback for. Usually one (the cell just
   // placed or moved to); a garden-to-garden swap changes two cells, so both
   // go here.
@@ -80,49 +93,89 @@ function App() {
   function handleSelectPlant(plantId: string) {
     // Selecting the already-selected plant returns to the neutral state;
     // selecting/deselecting never touches inspection.
-    setSelectedPlantId((current) => (current === plantId ? null : plantId))
-    setEraserSelected(false)
+    setActiveTool((current) =>
+      current.type === 'plant' && current.plantId === plantId
+        ? { type: 'neutral' }
+        : { type: 'plant', plantId },
+    )
   }
 
   function handleSelectEraser() {
-    setEraserSelected((current) => !current)
-    setSelectedPlantId(null)
+    setActiveTool((current) => (current.type === 'eraser' ? { type: 'neutral' } : { type: 'eraser' }))
+  }
+
+  function handleSelectSunlight(level: SunlightLevel) {
+    setActiveTool((current) =>
+      current.type === 'sunlight' && current.level === level
+        ? { type: 'neutral' }
+        : { type: 'sunlight', level },
+    )
+  }
+
+  function handleSelectSunlightClear() {
+    setActiveTool((current) =>
+      current.type === 'sunlight-clear' ? { type: 'neutral' } : { type: 'sunlight-clear' },
+    )
   }
 
   function handleCellClick(row: number, col: number) {
     if (!garden) return
 
-    if (selectedPlantId) {
-      // Clicking a cell that already holds the selected plant toggles it
-      // off instead of "replacing" it with itself — saves switching to the
-      // eraser for a quick undo of the same plant.
-      if (getPlantIdAt(garden, row, col) === selectedPlantId) {
+    switch (activeTool.type) {
+      case 'plant': {
+        const { plantId } = activeTool
+        // Clicking a cell that already holds the selected plant toggles it
+        // off instead of "replacing" it with itself — saves switching to
+        // the eraser for a quick undo of the same plant.
+        if (getPlantIdAt(garden, row, col) === plantId) {
+          setGarden((current) => (current ? removePlant(current, row, col) : current))
+          setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
+          if (isInspected(row, col)) setInspectedCoordinate(null)
+          return
+        }
+
+        setGarden((current) => (current ? placePlant(current, row, col, plantId) : current))
+        setLastPlacements([{ row, col }])
+        // A placement landing on the inspected cell is a replace — the
+        // inspected placement no longer exists as it was, so close.
+        if (isInspected(row, col)) setInspectedCoordinate(null)
+        return
+      }
+
+      case 'eraser': {
+        if (getPlantIdAt(garden, row, col) === undefined) return
         setGarden((current) => (current ? removePlant(current, row, col) : current))
         setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
         if (isInspected(row, col)) setInspectedCoordinate(null)
         return
       }
 
-      setGarden((current) => (current ? placePlant(current, row, col, selectedPlantId) : current))
-      setLastPlacements([{ row, col }])
-      // A placement landing on the inspected cell is a replace — the
-      // inspected placement no longer exists as it was, so close.
-      if (isInspected(row, col)) setInspectedCoordinate(null)
-      return
-    }
+      case 'sunlight':
+      case 'sunlight-clear':
+        // Painting happens via pointer sweep (handleCellPaint), not click —
+        // a sunlight tool being active must never place/replace/remove a
+        // plant or change inspection, so a plain click here is a no-op.
+        return
 
-    if (eraserSelected) {
-      if (getPlantIdAt(garden, row, col) === undefined) return
-      setGarden((current) => (current ? removePlant(current, row, col) : current))
-      setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
-      if (isInspected(row, col)) setInspectedCoordinate(null)
-      return
+      case 'neutral':
+      default: {
+        // Neutral: click an occupied cell to inspect it, an empty cell to
+        // clear inspection.
+        const plantId = getPlantIdAt(garden, row, col)
+        setInspectedCoordinate(plantId ? { row, col } : null)
+      }
     }
+  }
 
-    // Neutral: click an occupied cell to inspect it, an empty cell to clear
-    // inspection.
-    const plantId = getPlantIdAt(garden, row, col)
-    setInspectedCoordinate(plantId ? { row, col } : null)
+  function handleCellPaint(row: number, col: number) {
+    if (!garden) return
+
+    if (activeTool.type === 'sunlight') {
+      const { level } = activeTool
+      setGarden((current) => (current ? setSunlightAt(current, row, col, level) : current))
+    } else if (activeTool.type === 'sunlight-clear') {
+      setGarden((current) => (current ? clearSunlightAt(current, row, col) : current))
+    }
   }
 
   function handleCellDrop(row: number, col: number, payload: PlantDragPayload) {
@@ -276,13 +329,21 @@ function App() {
       </header>
       <GardenControls onNewGarden={handleNewGarden} onClearGarden={handleClearGarden} />
       <main className="app-main">
-        <PlantPicker
-          plants={plants}
-          selectedPlantId={selectedPlantId}
-          eraserSelected={eraserSelected}
-          onSelectPlant={handleSelectPlant}
-          onSelectEraser={handleSelectEraser}
-        />
+        <div className="tool-column">
+          <PlantPicker
+            plants={plants}
+            selectedPlantId={activeTool.type === 'plant' ? activeTool.plantId : null}
+            eraserSelected={activeTool.type === 'eraser'}
+            onSelectPlant={handleSelectPlant}
+            onSelectEraser={handleSelectEraser}
+          />
+          <SunlightPicker
+            activeLevel={activeTool.type === 'sunlight' ? activeTool.level : null}
+            clearSelected={activeTool.type === 'sunlight-clear'}
+            onSelectLevel={handleSelectSunlight}
+            onSelectClear={handleSelectSunlightClear}
+          />
+        </div>
         <div className="garden-column">
           <div className="garden-grid-viewport">
             <GardenGrid
@@ -291,6 +352,8 @@ function App() {
               inspectedCoordinate={inspectedCoordinate}
               onCellClick={handleCellClick}
               onCellDrop={handleCellDrop}
+              paintMode={activeTool.type === 'sunlight' || activeTool.type === 'sunlight-clear'}
+              onCellPaint={handleCellPaint}
             />
           </div>
           <PlacementFeedback neighbors={neighbors} spacingViolations={spacingViolations} />

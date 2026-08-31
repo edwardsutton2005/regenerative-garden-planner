@@ -10,6 +10,29 @@ export type PlacedPlant = {
 }
 
 /**
+ * A user-modeled garden condition, not measured irradiance, exact direct-
+ * sun hours, or simulated year-round exposure. The person planning this
+ * garden is declaring "I consider this cell full sun" — there is no
+ * horticultural source for that declaration, unlike a Plant's own sunlight
+ * requirement (Part 3B), which is curated and eligible for the Part 2E
+ * evidence treatment. See ARCHITECTURE.md.
+ */
+export type SunlightLevel = 'full-sun' | 'partial-sun' | 'shade'
+
+/**
+ * Site-level environmental state, separate from placements. Each field's
+ * shape reflects the scope its condition actually has — sunlight is
+ * per-cell, so it's a Record<CellKey, ...>; a future site-wide condition
+ * (e.g. climate) would be a plain scalar field here instead, not forced
+ * into the same per-cell shape. See ARCHITECTURE.md.
+ */
+export type GardenEnvironment = {
+  /** Absent key means sunlight is not modeled for that cell — never an
+   * 'unknown' SunlightLevel. See ARCHITECTURE.md. */
+  sunlightByCell: Record<CellKey, SunlightLevel>
+}
+
+/**
  * Garden state is an explicit mapping from cell coordinates to what is
  * placed there, rather than a fixed-size 2D array. This keeps state
  * independent of any particular grid size (see ARCHITECTURE.md).
@@ -18,6 +41,7 @@ export type GardenState = {
   rows: number
   columns: number
   placements: Record<CellKey, PlacedPlant>
+  environment: GardenEnvironment
 }
 
 export const GARDEN_MIN_SIZE = 4
@@ -50,7 +74,7 @@ export function createGarden(
     )
   }
 
-  return { rows, columns, placements: {} }
+  return { rows, columns, placements: {}, environment: { sunlightByCell: {} } }
 }
 
 /**
@@ -117,6 +141,51 @@ export function removePlant(
 }
 
 /**
+ * Sets the modeled sunlight condition at (row, col). Always assigns —
+ * painting the same level repeatedly is idempotent, never a toggle. Calling
+ * this on an out-of-bounds cell is a safe no-op.
+ */
+export function setSunlightAt(
+  garden: GardenState,
+  row: number,
+  col: number,
+  level: SunlightLevel,
+): GardenState {
+  if (!isValidCoordinate(garden, row, col)) return garden
+
+  return {
+    ...garden,
+    environment: {
+      ...garden.environment,
+      sunlightByCell: { ...garden.environment.sunlightByCell, [cellKey(row, col)]: level },
+    },
+  }
+}
+
+/**
+ * Clears the modeled sunlight condition at (row, col), if any — the cell
+ * returns to "not modeled" rather than any particular SunlightLevel.
+ * Calling this on an already-unmodeled or out-of-bounds cell is a safe
+ * no-op.
+ */
+export function clearSunlightAt(garden: GardenState, row: number, col: number): GardenState {
+  if (!isValidCoordinate(garden, row, col)) return garden
+
+  const sunlightByCell = { ...garden.environment.sunlightByCell }
+  delete sunlightByCell[cellKey(row, col)]
+  return { ...garden, environment: { ...garden.environment, sunlightByCell } }
+}
+
+export function getSunlightAt(
+  garden: GardenState,
+  row: number,
+  col: number,
+): SunlightLevel | undefined {
+  if (!isValidCoordinate(garden, row, col)) return undefined
+  return garden.environment.sunlightByCell[cellKey(row, col)]
+}
+
+/**
  * Moves whatever is at (fromRow, fromCol) to (toRow, toCol).
  *
  * If the destination is empty, this is a plain move: the source cell
@@ -152,7 +221,10 @@ export function movePlant(
 }
 
 /**
- * Removes all placements while preserving the garden's dimensions.
+ * Removes all placements while preserving the garden's dimensions and
+ * environmental state (e.g. modeled sunlight) — Clear Garden resets the
+ * planting design, not the site. Starting a New Garden instead discards the
+ * whole GardenState, resetting environment along with everything else.
  */
 export function clearGarden(garden: GardenState): GardenState {
   return { ...garden, placements: {} }

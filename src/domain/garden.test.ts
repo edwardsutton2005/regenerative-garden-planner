@@ -4,24 +4,28 @@ import {
   GARDEN_MIN_SIZE,
   chebyshevDistance,
   clearGarden,
+  clearSunlightAt,
   createGarden,
   getAdjacentCoordinates,
   getAllPlacements,
   getPlantIdAt,
+  getSunlightAt,
   hasPlacements,
   isValidCoordinate,
   isValidGardenDimension,
   movePlant,
   placePlant,
   removePlant,
+  setSunlightAt,
 } from './garden'
 
 describe('createGarden', () => {
-  it('creates a garden with the given dimensions and no placements', () => {
+  it('creates a garden with the given dimensions, no placements, and no modeled sunlight', () => {
     const garden = createGarden(5, 6)
     expect(garden.rows).toBe(5)
     expect(garden.columns).toBe(6)
     expect(garden.placements).toEqual({})
+    expect(garden.environment.sunlightByCell).toEqual({})
   })
 
   it('uses the documented default size when no dimensions are given', () => {
@@ -215,6 +219,66 @@ describe('removePlant', () => {
   })
 })
 
+describe('setSunlightAt / getSunlightAt / clearSunlightAt', () => {
+  it('is undefined for an unmodeled cell', () => {
+    const garden = createGarden()
+    expect(getSunlightAt(garden, 0, 0)).toBeUndefined()
+  })
+
+  it('sets a level and reads it back', () => {
+    const garden = setSunlightAt(createGarden(), 2, 3, 'full-sun')
+    expect(getSunlightAt(garden, 2, 3)).toBe('full-sun')
+  })
+
+  it('overwrites a previously set level rather than toggling', () => {
+    let garden = setSunlightAt(createGarden(), 1, 1, 'full-sun')
+    garden = setSunlightAt(garden, 1, 1, 'shade')
+    expect(getSunlightAt(garden, 1, 1)).toBe('shade')
+
+    // Setting the same level again stays exactly that level — idempotent,
+    // never a toggle back to unmodeled.
+    garden = setSunlightAt(garden, 1, 1, 'shade')
+    expect(getSunlightAt(garden, 1, 1)).toBe('shade')
+  })
+
+  it('leaves other cells unmodeled', () => {
+    const garden = setSunlightAt(createGarden(), 1, 1, 'partial-sun')
+    expect(getSunlightAt(garden, 2, 2)).toBeUndefined()
+  })
+
+  it('clearSunlightAt returns a modeled cell to unmodeled', () => {
+    let garden = setSunlightAt(createGarden(), 1, 1, 'full-sun')
+    garden = clearSunlightAt(garden, 1, 1)
+    expect(getSunlightAt(garden, 1, 1)).toBeUndefined()
+  })
+
+  it('clearSunlightAt is a safe no-op on an already-unmodeled cell', () => {
+    const garden = createGarden()
+    expect(() => clearSunlightAt(garden, 0, 0)).not.toThrow()
+    expect(getSunlightAt(clearSunlightAt(garden, 0, 0), 0, 0)).toBeUndefined()
+  })
+
+  it('does not mutate the original garden state', () => {
+    const original = createGarden()
+    setSunlightAt(original, 0, 0, 'full-sun')
+    expect(getSunlightAt(original, 0, 0)).toBeUndefined()
+  })
+
+  it('setting/reading/clearing an out-of-bounds coordinate is a no-op', () => {
+    const garden = createGarden(5, 5)
+    expect(setSunlightAt(garden, 5, 0, 'full-sun')).toEqual(garden)
+    expect(getSunlightAt(garden, -1, 0)).toBeUndefined()
+    expect(clearSunlightAt(garden, 5, 0)).toEqual(garden)
+  })
+
+  it('is independent of plant placements at the same cell', () => {
+    let garden = placePlant(createGarden(), 1, 1, 'tomato')
+    garden = setSunlightAt(garden, 1, 1, 'shade')
+    expect(getPlantIdAt(garden, 1, 1)).toBe('tomato')
+    expect(getSunlightAt(garden, 1, 1)).toBe('shade')
+  })
+})
+
 describe('movePlant', () => {
   it('moves a plant from an occupied source to an empty destination', () => {
     let garden = placePlant(createGarden(), 1, 1, 'tomato')
@@ -279,6 +343,18 @@ describe('clearGarden', () => {
   it('is a no-op-equivalent on an already-empty garden', () => {
     const garden = createGarden()
     expect(clearGarden(garden).placements).toEqual({})
+  })
+
+  it('preserves modeled sunlight — Clear Garden resets the planting design, not the site', () => {
+    let garden = createGarden(6, 7)
+    garden = placePlant(garden, 0, 0, 'tomato')
+    garden = setSunlightAt(garden, 0, 0, 'full-sun')
+    garden = setSunlightAt(garden, 3, 3, 'shade')
+
+    const cleared = clearGarden(garden)
+    expect(cleared.placements).toEqual({})
+    expect(getSunlightAt(cleared, 0, 0)).toBe('full-sun')
+    expect(getSunlightAt(cleared, 3, 3)).toBe('shade')
   })
 
   it('does not mutate the original garden state', () => {

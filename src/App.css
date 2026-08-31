@@ -2,6 +2,12 @@
   --cat-vegetable: #e2622b;
   --cat-herb: #4c8c4a;
   --cat-flower: #d1519c;
+  /* Deliberately distinct from the --cat-* plant-category hues above, so a
+   * painted sunlight condition is never visually confused with a plant's
+   * own category color. */
+  --sun-full-sun: #f0b429;
+  --sun-partial-sun: #c98a3e;
+  --sun-shade: #5b7a9c;
 }
 
 .app {
@@ -28,8 +34,44 @@
   align-items: flex-start;
 }
 
+.tool-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 160px;
+}
+
 .plant-picker {
   min-width: 160px;
+}
+
+.sunlight-picker h2 {
+  margin: 0 0 12px;
+}
+
+.sunlight-picker ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sunlight-option {
+  cursor: pointer;
+}
+
+.sunlight-option--full-sun {
+  --plant-color: var(--sun-full-sun);
+}
+
+.sunlight-option--partial-sun {
+  --plant-color: var(--sun-partial-sun);
+}
+
+.sunlight-option--shade {
+  --plant-color: var(--sun-shade);
 }
 
 .plant-picker h2 {
@@ -217,6 +259,21 @@
 .garden-cell--flower {
   background: color-mix(in srgb, var(--cat-flower) 20%, var(--bg));
   border-color: var(--cat-flower);
+}
+
+/* A thin inset stripe, not a real border or background — plant category
+ * (background + name) stays the dominant signal; sunlight is a secondary
+ * accent that layers on top regardless of occupancy. */
+.garden-cell--sun-full-sun {
+  box-shadow: inset 0 3px 0 0 var(--sun-full-sun);
+}
+
+.garden-cell--sun-partial-sun {
+  box-shadow: inset 0 3px 0 0 var(--sun-partial-sun);
+}
+
+.garden-cell--sun-shade {
+  box-shadow: inset 0 3px 0 0 var(--sun-shade);
 }
 
 .placement-feedback {

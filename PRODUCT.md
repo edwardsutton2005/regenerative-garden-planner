@@ -508,6 +508,26 @@ Environmental conditions should remain spatial where doing so materially improve
 
 The goal should not merely be to label plants "native" or "non-native," but eventually to help users choose plants appropriate for the ecosystem they are designing within.
 
+Environmental knowledge should be represented at the narrowest spatial or contextual scope the underlying condition actually has — sunlight is per-cell, climate/location is site-wide, native/invasive suitability is plant × location. Do not assume every future condition is per-cell just because the first one is.
+
+---
+
+## Part 3A — Garden Environment & Sunlight Mapping
+
+Sunlight is the first modeled environmental dimension, and establishes the garden/site environmental state that later dimensions will reuse.
+
+The garden now carries its own environmental state, separate from what's planted. Sunlight conditions are user-declared per cell — the person planning this garden marks a cell as full sun, partial sun, or shade — modeled as such, not measured irradiance, exact direct-sun hours, or simulated year-round exposure.
+
+A cell with no marked sunlight is unmodeled, not a negative or default condition.
+
+**Clear Garden** resets the planting design but preserves the garden's modeled sunlight. **New Garden** begins a new site and resets both.
+
+This slice adds no plant sunlight requirements and no fit reasoning — it establishes the state and the editing/visualization interaction only. That's Part 3B.
+
+## Part 3B — Plant Sunlight Knowledge & Fit
+
+Sourced plant sunlight requirements, and a deterministic evaluation of whether an inspected placement's modeled sunlight fits its plant — including explicit handling of insufficient information, distinct from a known incompatibility. Not yet detailed; to be planned once 3A is validated.
+
 ---
 
 # Part 4 — Regenerative Systems
