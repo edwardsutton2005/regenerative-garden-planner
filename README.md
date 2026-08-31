@@ -2,6 +2,8 @@
 
 An interactive garden-design application that evaluates a spatial layout using curated plant facts and deterministic rules. It helps users explore companion relationships, spacing, ecological roles, and environmental conditions without treating an LLM as the source of gardening knowledge.
 
+![Regenerative Garden Planner](./docs/images/garden-planner.png)
+
 **Live demo:** _Coming soon_
 
 **Screenshot/demo GIF:** _Add a current product screenshot or short interaction recording here._
