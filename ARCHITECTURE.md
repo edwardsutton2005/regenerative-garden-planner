@@ -1,456 +1,154 @@
 # Architecture
 
-## Current Objective
+## Purpose
 
-Build on the completed V1 companion-planting architecture with the simplest technically sound extensions required by the current Part 2 work described in `PRODUCT.md`.
+The Regenerative Garden Planner is a client-side React application for experimenting with spatial garden layouts. Its architecture is intentionally small: explicit state, curated data, pure TypeScript domain functions, and React presentation components.
 
-Preserve existing V1 behavior and architecture unless a Part 2 requirement creates a concrete reason to change it.
+The main constraint is explainability. A conclusion shown to a user should be traceable to current garden state, structured plant knowledge, and a deterministic rule.
 
-Do not pre-build architecture for later Part 2 slices or future product phases.
+## Technology
 
----
+- React and TypeScript
+- Vite for development and production builds
+- CSS for layout and presentation
+- Vitest for domain and data tests
+- Oxlint for static analysis
+- Client-side state only
 
-## Current Stack
+There is no backend, database, authentication system, global state library, persistence layer, or AI API.
 
-- React
-- TypeScript
-- Vite
-- CSS
-- client-side application state
-- Vitest for lightweight domain and data tests
+## Repository Structure
 
-Do not add a backend until persistence, accounts, shared data, or another concrete requirement makes one necessary.
-
-Do not add an AI API unless a later product requirement explicitly justifies one.
-
----
-
-## Architectural Philosophy
-
-### 1. Prefer Simplicity
-
-Use the simplest implementation that satisfies the current product requirement.
-
-Do not introduce abstractions solely because they might be useful later.
-
-Avoid unnecessary:
-
-- frameworks
-- dependencies
-- service layers
-- factories
-- providers
-- global state libraries
-- generalized rule engines
-- premature optimization
-
-The application is still a relatively small interactive product.
-
-Treat it accordingly.
-
----
-
-### 2. Separate Domain Logic from Presentation
-
-React components should primarily be responsible for rendering the garden, handling user interaction, and presenting derived results.
-
-Gardening knowledge should not be embedded throughout UI components.
-
-Avoid logic such as:
-
-```ts
-if (plant.name === "Tomato" && neighbor.name === "Basil") {
-  // ...
-}
+```text
+src/
+├── components/   React interaction and presentation
+├── data/         Curated plants, relationship rules, and source registry
+├── domain/       Framework-independent state operations and evaluation rules
+├── App.tsx       Application orchestration and interaction state
+└── main.tsx      Browser entry point
 ```
 
-Plant data, relationship data, spacing rules, and future gardening rules should live in dedicated framework-independent modules.
+The repository keeps gardening knowledge out of React components. Components may choose wording and visual treatment, but they do not define which plants are companions, what spacing rule applies, or which ecological role a plant has.
 
-UI components should call domain functions and render their results.
+## State Model
 
----
-
-### 3. Keep Visual Representation Replaceable
-
-The garden-state model should represent what exists in the garden, not how it is visually rendered.
-
-A placed plant should be stored as a plant placement rather than as:
-
-- an emoji
-- an image path
-- a sprite
-- a CSS class
-- a UI-specific component
-
-Rendering may use temporary visual representations while the interface develops.
-
-Later illustrated plant assets should be replaceable without changing garden-state or rule logic.
-
-Avoid coupling plant data or garden rules to a particular visual implementation.
-
----
-
-# Established V1 Architecture
-
-## 4. Garden Dimensions and State
-
-Grid size is chosen by the user when a garden is created.
-
-V1 supports bounded rectangular gardens.
-
-Bounds:
-
-- minimum: 4 × 4
-- maximum: 30 × 30
-- default: 10 × 10
-
-Dimensions remain fixed for the lifetime of a garden.
-
-Changing dimensions means starting a new garden rather than resizing an occupied garden.
-
-The garden lifecycle distinguishes between:
-
-- **Clear Garden** — removes all placements while preserving dimensions
-- **New Garden** — discards the current garden and returns to garden-size selection
-
-If the garden contains plants, starting a new garden requires confirmation.
-
-Garden state explicitly contains its dimensions and placements.
-
-Conceptually:
+`GardenState` represents facts about one garden:
 
 ```ts
 type GardenState = {
   rows: number
   columns: number
   placements: Record<CellKey, PlacedPlant>
+  environment: GardenEnvironment
 }
 ```
 
----
+The grid is a bounded rectangle from 4×4 through 30×30 cells. Coordinates are zero-based integers. Mutation functions validate dimensions and coordinates, return new state, and treat invalid operations on an existing garden as no-ops.
 
-## 5. Placement, Movement, and Validation Policy
+Placements are stored sparsely by coordinate rather than in a fixed two-dimensional array. One cell contains at most one plant. Moving onto an occupied cell swaps the two placements; placing from the catalogue replaces the destination.
 
-Placing a plant on an occupied cell replaces the existing plant.
+Environmental state is separate from plant placement state. The current environment contains user-declared sunlight categories by cell. A missing key means sunlight has not been modeled for that cell. Clearing plants preserves environmental state; starting a new garden discards both.
 
-This applies to:
+## Interaction State
 
-- click placement
-- dragging a new plant from the picker
+UI concerns are not stored in `GardenState`. `App.tsx` separately tracks:
 
-Dragging an existing garden plant:
+- the active tool
+- transient feedback focus coordinates
+- the inspected coordinate
+- setup-screen dimensions
 
-- to an empty cell → moves the plant
-- to an occupied cell → swaps the two plants
-- to the same cell → no-op
-- outside the valid garden → no-op
+Inspection is resolved against live garden state. Cached relationship, spacing, composition, or opportunity results are not stored in placements.
 
-Garden creation rejects dimensions that are:
+## Structured Knowledge
 
-- non-integer
-- non-finite
-- outside the documented bounds
+`src/data/` contains the normalized knowledge consumed by the application:
 
-Operations on an existing garden that receive invalid coordinates treat them as no-ops or return an empty result as appropriate.
+- plant identity, lifecycle, spacing tier, and ecological roles
+- symmetric companion/incompatible relationship pairs
+- a registry of attributable sources
+- optional claim-level evidence references
 
-This policy should remain explicit and testable.
+Visual details such as colors, icons, or component names are not stored as domain facts. Evidence metadata is also kept separate from reasoning: it records provenance but does not alter a rule result.
 
----
+See [docs/data-sources.md](./docs/data-sources.md) for the current sourcing policy and known provenance gaps.
 
-## 6. Companion and Incompatible Relationships
+## Deterministic Domain Logic
 
-Companion/incompatible relationships are stored in a normalized relationship dataset rather than duplicated directly on individual plant records.
+Each concern has a focused module instead of a generalized rule-engine abstraction:
 
-Relationships are symmetric.
+- `garden.ts` — state construction, validation, placement operations, environment operations, and coordinate helpers
+- `relationships.ts` — symmetric companion/incompatible lookup and adjacent evaluation
+- `spacing.ts` — same-species spacing evaluation
+- `composition.ts` — garden-wide aggregation of represented ecological roles
+- `opportunities.ts` — explicitly scoped opportunity policies
+- `plant.ts` and `source.ts` — domain types
 
-For V1, adjacency means the four orthogonal cells:
-
-- up
-- down
-- left
-- right
-
-Diagonal cells are not adjacent for companion/incompatible evaluation.
-
-If conflicting relationship rules somehow exist for the same pair, an incompatible rule wins regardless of authoring order.
-
-This is a defensive runtime fallback.
-
-Production data should be validated separately so conflicts are not intentionally authored.
-
----
-
-## 7. Spacing
-
-V1 spacing values are abstract same-species spacing tiers.
-
-They do not represent an exact physical conversion between garden cells and real-world distance.
-
-Spacing rules:
-
-- apply only between placements with the same plant ID
-- use Chebyshev distance
-- include diagonal proximity
-- treat a distance equal to the minimum spacing as valid
-- do not infer cross-species spacing from same-species horticultural guidance
-
-Spacing behavior should remain independent from companion/incompatible adjacency behavior.
-
----
-
-# Current Part 2 Architectural Principles
-
-## 8. Store Facts, Derive Current Status
-
-Garden state should continue to store factual state such as:
-
-- dimensions
-- placements
-
-Do not store conclusions such as:
-
-- this placement currently has a companion
-- this placement currently has a spacing problem
-- this garden currently has a particular ecological role
-
-These are derived facts.
-
-Current status should be recomputed from the live garden state and trusted structured data.
-
-Conceptually:
+The processing model is:
 
 ```text
-stored state + structured data
-            ↓
-      deterministic evaluation
-            ↓
-         current status
+garden state + structured knowledge
+                ↓
+       deterministic evaluation
+                ↓
+      structured current findings
+                ↓
+          React explanation
 ```
 
-This ensures that inspection reflects the garden as it exists now rather than feedback from an earlier action.
+This boundary is discussed in more detail in [docs/reasoning-engine.md](./docs/reasoning-engine.md).
 
----
-## 9. Reasoning Boundaries
+## Implemented Spatial Rules
 
-The application should separate:
+### Relationships
 
-- structured knowledge
-- deterministic reasoning
-- later AI reasoning
+Companion and incompatible relationships are symmetric. They apply only to immediate orthogonal neighbors: up, down, left, and right. Diagonals are not adjacent for this rule. If conflicting rules exist for a pair, incompatibility wins defensively; data tests are intended to prevent such conflicts from being authored.
 
-These are conceptual boundaries, not a request to introduce framework classes, services, folders, or generalized engines for each layer.
+### Spacing
 
-Deterministic reasoning may only derive conclusions justified by explicitly modeled structured knowledge plus the current garden state.
+Spacing applies only between placements with the same plant ID. It uses Chebyshev distance, so diagonal proximity matters. A distance equal to the plant's minimum tier is valid.
 
-Keep observation separate from judgment.
+Spacing tiers are relative abstract grid values, not a conversion from inches or feet. Cross-species spacing is not inferred from same-species horticultural guidance.
 
-For example:
+### Composition
 
-- "Nitrogen fixation is not represented" is an observation.
-- "The garden should add a nitrogen-fixing plant" is a recommendation that requires additional product logic.
+Composition reports whether a modeled ecological role is represented by at least one placed plant type. It does not assign magnitude, coverage, or quality, and duplicate placements do not increase a role's strength.
 
-Do not introduce a generalized reasoning engine merely to represent these boundaries.
+### Opportunities
 
-The spatial scope of a derived conclusion or recommendation must not be more precise than the spatial scope supported by the underlying modeled knowledge — reason at the narrowest spatial scope the underlying rule actually justifies.
+Opportunities are explicit product policies rather than deductions from every missing property:
 
-For Part 2C, garden composition should remain a small deterministic aggregation over current placements and plant ecological roles.
+- a garden-wide suggestion when pollinator support is absent
+- local companion candidates for an inspected placement that currently lacks an adjacent modeled companion
 
-For Part 2D, a garden-wide absence may only ground a garden-wide opportunity, and a local adjacency rule may only ground a placement-local opportunity — neither may imply coverage, zones, or areas the application doesn't yet model.
+The spatial scope of a conclusion cannot be more precise than its underlying data. A garden-wide observation cannot justify a cell-specific recommendation.
 
----
-## 10. Inspection Is UI State
+### Sunlight Mapping
 
-Part 2A introduces persistent inspection.
+Sunlight is currently a user-declared cell category: full sun, partial sun, or shade. It is not measured irradiance, a simulation, or a plant-fit conclusion. Plant sunlight requirements and fit evaluation are planned separately.
 
-The currently inspected placement should be represented as interaction state rather than part of `GardenState`.
+## Explanation Boundary
 
-The simplest representation that satisfies the interaction should be preferred.
+Domain evaluators return structured objects containing plant identities, coordinates, rule types, roles, or required distances. React components turn those results into concise messages for immediate feedback, persistent inspection, composition summaries, and opportunities.
 
-Conceptually, this may be as small as:
+This keeps user-facing language replaceable without duplicating gardening rules in JSX. The application deliberately avoids an opaque score or a universal finding schema.
 
-```ts
-type InspectedCoordinate = {
-  row: number
-  col: number
-} | null
-```
+## Testing Strategy
 
-This is illustrative rather than a required type definition.
+Pure domain behavior and data invariants are tested with Vitest. Coverage focuses on:
 
-Do not attach inspection state or cached inspection results to plant placements.
+- valid and invalid garden dimensions and coordinates
+- immutable state transitions
+- replacement, movement, swapping, clearing, and environment lifecycle
+- relationship symmetry, adjacency, and conflict handling
+- spacing boundaries and deduplication
+- composition and opportunity policy behavior
+- unique data identifiers and valid provenance references
 
-If the inspected placement moves, is removed, or is replaced, the interface should resolve inspection against the current garden state rather than preserving stale information.
+Native drag-and-drop, responsive layout, local grid scrolling, and other primarily visual interactions are verified manually. A browser-testing dependency has not been added because the current domain behavior can be tested without one.
 
----
+## Deliberate Limitations
 
-## 11. Immediate Feedback and Inspection Are Separate Concerns
+The grid has no physical scale. Real-world measurements are not converted into cells. The application also does not currently provide persistence, accounts, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations.
 
-Immediate feedback answers:
-
-> What just changed?
-
-Persistent inspection answers:
-
-> What is true here now?
-
-These should remain conceptually separate.
-
-Immediate feedback may remain transient.
-
-Inspection should derive its contents from current garden state.
-
-Where practical, both should reuse the same underlying domain logic instead of maintaining separate gardening rules.
-
----
-
-## 12. Reuse Focused Domain Logic
-
-Part 2 should extend the existing framework-independent domain functions rather than replacing them with a generalized intelligence system.
-
-Prefer focused, testable functions for individual concerns.
-
-Do not introduce a monolithic abstraction such as a `GardenIntelligenceEngine` unless future complexity creates a concrete need for one.
-
-New domain logic should remain:
-
-- deterministic
-- framework-independent
-- testable
-- as small as the current feature allows
-
----
-
-## 13. Keep Domain Results Explainable
-
-Domain evaluators should return structured, testable information rather than only opaque scores or UI-specific strings when practical.
-
-The architecture should preserve enough information for the interface to explain why a result exists.
-
-Do not create a universal finding model or generalized rule-output schema before multiple implemented systems demonstrate that one is actually useful.
-
----
-
-## 14. New Plant Data Must Serve an Active Feature
-
-Part 2 is expected to add richer plant information over time.
-
-Possible future Part 2 data includes:
-
-- lifecycle
-- mature height
-- mature spread
-- growth habit
-- ecological roles
-
-These fields should be designed when the corresponding product slice becomes active.
-
-Do not expand the plant model in advance merely because the information may eventually be useful.
-
----
-
-## 15. Physical Plant Data Does Not Define Grid Scale
-
-Part 2 may eventually store real physical plant dimensions.
-
-The garden grid remains abstract unless a later product requirement explicitly introduces physical scale.
-
-Do not assume:
-
-```text
-N inches = M garden cells
-```
-
-Physical plant dimensions may be used for identity, inspection, visual differentiation, or other features that do not require an exact spatial conversion.
-
-Do not introduce precise footprint, canopy, collision, or shade simulation during Part 2 unless the product scope is deliberately changed.
-
----
-
-## 16. Later Part 2 Systems Should Be Architected When They Become Active
-
-All Part 2 slices currently named in `PRODUCT.md` (2A–2D) are implemented. This rule's process still governs any future slice — a further Part 2 addendum, Part 3, or otherwise — that isn't yet named there:
-
-1. define the product behavior precisely
-2. identify the smallest required data and domain changes
-3. update this architecture only where the implementation introduces a durable architectural decision
-4. implement the slice
-5. test it before generalizing further
-
-This prevents an earlier slice from carrying abstractions created for hypothetical later needs.
-
----
-
-## 17. Ecological Roles Are Curated Plant Data, Not a Rule Engine
-
-Ecological roles are intrinsic, curated facts stored directly on `Plant`, the same as other plant identity data.
-
-A role represents a supported capability, not a claim that the function is occurring in the garden right now.
-
-This does not justify building a generalized ecological-role rule engine.
-
----
-
-## 18. Knowledge Provenance Is Separate From Reasoning
-
-Curated knowledge and provenance are separate concerns. Domain reasoning consumes normalized application facts. Evidence metadata records where those facts came from but does not participate in deterministic reasoning unless a future feature explicitly models source confidence.
-
----
-
-# Testing Philosophy
-
-Pure domain behavior and important data invariants should receive lightweight automated tests.
-
-Examples include:
-
-- relationship evaluation
-- spacing evaluation
-- garden-state behavior
-- future domain rules once introduced
-
-Do not add large UI-testing infrastructure unless interaction complexity creates a concrete need.
-
-Manual browser verification remains acceptable for behaviors such as:
-
-- native drag-and-drop
-- visual layout
-- scrolling
-- contextual inspection behavior
-- other primarily visual interaction details
-
----
-
-## Current Non-Goals
-
-Do not add unless a current product requirement explicitly changes:
-
-- backend/database infrastructure
-- authentication/accounts
-- persistence
-- AI API
-- global state library
-- generalized rule engine
-- physical grid scale
-- sunlight simulation
-- water-flow simulation
-- soil simulation
-- canopy/shade simulation
-- complex GIS or arbitrary garden polygons
-- 3D graphics
-
----
-
-## Architectural Decision Rule
-
-For each proposed abstraction, ask:
-
-> Does the current product require this abstraction now?
-
-If the answer is no, do not add it.
-
-For each proposed piece of plant data, ask:
-
-> Does an active product feature use this information?
-
-If the answer is no, do not add it yet.
-
-The architecture should remain easy to understand while the garden intelligence becomes progressively richer.
+If an LLM is introduced later, deterministic data and domain rules should remain the source of horticultural facts and conclusions. An LLM may assist with explanation, comparison, or interaction, but should not invent the underlying gardening rules.
