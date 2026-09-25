@@ -17,12 +17,21 @@ import type { Plant } from '../domain/plant'
 // pollinator resource), not a claim that the function is occurring right
 // now. Both are intrinsic plant facts, independent of spacing/category.
 //
+// sunlightRequirement (Part 3B) is the categorical SunlightLevel set each
+// plant is curated to accept, each backed by a specific, linkable
+// university/college Extension source in evidence.sunlightRequirement — see
+// docs/data-sources.md "Sunlight" for the human-readable table of exactly
+// what each source does and does not explicitly state, and the V1
+// full-sun/partial-sun/shade normalization policy the sets below follow.
+//
 // evidence (Part 2E) records claim-level provenance where it's actually
-// attributable — see domain/plant.ts. Most entries below have none: the
-// comments above predate per-claim citation discipline and only describe a
-// dataset-wide sourcing policy, not a specific source per plant, so
-// attaching one would misrepresent precision we don't have. Sunflower is
-// the one exception with a genuinely specific, linkable source.
+// attributable — see domain/plant.ts. Most entries below have none for
+// lifecycle/ecologicalRoles/spacing: the comments above predate per-claim
+// citation discipline and only describe a dataset-wide sourcing policy, not
+// a specific source per plant, so attaching one would misrepresent
+// precision we don't have. Sunflower's spacingGuidance is the one exception
+// there. sunlightRequirement is held to a stricter standard — every plant's
+// accepted set is backed by a registered source (see data/sources.ts).
 export const plants: Plant[] = [
   // ~24-36 in apart.
   // Lifecycle: tender perennial; commonly grown as an annual in colder
@@ -34,6 +43,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 4,
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['umn-extension-tomatoes'] },
   },
   // ~2-3 in apart — by far the tightest-packed of the seed plants.
   // Lifecycle: biennial, though typically harvested in its first year.
@@ -44,6 +55,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 1,
     lifecycle: 'biennial',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun', 'partial-sun'],
+    evidence: { sunlightRequirement: ['illinois-extension-salad-in-the-shade'] },
   },
   // ~4-8 in apart (leaf lettuce).
   // Lifecycle: annual.
@@ -54,6 +67,10 @@ export const plants: Plant[] = [
     minimumSpacingCells: 2,
     lifecycle: 'annual',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun', 'partial-sun'],
+    evidence: {
+      sunlightRequirement: ['illinois-extension-salad-in-the-shade', 'illinois-extension-lettuce'],
+    },
   },
   // ~10-12 in apart.
   // Lifecycle: annual. Pollinator support is a capability when the plant is
@@ -65,6 +82,14 @@ export const plants: Plant[] = [
     minimumSpacingCells: 2,
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
+    sunlightRequirement: ['full-sun'],
+    evidence: {
+      sunlightRequirement: [
+        'umn-extension-herbs',
+        'pennstate-extension-basil',
+        'illinois-extension-basil',
+      ],
+    },
   },
   // ~18 in apart.
   // Lifecycle: perennial.
@@ -75,6 +100,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'perennial',
     ecologicalRoles: ['pollinator-support'],
+    sunlightRequirement: ['full-sun', 'partial-sun'],
+    evidence: { sunlightRequirement: ['usu-extension-mint'] },
   },
   // ~24-36 in apart (mature shrub spacing).
   // Lifecycle: tender perennial; commonly grown as an annual in colder
@@ -86,6 +113,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 4,
     lifecycle: 'tender-perennial',
     ecologicalRoles: ['pollinator-support'],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['illinois-extension-rosemary'] },
   },
   // ~6-10 in apart (French marigold, a common garden variety).
   // Lifecycle: annual.
@@ -96,6 +125,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 2,
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['umn-extension-marigolds'] },
   },
   // ~18 in apart (typical branching garden variety, per UMN Extension).
   // Lifecycle: annual.
@@ -106,9 +137,11 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
-    // The only current seed plant with a specific, attributable spacing
-    // source — see data/sources.ts.
-    evidence: { spacingGuidance: ['umn-extension-sunflowers'] },
+    sunlightRequirement: ['full-sun'],
+    evidence: {
+      spacingGuidance: ['umn-extension-sunflowers'],
+      sunlightRequirement: ['illinois-extension-sunflowers'],
+    },
   },
   // ~3-6 in apart.
   // Lifecycle: biennial, though typically harvested in its first year.
@@ -119,6 +152,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 2,
     lifecycle: 'biennial',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['umn-extension-onions'] },
   },
   // ~1-4 in apart, depending on planting method/source.
   // Lifecycle: annual. Nitrogen-fixation reflects the plant's capability
@@ -130,6 +165,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 1,
     lifecycle: 'annual',
     ecologicalRoles: ['nitrogen-fixation'],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['usu-extension-beans'] },
   },
   // ~2 in apart, per common garden guidance.
   // Lifecycle: annual. See Bush Bean note on nitrogen-fixation.
@@ -140,6 +177,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 1,
     lifecycle: 'annual',
     ecologicalRoles: ['nitrogen-fixation'],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['umn-extension-peas'] },
   },
   // ~12-18 in apart.
   // Lifecycle: tender perennial; commonly grown as an annual in colder
@@ -151,6 +190,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['umn-extension-raised-bed-gardens'] },
   },
   // ~12-18 in apart.
   // Lifecycle: annual.
@@ -161,6 +202,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'annual',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['illinois-extension-get-started'] },
   },
   // ~15-18 in apart.
   // Lifecycle: biennial, though typically harvested in its first year.
@@ -171,6 +214,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'biennial',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['usu-extension-cabbage'] },
   },
   // ~12-18 in apart, depending on planting method/type.
   // Lifecycle: tender perennial; commonly grown as an annual in colder
@@ -182,6 +227,8 @@ export const plants: Plant[] = [
     minimumSpacingCells: 3,
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['umn-extension-potatoes'] },
   },
   // ~10-12 in apart.
   // Lifecycle: annual.
@@ -192,5 +239,7 @@ export const plants: Plant[] = [
     minimumSpacingCells: 2,
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
+    sunlightRequirement: ['full-sun'],
+    evidence: { sunlightRequirement: ['illinois-extension-dill'] },
   },
 ]

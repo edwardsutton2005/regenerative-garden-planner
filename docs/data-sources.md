@@ -8,14 +8,11 @@ Normalized facts live in `src/data/`. Optional claim-level evidence points to en
 
 Evidence metadata and deterministic reasoning are separate. Adding or omitting a citation does not change a rule result. Missing evidence means provenance has not yet been recorded at the claim level; it should not be read as proof that a claim is either supported or unsupported.
 
-## Registered Claim-Level Source
+## Registered Claim-Level Sources
 
-The current structured source registry contains one source:
+The structured source registry (`src/data/sources.ts`) currently holds 19 sources: one attached to Sunflower's spacing guidance, and 18 university/college Extension sources backing every seed plant's `sunlightRequirement` — see "Sunlight" below for the full table.
 
-- [Sunflowers — University of Minnesota Extension](https://extension.umn.edu/flowers/sunflowers)
-  - Attached to the spacing guidance that informed Sunflower's normalized spacing tier.
-
-The source gives real-world horticultural guidance. It does not state the application's abstract `minimumSpacingCells` value; that value is a project-level normalization.
+Every registered source gives real-world horticultural guidance. None states the application's abstract `minimumSpacingCells` value or its `SunlightLevel` category directly; those are project-level normalizations informed by, not copied from, the source.
 
 ## Companion and Incompatible Relationships
 
@@ -51,9 +48,52 @@ Lifecycle and the current roles—pollinator support and nitrogen fixation—are
 
 ## Sunlight
 
-Current sunlight data is supplied by the user for their own garden cells. It represents the user's category—full sun, partial sun, shade, or unmodeled—not a researched plant claim, measured irradiance, or simulated sun exposure. It therefore does not require a horticultural citation.
+### Garden cell sunlight (user-declared)
 
-Plant sunlight requirements and fit evaluation are not implemented. When added, those requirements should be sourced per plant and should distinguish unknown conditions from known incompatibility.
+Current sunlight data supplied by the user for their own garden cells represents the user's category — full sun, partial sun, shade, or unmodeled — not a researched plant claim, measured irradiance, or simulated sun exposure. It therefore does not require a horticultural citation.
+
+### Plant sunlight requirement (curated, Part 3B)
+
+Each plant curates the sunlight categories it's commonly grown in (`Plant.sunlightRequirement`), evaluated by `domain/sunlightFit.ts`, which distinguishes a known mismatch from an unmodeled cell or an unmodeled plant requirement — insufficient information is never reported as a mismatch. Unlike lifecycle/ecological-role/spacing data, every plant's `sunlightRequirement` here is backed by at least one registered source in `evidence.sunlightRequirement` (enforced by a data test in `src/data/plants.test.ts`).
+
+### V1 normalization policy
+
+A real-world sunlight statement is translated into the app's three-category `SunlightLevel` set as follows:
+
+- **full-sun** — approximately 6+ hours of direct sunlight.
+- **partial-sun** — approximately 4–6 hours of direct sunlight, or a level a source explicitly names as suitable ("partial sun," "partial shade," etc.) regardless of hour count.
+- **shade** — less than approximately 4 hours of direct sunlight.
+
+A source's explicit category wording always takes precedence over inferring a category from an hour range. A plant is never marked as accepting `partial-sun` merely because it might survive there without a source affirmatively saying so — tolerance is not the same as a stated accepted growing condition.
+
+### Provenance table
+
+This table is documentation for human review. `src/data/sources.ts` and each plant's `Plant.evidence.sunlightRequirement` in `src/data/plants.ts` remain the machine-readable source of truth; if this table and the code ever disagree, the code is authoritative and this table is stale.
+
+Where a cited source doesn't fully or specifically support the normalized set (a generic statement rather than a plant-specific one, or support for only part of a multi-level set), that's called out in the Notes column rather than left implied.
+
+| Plant | `sunlightRequirement` | Source(s) | Notes |
+|---|---|---|---|
+| Tomato | `full-sun` | [Growing tomatoes in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-tomatoes) | Explicit: "tomatoes are heat-loving plants that require a long, frost-free season and full sun." |
+| Carrot | `full-sun`, `partial-sun` | [Use the whole garden and grow a salad in the shade — Illinois Extension](https://extension.illinois.edu/blogs/flowers-fruits-and-frass/2022-06-24-use-whole-garden-and-grow-salad-shade) | `partial-sun` is explicit and carrot-specific: "Carrots tolerate being grown in partially shaded places if you get at least four hours of sunlight." `full-sun` is not separately stated by this source — a carrot growing outside a partial-shade spot is assumed to get more light by default, but that's an inference from context, not a quoted claim. |
+| Lettuce | `full-sun`, `partial-sun` | [Use the whole garden and grow a salad in the shade — Illinois Extension](https://extension.illinois.edu/blogs/flowers-fruits-and-frass/2022-06-24-use-whole-garden-and-grow-salad-shade); [Lettuce — Illinois Extension](https://extension.illinois.edu/gardening/lettuce) | The shade article explicitly supports `partial-sun`: "head lettuce grow well with about 4 hours of full sun." The Lettuce growing-guide page supports general full-sun cultivation but only mentions shade as a heat-avoidance strategy for loose-leaf varieties, not as a stated primary requirement. |
+| Basil | `full-sun` | [Growing herbs in home gardens — UMN Extension](https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/growing-herbs); [Basil, A Summer Favorite — Penn State Extension](https://extension.psu.edu/basil-a-summer-favorite); [Basil — Illinois Extension](https://extension.illinois.edu/herbs/basil) | Strongly supported: two basil-specific sources agree explicitly — Penn State: "Choose a site with full sun, meaning at least six to eight hours per day"; Illinois: "Basil prefers a sunny location." The UMN source is general herb guidance, not basil-specific: "Most herbs need at least six hours of direct sunlight daily; full sun produces the best growth." |
+| Mint | `full-sun`, `partial-sun` | [How to Grow Mint in Your Garden — Utah State University Extension](https://extension.usu.edu/yardandgarden/research/mint-in-the-garden) | Explicit: "Mint grows best in full sun to partial shade." |
+| Rosemary | `full-sun` | [Rosemary — Illinois Extension](https://extension.illinois.edu/herbs/rosemary) | Explicit: "rosemary prefers a full sun location." |
+| Marigold | `full-sun` | [Marigolds — UMN Extension](https://extension.umn.edu/gardening-minnesota/marigolds) | Source: these plants "thrive in full sun locations." |
+| Sunflower | `full-sun` | [Plant Sunflowers in Mid-May for Summer Beauty and Pollinator Power — Illinois Extension](https://extension.illinois.edu/news-releases/plant-sunflowers-mid-may-summer-beauty-and-pollinator-power) | Explicit: sunflowers "thrive in full sun." |
+| Onion | `full-sun` | [Growing onions in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-onions) | Explicit: "All onions require full sun for the best growth." |
+| Bush Bean | `full-sun` | [How to Grow Beans in Your Garden — Utah State University Extension](https://extension.usu.edu/yardandgarden/research/beans-in-the-garden) | Explicit: "Beans flourish in full sun." |
+| Pea | `full-sun` | [Growing peas in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-peas) | Explicit: "the plants do need full sun." |
+| Bell Pepper | `full-sun` | [Raised bed gardens — UMN Extension](https://extension.umn.edu/garden-and-home/yard-and-garden/gardening-in-minnesota/raised-bed-gardens) | Explicit, names peppers directly: "For plants like tomatoes, peppers, and eggplants that require full sun, locate your raised bed in an area that receives at least 6 to 8 hours of sunlight each day." |
+| Cucumber | `full-sun` | [Get Started — Illinois Extension](https://extension.illinois.edu/gardening/get-started) | "Most fruiting vegetables need at least 6 to 8 hours of sunlight" — cucumber is unambiguously a fruiting vegetable, well supported by this general statement. |
+| Cabbage | `full-sun` | [How to Grow Cabbage in Your Garden — Utah State University Extension](https://extension.usu.edu/yardandgarden/research/cabbage-in-the-garden) | Explicit: "Cabbage is a cool season vegetable that prefers sunny locations and fertile, well-drained soil." A separate Illinois Extension article ("Use the whole garden and grow a salad in the shade") lists cabbage among crops tolerating 4-6 hours of sun (partial-sun territory); that tolerance claim was not adopted into the curated set here, since USU's explicit full-sun preference for the crop is the more direct statement of its normal growing requirement, and a documented tolerance for less light is a different claim than an accepted growing condition. |
+| Potato | `full-sun` | [Growing potatoes in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-potatoes) | Source states "Potatoes need sunny locations to grow well" — general, not hour-quantified, but consistent with `full-sun`. |
+| Dill | `full-sun` | [Dill — Illinois Extension](https://extension.illinois.edu/herbs/dill) | Explicit: "Dill performs best in a full sun location." |
+
+**Title discrepancies from the original citation list:** two sources were requested by a title that no longer matches any live page. "University of Minnesota Extension, 'Growing basil in home gardens'" — no such page currently exists; the real, current UMN basil-adjacent page is "Growing herbs in home gardens" (general herb guidance, used above). "Illinois Extension, 'Plan your vegetable garden early'" — no such exact title currently exists; the real, current page carrying that content (the "most fruiting vegetables need 6 to 8 hours" / "leafy vegetables ... need less sunlight" statement) is titled "Get Started," likely a renamed/consolidated successor to an older Illinois Extension vegetable-garden-guide page. Both are registered under their real, current titles above.
+
+**Outstanding provenance issue:** none for `sunlightRequirement` at the source-registration level — every seed plant now carries at least one registered source, and every entry has at least one plant-specific citation except Cucumber and Carrot's `full-sun` half (see their Notes above). Potato's source is general rather than hour-quantified but is still plant-specific and explicit about the category.
 
 ## Adding New Knowledge
 

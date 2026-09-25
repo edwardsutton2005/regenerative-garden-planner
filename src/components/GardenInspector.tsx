@@ -1,11 +1,13 @@
 import type { FocusedNeighborRelationship } from '../domain/relationships'
 import type { FocusedSpacingViolation } from '../domain/spacing'
+import type { SunlightFitResult } from '../domain/sunlightFit'
 import type { Plant } from '../domain/plant'
 
 type GardenInspectorProps = {
   plant: Plant
   neighbors: FocusedNeighborRelationship[]
   spacingViolations: FocusedSpacingViolation[]
+  sunlightFit: SunlightFitResult | null
   companionCandidates: Plant[]
   onClose: () => void
 }
@@ -17,10 +19,24 @@ function formatEnumLabel(value: string): string {
   return spaced.charAt(0).toUpperCase() + spaced.slice(1)
 }
 
+function sunlightFitMessage(result: SunlightFitResult): string {
+  switch (result.status) {
+    case 'fit':
+      return `Fits the modeled sunlight here (${formatEnumLabel(result.cellSunlight!)}).`
+    case 'mismatch':
+      return `May not suit the modeled sunlight here (${formatEnumLabel(result.cellSunlight!)}).`
+    case 'unmodeled-cell':
+      return 'Sunlight has not been modeled for this cell yet.'
+    case 'unmodeled-requirement':
+      return `${result.plant.name}’s sunlight requirement has not been curated yet.`
+  }
+}
+
 function GardenInspector({
   plant,
   neighbors,
   spacingViolations,
+  sunlightFit,
   companionCandidates,
   onClose,
 }: GardenInspectorProps) {
@@ -91,6 +107,17 @@ function GardenInspector({
           </ul>
         )}
       </section>
+
+      {sunlightFit && (
+        <section className="garden-inspector__section">
+          <h3>Sunlight fit</h3>
+          <p
+            className={`garden-inspector__sunlight-fit garden-inspector__sunlight-fit--${sunlightFit.status}`}
+          >
+            {sunlightFitMessage(sunlightFit)}
+          </p>
+        </section>
+      )}
 
       {companionCandidates.length > 0 && (
         <section className="garden-inspector__section">

@@ -17,6 +17,7 @@ Facts come from two places:
    - same-species spacing tier
    - ecological roles
    - companion and incompatible pairs
+   - accepted sunlight categories (a set, not an ordered scale)
 
 Source metadata records evidence for curated claims where it has been attributed. It does not change the normalized facts passed to evaluators.
 
@@ -31,12 +32,11 @@ Current evaluators include:
 - garden-wide ecological-role composition
 - absence of garden-wide pollinator support
 - local companion candidates for an inspected placement
+- sunlight fit for an inspected placement
 
-Each evaluator is deliberately narrow. For example, relationship evaluation uses orthogonal adjacency, while spacing uses Chebyshev distance. Composition reports representation, not quantity or quality. Opportunity logic is limited to explicitly approved policies rather than treating every absent fact as a deficiency.
+Each evaluator is deliberately narrow. For example, relationship evaluation uses orthogonal adjacency, while spacing uses Chebyshev distance. Composition reports representation, not quantity or quality. Opportunity logic is limited to explicitly approved policies rather than treating every absent fact as a deficiency. Sunlight fit is a categorical set-membership test, not an ordered scale — it reports `fit`, `mismatch`, or one of two distinct "not modeled" outcomes (unmodeled cell sunlight, unmodeled plant requirement), and the two "not modeled" outcomes are never presented as a mismatch.
 
-The functions return structured results with the coordinates, plant identities, relationship type, role, or required distance needed to explain a conclusion. Results are recomputed from current state instead of cached in the garden.
-
-Sunlight mapping currently contributes a domain fact only. Plant sunlight requirements and sunlight-fit reasoning are planned but not implemented.
+The functions return structured results with the coordinates, plant identities, relationship type, role, sunlight-fit status, or required distance needed to explain a conclusion. Results are recomputed from current state instead of cached in the garden.
 
 ## Layer 3 — Explanation
 
@@ -48,6 +48,8 @@ React components currently provide deterministic, template-based explanations:
 - `GardenInspector` explains the current inspected placement
 - `GardenComposition` lists represented ecological roles and contributing plant types
 - `GardenOpportunities` presents scoped strategies to consider
+
+`GardenInspector` also reports the inspected placement's sunlight fit (all four statuses); `PlacementFeedback` surfaces only a sunlight mismatch, mirroring how it already surfaces only notable relationship/spacing findings rather than every possible status.
 
 Immediate feedback and persistent inspection reuse the same domain evaluators but answer different questions:
 

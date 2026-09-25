@@ -526,7 +526,9 @@ This slice adds no plant sunlight requirements and no fit reasoning — it estab
 
 ## Part 3B — Plant Sunlight Knowledge & Fit
 
-Sourced plant sunlight requirements, and a deterministic evaluation of whether an inspected placement's modeled sunlight fits its plant — including explicit handling of insufficient information, distinct from a known incompatibility. Not yet detailed; to be planned once 3A is validated.
+Each plant now curates the categorical sunlight levels it's commonly grown in (a set, e.g. full sun and partial sun — not an ordered scale, so there is no "too much" or "too little," only accepted or not accepted). A deterministic evaluator compares an inspected placement's plant against its cell's modeled sunlight and reports one of four outcomes: fit, mismatch, unmodeled cell sunlight, or unmodeled plant requirement. The two "unmodeled" outcomes are always distinct from a mismatch — insufficient information is never presented as a known incompatibility.
+
+This evaluation is placement-local only, matching the Part 2D opportunity-scope discipline: no garden-wide sunlight-fit summary, score, or recommended alternative exists yet. A mismatch is surfaced immediately after placement, alongside the existing companion/spacing feedback; the full four-state result (including the unmodeled cases) is shown in persistent inspection.
 
 ---
 

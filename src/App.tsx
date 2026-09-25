@@ -33,6 +33,8 @@ import type { GardenState, SunlightLevel } from './domain/garden'
 import type { Plant } from './domain/plant'
 import { evaluateNeighborsForFocuses } from './domain/relationships'
 import { evaluateSpacingForFocuses } from './domain/spacing'
+import { evaluateSunlightFit } from './domain/sunlightFit'
+import type { SunlightFitResult } from './domain/sunlightFit'
 import './App.css'
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
@@ -281,6 +283,10 @@ function App() {
 
   const spacingViolations = evaluateSpacingForFocuses(garden, spacingFocusEntries)
 
+  const sunlightMismatches = lastPlacements
+    .map((p) => evaluateSunlightFit(garden, p.row, p.col, plantsById))
+    .filter((r): r is SunlightFitResult => r !== null && r.status === 'mismatch')
+
   const composition = evaluateGardenComposition(garden, plantsById)
   const gardenOpportunities = evaluateGardenOpportunities(garden, plantsById)
 
@@ -305,6 +311,10 @@ function App() {
           { coordinate: inspectedCoordinate, plant: inspectedPlant },
         ])
       : []
+
+  const inspectorSunlightFit = inspectedCoordinate
+    ? evaluateSunlightFit(garden, inspectedCoordinate.row, inspectedCoordinate.col, plantsById)
+    : null
 
   const localCompanionOpportunity = inspectedCoordinate
     ? evaluateCompanionOpportunityForPlacement(
@@ -356,7 +366,11 @@ function App() {
               onCellPaint={handleCellPaint}
             />
           </div>
-          <PlacementFeedback neighbors={neighbors} spacingViolations={spacingViolations} />
+          <PlacementFeedback
+            neighbors={neighbors}
+            spacingViolations={spacingViolations}
+            sunlightMismatches={sunlightMismatches}
+          />
         </div>
         <div className="garden-rail">
           <GardenComposition composition={composition} plantsById={plantsById} />
@@ -366,6 +380,7 @@ function App() {
               plant={inspectedPlant}
               neighbors={inspectorNeighbors}
               spacingViolations={inspectorSpacing}
+              sunlightFit={inspectorSunlightFit}
               companionCandidates={companionCandidates}
               onClose={() => setInspectedCoordinate(null)}
             />

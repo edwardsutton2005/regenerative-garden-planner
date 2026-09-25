@@ -15,7 +15,7 @@ The main constraint is explainability. A conclusion shown to a user should be tr
 - Oxlint for static analysis
 - Client-side state only
 
-There is no backend, database, authentication system, global state library, persistence layer, or AI API.
+There is currently no backend, database, authentication system, global state library, persistence layer, or AI API. See [Planned Persistence Direction](#planned-persistence-direction) for the intended future backend milestone.
 
 ## Repository Structure
 
@@ -82,6 +82,7 @@ Each concern has a focused module instead of a generalized rule-engine abstracti
 - `spacing.ts` — same-species spacing evaluation
 - `composition.ts` — garden-wide aggregation of represented ecological roles
 - `opportunities.ts` — explicitly scoped opportunity policies
+- `sunlightFit.ts` — placement-local sunlight-fit evaluation
 - `plant.ts` and `source.ts` — domain types
 
 The processing model is:
@@ -125,7 +126,11 @@ The spatial scope of a conclusion cannot be more precise than its underlying dat
 
 ### Sunlight Mapping
 
-Sunlight is currently a user-declared cell category: full sun, partial sun, or shade. It is not measured irradiance, a simulation, or a plant-fit conclusion. Plant sunlight requirements and fit evaluation are planned separately.
+Sunlight is currently a user-declared cell category: full sun, partial sun, or shade. It is not measured irradiance or a simulation.
+
+### Sunlight Fit
+
+Each plant curates the sunlight categories it accepts as an unordered set — a categorical membership test, not a scale, so there is no "too much" or "too little" sun, only accepted or not accepted. `evaluateSunlightFit` (`domain/sunlightFit.ts`) derives the plant from `GardenState` and a coordinate rather than accepting it as a separate argument, so the evaluated plant can never disagree with what's actually placed there. It reports one of four statuses — `fit`, `mismatch`, `unmodeled-cell`, or `unmodeled-requirement` — and the two "unmodeled" statuses are never collapsed into `mismatch`: insufficient information is a distinct conclusion from a known incompatibility.
 
 ## Explanation Boundary
 
@@ -143,12 +148,32 @@ Pure domain behavior and data invariants are tested with Vitest. Coverage focuse
 - relationship symmetry, adjacency, and conflict handling
 - spacing boundaries and deduplication
 - composition and opportunity policy behavior
+- sunlight-fit status derivation, including both "unmodeled" cases staying distinct from a mismatch
 - unique data identifiers and valid provenance references
 
 Native drag-and-drop, responsive layout, local grid scrolling, and other primarily visual interactions are verified manually. A browser-testing dependency has not been added because the current domain behavior can be tested without one.
 
 ## Deliberate Limitations
 
-The grid has no physical scale. Real-world measurements are not converted into cells. The application also does not currently provide persistence, accounts, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations.
+The grid has no physical scale. Real-world measurements are not converted into cells. The application also does not currently provide persistence, accounts, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations. Persistence is planned; see [Planned Persistence Direction](#planned-persistence-direction).
 
 If an LLM is introduced later, deterministic data and domain rules should remain the source of horticultural facts and conclusions. An LLM may assist with explanation, comparison, or interaction, but should not invent the underlying gardening rules.
+
+## Planned Persistence Direction
+
+The application remains client-side while the domain model and reasoning engine continue to develop. Persistence is a planned future milestone, not current scope, and backend work is staged infrastructure rather than one large migration.
+
+- The frontend remains React, TypeScript, and Vite.
+- A future backend will use Node.js, Express, and TypeScript.
+- PostgreSQL is the intended persistent database.
+- Authentication, microservices, caching infrastructure, and other backend complexity are deferred until a concrete product requirement exists.
+
+The existing boundary extends rather than changes: persistence stores gardens; the domain layer understands and manipulates gardens; the reasoning engine evaluates gardens; the UI presents and edits them. `GardenState` and the deterministic garden operations remain independent of React, Express, PostgreSQL, or any particular storage representation, and the reasoning engine continues to operate on the domain model rather than on database structures.
+
+### Staged Milestones
+
+1. **Garden persistence** (first) — create, save, load, update, and delete garden layouts through a small REST API.
+2. **Structured knowledge storage** (possible) — moving gardening knowledge such as plant metadata, environmental requirements, companion/incompatible relationships, and evidence/provenance into persistent storage, once the dataset is large or complex enough to justify it. Until then, keeping this knowledge in the existing application/domain data is acceptable.
+3. **Accounts and sharing** (later) — accounts, garden ownership, multiple saved gardens per user, and sharing, introduced only if they become actual product requirements.
+
+The backend should not be introduced immediately. The domain model and reasoning-engine foundation should be sufficiently stable first, so persistence is built around that representation rather than forcing it to conform prematurely to a database schema. Implementation choices that are not yet necessary — ORM selection, detailed database schemas, exact endpoint contracts, deployment architecture, and authentication strategy — stay open until the relevant milestone is actually being implemented.

@@ -1,4 +1,5 @@
 import type { SourceId } from './source'
+import type { SunlightLevel } from './garden'
 
 export type PlantCategory = 'vegetable' | 'herb' | 'flower'
 
@@ -49,6 +50,15 @@ export type Plant = {
    */
   ecologicalRoles: EcologicalRole[]
   /**
+   * The categorical SunlightLevel(s) this plant is curated to accept — an
+   * unordered set membership test (e.g. ['full-sun', 'partial-sun']), not a
+   * ranked scale from "too little" to "too much" sun. Absent (rather than an
+   * empty array) means this plant's requirement is not yet modeled — a real
+   * curation gap, distinct from a cell's own unmodeled sunlight (see
+   * domain/sunlightFit.ts and ARCHITECTURE.md "Sunlight Mapping").
+   */
+  sunlightRequirement?: SunlightLevel[]
+  /**
    * Claim-level source evidence, present only where actually recorded.
    * Absence means no source has been attributed yet, not that the fact is
    * unsupported. Never read by domain/spacing.ts, domain/relationships.ts,
@@ -72,4 +82,12 @@ export type PlantEvidence = {
    */
   spacingGuidance?: SourceId[]
   ecologicalRoles?: Partial<Record<EcologicalRole, SourceId[]>>
+  /**
+   * Sources supporting this plant's curated sunlightRequirement. The
+   * cell-level sunlight a user paints onto the garden is their own
+   * declaration and never carries evidence — only this curated,
+   * plant-side fact does. See ARCHITECTURE.md "Knowledge Provenance Is
+   * Separate From Reasoning."
+   */
+  sunlightRequirement?: SourceId[]
 }

@@ -310,6 +310,12 @@
   border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
 }
 
+.placement-feedback__item--sunlight {
+  color: var(--sun-full-sun);
+  background: color-mix(in srgb, var(--sun-full-sun) 12%, var(--bg));
+  border-color: color-mix(in srgb, var(--sun-full-sun) 40%, transparent);
+}
+
 .garden-rail {
   display: flex;
   flex-direction: column;
@@ -520,6 +526,24 @@
   margin: 0;
   font-size: 13px;
   color: var(--text-h);
+}
+
+.garden-inspector__sunlight-fit {
+  margin: 0;
+  font-size: 13px;
+}
+
+.garden-inspector__sunlight-fit--fit {
+  color: var(--cat-herb);
+}
+
+.garden-inspector__sunlight-fit--mismatch {
+  color: var(--sun-full-sun);
+}
+
+.garden-inspector__sunlight-fit--unmodeled-cell,
+.garden-inspector__sunlight-fit--unmodeled-requirement {
+  color: var(--text);
 }
 
 .garden-inspector__list--roles {
