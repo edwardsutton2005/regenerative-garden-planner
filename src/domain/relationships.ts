@@ -1,5 +1,5 @@
-import type { CellCoordinate, GardenState } from './garden'
-import { getAdjacentCoordinates, getPlantIdAt } from './garden'
+import type { GardenState } from './garden'
+import { distance, getAllPlacements, getPlacement } from './garden'
 import type { Plant } from './plant'
 import type { SourceId } from './source'
 
@@ -48,90 +48,89 @@ export function getRelationship(
     : 'companion'
 }
 
+/**
+ * Companion/incompatible interaction distance, in inches (inclusive). A
+ * product rule that preserves V1's orthogonal-adjacency behavior under 12"
+ * snapping (orthogonal neighbors are 12" apart, diagonal ~16.97"), not a
+ * horticulturally sourced distance. See ARCHITECTURE.md "Relationships".
+ */
+export const COMPANION_INTERACTION_DISTANCE = 12
+
 export type NeighborRelationship = {
-  coordinate: CellCoordinate
+  placementId: string
   plant: Plant
+  distance: number
   relationship: PlantRelationshipType | 'neutral'
 }
 
 /**
- * Classifies the relationship between the plant at (row, col) and each
- * occupied, immediately-adjacent cell. Only looks at that one cell's
- * neighbors, not the whole garden.
+ * Classifies the relationship between the given placement and every other
+ * placement within COMPANION_INTERACTION_DISTANCE of it. The focus plant is
+ * derived from GardenState, never passed in. Returns [] for an unknown
+ * placement or plant id; neighbors with unknown plant ids are skipped.
  */
 export function evaluateNeighbors(
   garden: GardenState,
-  row: number,
-  col: number,
-  plantId: string,
+  placementId: string,
   plantsById: Record<string, Plant>,
   rules: PlantRelationshipRule[],
 ): NeighborRelationship[] {
-  return getAdjacentCoordinates(garden, row, col)
-    .map((coordinate) => {
-      const neighborPlantId = getPlantIdAt(garden, coordinate.row, coordinate.col)
-      const neighborPlant = neighborPlantId ? plantsById[neighborPlantId] : undefined
-      if (!neighborPlant) return null
+  const focus = getPlacement(garden, placementId)
+  if (!focus || !plantsById[focus.plantId]) return []
 
-      return {
-        coordinate,
-        plant: neighborPlant,
-        relationship: getRelationship(plantId, neighborPlantId!, rules),
-      }
+  const neighbors: NeighborRelationship[] = []
+  for (const other of getAllPlacements(garden)) {
+    if (other.id === focus.id) continue
+    const plant = plantsById[other.plantId]
+    if (!plant) continue
+
+    const d = distance(focus.position, other.position)
+    if (d > COMPANION_INTERACTION_DISTANCE) continue
+
+    neighbors.push({
+      placementId: other.id,
+      plant,
+      distance: d,
+      relationship: getRelationship(focus.plantId, other.plantId, rules),
     })
-    .filter((entry): entry is NeighborRelationship => entry !== null)
+  }
+  return neighbors
 }
 
 export type FocusedNeighborRelationship = NeighborRelationship & {
-  focusCoordinate: CellCoordinate
+  focusPlacementId: string
   focusPlant: Plant
 }
 
 /**
  * Like evaluateNeighbors, but for more than one focus placement at once —
- * e.g. both cells changed by a garden-to-garden swap, which each may have
- * gained a new companion/incompatible consequence. Composes the existing
- * single-focus evaluateNeighbors rather than reimplementing it.
+ * e.g. both placements changed by a swap. Composes evaluateNeighbors rather
+ * than reimplementing it.
  *
- * If two focus coordinates are themselves adjacent, evaluating both would
- * independently rediscover the same real pair from each side. That's
- * deduplicated by an identity of (relationship type + the unordered pair of
- * cells involved) so a genuinely different finding between the same two
- * cells is never possible to conflate with it.
+ * Two focuses within interaction distance of each other would independently
+ * rediscover the same real pair from each side, so findings are
+ * deduplicated by (relationship type + the unordered pair of placement ids).
  */
 export function evaluateNeighborsForFocuses(
   garden: GardenState,
-  focuses: { coordinate: CellCoordinate; plantId: string }[],
+  placementIds: string[],
   plantsById: Record<string, Plant>,
   rules: PlantRelationshipRule[],
 ): FocusedNeighborRelationship[] {
   const seen = new Set<string>()
   const combined: FocusedNeighborRelationship[] = []
 
-  for (const focus of focuses) {
-    const focusPlant = plantsById[focus.plantId]
+  for (const focusPlacementId of placementIds) {
+    const focus = getPlacement(garden, focusPlacementId)
+    const focusPlant = focus ? plantsById[focus.plantId] : undefined
     if (!focusPlant) continue
 
-    const results = evaluateNeighbors(
-      garden,
-      focus.coordinate.row,
-      focus.coordinate.col,
-      focus.plantId,
-      plantsById,
-      rules,
-    )
-
-    for (const result of results) {
-      const pair = [
-        `${focus.coordinate.row},${focus.coordinate.col}`,
-        `${result.coordinate.row},${result.coordinate.col}`,
-      ]
-        .sort()
-        .join('|')
+    for (const result of evaluateNeighbors(garden, focusPlacementId, plantsById, rules)) {
+      const pair = [focusPlacementId, result.placementId].sort().join('|')
       const key = `${result.relationship}:${pair}`
       if (seen.has(key)) continue
       seen.add(key)
-      combined.push({ ...result, focusCoordinate: focus.coordinate, focusPlant })
+      combined.push({ ...result, focusPlacementId, focusPlant })
     }
   }
 

@@ -12,27 +12,32 @@ An interactive garden-design application that evaluates a spatial layout using c
 
 The central product idea is: **the garden itself is the interface**.
 
-Instead of completing a questionnaire and receiving a static recommendation, a user creates a grid, places and rearranges plants, and sees what those choices imply. Immediate feedback explains a recent action, while persistent inspection describes the current state of a placement. Garden-level summaries show which modeled ecological roles are represented and surface a deliberately small set of explainable opportunities.
+Instead of completing a questionnaire and receiving a static recommendation, a user creates a garden, places and rearranges plants, and sees what those choices imply. Immediate feedback explains a recent action, while persistent inspection describes the current state of a placement. Garden-level summaries show which modeled ecological roles are represented and surface a deliberately small set of explainable opportunities.
 
 The project is designed as a compact test bed for spatial interaction and transparent ecological reasoning. It favors explicit data and rules over opaque scoring or generated horticultural claims.
 
 ## Current Features
 
-- Configurable rectangular gardens from 4×4 through 30×30 cells
-- Click placement, replacement, erasing, clearing, and new-garden creation
-- Native drag-and-drop from the plant picker and between garden cells, including swaps
-- A 16-plant catalogue with lifecycle, same-species spacing tiers, and curated ecological roles
-- Symmetric companion and incompatible relationship evaluation for orthogonally adjacent plants
-- Same-species spacing evaluation using Chebyshev distance
-- Immediate feedback after placement, movement, and swapping
+- Configurable rectangular gardens from 4×4 through 30×30 feet, modeled in physical inches
+- A free-placement garden canvas: click or drag plants to any position (whole-inch precision), drag them anywhere, erase, clear, and start new gardens
+- Spacing envelopes and companion/incompatible highlights while dragging; keyboard placement and movement
+- A full-screen workspace: tool rail (Select, Beds, Sunlight brush, Eraser), status line, collapsible inspector, and an inventory bar of plants in use
+- A plant catalog popup with search and category filters; choosing a plant arms it for placing
+- Undo and redo for garden changes (buttons, Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z, Ctrl+Y)
+- Planting beds: draw, select, move (with their plants), resize, rename, and delete; bed membership is derived from plant position
+- A 16-plant catalogue with lifecycle, sourced same-species spacing in inches, and curated ecological roles
+- Symmetric companion and incompatible relationship evaluation for plants within 12 inches of each other
+- Same-species spacing evaluation using Euclidean distance
+- Immediate feedback after placement and movement
 - Persistent placement inspection that updates with the current garden state
 - Garden composition summaries for represented pollinator-support and nitrogen-fixation roles
 - Scoped opportunities for missing garden-wide pollinator support and local companion options
 - Claim-level provenance metadata with validation against a source registry
-- User-declared per-cell sunlight mapping for full sun, partial sun, and shade
-- Local scrolling for large gardens without changing the abstract grid model
+- User-declared sunlight mapping on 12-inch environmental cells for full sun, partial sun, and shade
+- Sunlight-fit evaluation against each plant's sourced sunlight requirement
+- Local scrolling for large gardens
 
-Sunlight mapping records the user's description of the site. Plant sunlight requirements and sunlight-fit evaluation are not implemented yet.
+Sunlight mapping records the user's description of the site.
 
 ## How It Works
 

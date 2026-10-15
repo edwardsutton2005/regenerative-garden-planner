@@ -45,7 +45,7 @@ V1 should prove the core interaction before adding more sophisticated ecological
 ## Core User Loop
 
 1. View an empty garden plot.
-2. Browse available plants.
+2. Find plants worth trying (with the workspace redesign: in the plant catalog, or the garden's inventory bar of recently used plants).
 3. Select a plant.
 4. Place it spatially in the garden.
 5. Immediately see relevant feedback.
@@ -60,11 +60,10 @@ Feedback should feel responsive and encouraging rather than interrupting the use
 
 ### Garden Canvas
 
-- Interactive top-down garden grid
-- User-configurable grid size chosen when a garden is created
-- Grid dimensions stay fixed for the lifetime of that garden
+- Interactive top-down garden canvas with a visual measurement grid
+- User-configurable garden size chosen when a garden is created
+- Garden dimensions stay fixed for the lifetime of that garden
 - Place plants
-- Replace plants
 - Remove plants
 - Move and rearrange plants
 - Clear the current garden
@@ -73,9 +72,9 @@ Feedback should feel responsive and encouraging rather than interrupting the use
 - Rendering that can later support illustrated visual assets
 - Garden state maintained while using the application
 
-The V1 grid is a bounded rectangular abstraction rather than a physically precise landscape editor.
+The garden is a bounded rectangle measured in real physical units (inches). Plants are placed at physical positions within it. It is not a GIS or landscape-surveying tool: boundaries are a simple rectangle, and positions are design intent rather than surveyed measurements.
 
-Grid cells are abstract row/column units and do not represent an exact real-world measurement.
+V1 originally modeled the garden as abstract grid cells. That model is superseded by the physical coordinate model — see [Spatial Foundation — Physical Garden Coordinates](#spatial-foundation--physical-garden-coordinates). The grid remains as a visual measurement reference and as the resolution of cell-level environmental data such as sunlight. Plants are placed freely; they do not snap to it.
 
 ### Plant Library
 
@@ -94,7 +93,7 @@ V1 plant data supports properties needed by current features, including:
 - unique identifier
 - display name
 - category
-- same-species spacing requirement
+- same-species spacing guidance, in inches
 
 Companion and incompatible relationships are stored separately in a normalized relationship dataset rather than duplicated directly on each plant.
 
@@ -110,27 +109,23 @@ Examples:
 - known poor pairings can produce warnings
 - relationships work regardless of which plant was placed first
 
-For V1, companion/incompatible interaction distance means immediate orthogonal adjacency:
+Two placements are within interaction distance when the Euclidean distance between their positions is **12 inches or less**.
 
-- up
-- down
-- left
-- right
+The 12-inch distance is a **product rule that preserves V1 behavior**, not a horticulturally sourced interaction distance. V1 originally defined interaction as immediate orthogonal adjacency (up, down, left, right, not diagonal) on its grid. On the original grid (plants at the centers of 12-inch cells), orthogonal neighbors were 12 inches apart and diagonal neighbors about 17 inches apart, so the 12-inch rule reproduces that behavior exactly for plants laid out on the grid. Plants can now be placed freely, and the rule applies to their actual distances.
 
-Diagonal neighbors are not considered adjacent for companion/incompatible evaluation.
+Per-pair or per-plant companion interaction distances are not modeled. They should be introduced only with sourced evidence and a deliberate product decision.
 
 ### Spacing
 
-Plants have basic same-species spacing requirements.
+Plants have basic same-species spacing guidance expressed in real physical units (inches).
 
-Spacing values are expressed as abstract grid-cell tiers rather than physical units.
-
-V1 spacing rules:
+Spacing rules:
 
 - apply only between plants with the same plant ID
-- use Chebyshev distance
-- treat diagonal proximity as physically relevant
+- compare the Euclidean distance between the two placements against the plant's minimum spacing; a distance exactly equal to the minimum is acceptable
 - do not infer unsupported cross-species spacing requirements
+
+Spacing guidance must be sourced. The curated value is the source's plant-to-plant spacing, not the between-row spacing. It may be stored as a range (minimum and maximum) when a source gives one, even though the current rule only uses the minimum.
 
 The application identifies same-species plants that are too close together and communicates the problem clearly.
 
@@ -150,13 +145,9 @@ Examples:
 
 Feedback should help teach the user rather than simply displaying a score.
 
-### Garden Score
+### No Garden Score
 
-A Garden Score is optional.
-
-If introduced, it should summarize underlying rules rather than becoming the product itself.
-
-Users should be able to understand why any score changes.
+The product deliberately has no garden score, and no XP, health percentages, levels, or similar game mechanics. Feedback explains specific, rule-based facts instead of collapsing them into a number. (This replaces an earlier note that a score was optional.)
 
 ---
 
@@ -252,7 +243,7 @@ The inspected subject should represent a particular placement in the garden, not
 
 Inspection should be contextual and support the garden rather than dominate it.
 
-It should not become a large encyclopedia-style interface.
+It should not become a large encyclopedia-style interface. (The workspace redesign gives inspection a persistent, collapsible side panel; the same restraint applies.)
 
 Part 2A should establish a consistent place for future plant and garden intelligence to appear.
 
@@ -358,7 +349,7 @@ Absence is not deficiency by default. A recommendation requires an explicit, del
 The precision of a recommendation cannot exceed the precision of its underlying modeled knowledge. Each opportunity family is reasoned at the narrowest spatial scope its underlying rule actually supports:
 
 - **Garden-wide** — supported when the underlying knowledge only tells us whether something is represented anywhere in the garden, not where.
-- **Placement-local** — supported when the underlying knowledge is itself local (e.g. companion/incompatible adjacency, which V1 already defines only for the orthogonal neighbors of one placement).
+- **Placement-local** — supported when the underlying knowledge is itself local (e.g. companion/incompatible interaction, which is defined only for placements within the interaction distance of one placement).
 
 V1 does not model spatial coverage, zones, beds, or areas, so no opportunity may claim that a specific area of the garden needs something.
 
@@ -368,7 +359,7 @@ Exactly two families exist for now:
 
 1. **Garden-wide pollinator-support opportunity** — if pollinator-support is not represented anywhere in the current garden, surface a garden-wide opportunity to consider adding a pollinator-support plant. This is a specific, deliberate policy, not a generalization: nitrogen-fixation absence is explicitly **not** currently sufficient for a recommendation, and there is no generic "recommend any absent role" rule.
 
-2. **Local companion opportunity** — for the currently inspected placement, if none of its orthogonally adjacent plants have a modeled companion relationship with it, surface the catalogue's other companion options for that plant. Presence of at least one adjacent modeled companion suppresses this opportunity — this is presence-based, not a quantity or quality judgment.
+2. **Local companion opportunity** — for the currently inspected placement, if none of the plants within its interaction distance have a modeled companion relationship with it, surface the catalogue's other companion options for that plant. Presence of at least one nearby modeled companion suppresses this opportunity — this is presence-based, not a quantity or quality judgment.
 
 Both families are framed as possibilities ("consider...") rather than as a claim that the current garden is deficient, that a suggested plant is required or best, or that it guarantees improved growth.
 
@@ -384,7 +375,7 @@ Establish structured, claim-level provenance for curated horticultural knowledge
 
 ## Boundary
 
-Provenance is internal metadata. It does not affect deterministic reasoning and does not add citation or source UI to the current interaction model. A curated fact without recorded evidence remains a valid, usable fact — absence of evidence means no source has been attributed yet, not that the fact is unsupported.
+Provenance is internal metadata. It does not affect deterministic reasoning and does not add citation or source UI to the current interaction model. Whether plant sources should eventually appear in the inspector is an open question (see [Canvas-First Workspace](#canvas-first-workspace)). A curated fact without recorded evidence remains a valid, usable fact — absence of evidence means no source has been attributed yet, not that the fact is unsupported.
 
 Facts researched from this point forward should record their supporting source(s) when they're added, rather than provenance being reconstructed after the fact.
 
@@ -398,9 +389,9 @@ Likely useful plant traits if this becomes active include lifecycle (already imp
 
 Real mature dimensions may be stored using real-world units when supported by reliable horticultural sources. However:
 
-> Real plant dimensions must not be silently converted into garden-cell dimensions while the grid remains physically abstract.
+> Real plant dimensions must be stored as the physical values a source states, never converted into abstract units.
 
-For example, knowing that a plant may mature to 60 inches tall is valid plant information. Concluding that 60 inches equals a particular number of garden cells is not valid until the application has an explicit physical scale.
+The garden now has an explicit physical scale (see [Spatial Foundation — Physical Garden Coordinates](#spatial-foundation--physical-garden-coordinates)), so a sourced dimension such as a mature spread in inches can be compared directly with real garden distances. A simple future model could approximate a mature footprint as a circle centered on a placement's position, where `clearance = centerDistance − r₁ − r₂`. The spatial model must not prevent this, but footprint reasoning is not implemented.
 
 Physical structure may eventually support plant identity, inspection, qualitative structural understanding, and later visual differentiation — it does not require exact geometric plant simulation.
 
@@ -408,15 +399,9 @@ This is **not currently a required Part 2 feature**.
 
 ---
 
-## Optional Future Part 2 Direction — Garden Areas / Beds
+## Garden Areas / Beds
 
-Whole-garden composition may eventually prove too coarse.
-
-If testing demonstrates a real need, the application may later allow the user to inspect or reason about smaller garden areas or beds.
-
-This is **not currently a required Part 2 feature**.
-
-Do not build garden sections simply because they may be useful later.
+Planting beds are implemented as spatial layout objects — see [Planting Beds](#planting-beds). Reasoning about beds (for example, per-bed composition) is still not a feature. Add it only if whole-garden reasoning proves too coarse in practice.
 
 ---
 
@@ -440,7 +425,7 @@ Do not implement these during Part 2 unless the product scope is deliberately up
 - regional native alternatives
 - invasive-species regional logic
 - geographic/ecoregion matching
-- physical cell-to-feet conversion
+- converting abstract units into physical measurements (all physical values must come from a source or from the user)
 - exact mature-footprint collision simulation
 - canopy/shade simulation
 - complex garden-boundary or GIS editing
@@ -516,7 +501,7 @@ Environmental knowledge should be represented at the narrowest spatial or contex
 
 Sunlight is the first modeled environmental dimension, and establishes the garden/site environmental state that later dimensions will reuse.
 
-The garden now carries its own environmental state, separate from what's planted. Sunlight conditions are user-declared per cell — the person planning this garden marks a cell as full sun, partial sun, or shade — modeled as such, not measured irradiance, exact direct-sun hours, or simulated year-round exposure.
+The garden now carries its own environmental state, separate from what's planted. Sunlight conditions are user-declared per environmental cell (12 × 12 inches; see [Spatial Foundation](#spatial-foundation--physical-garden-coordinates)) — the person planning this garden marks a cell as full sun, partial sun, or shade — modeled as such, not measured irradiance, exact direct-sun hours, or simulated year-round exposure.
 
 A cell with no marked sunlight is unmodeled, not a negative or default condition.
 
@@ -529,6 +514,279 @@ This slice adds no plant sunlight requirements and no fit reasoning — it estab
 Each plant now curates the categorical sunlight levels it's commonly grown in (a set, e.g. full sun and partial sun — not an ordered scale, so there is no "too much" or "too little," only accepted or not accepted). A deterministic evaluator compares an inspected placement's plant against its cell's modeled sunlight and reports one of four outcomes: fit, mismatch, unmodeled cell sunlight, or unmodeled plant requirement. The two "unmodeled" outcomes are always distinct from a mismatch — insufficient information is never presented as a known incompatibility.
 
 This evaluation is placement-local only, matching the Part 2D opportunity-scope discipline: no garden-wide sunlight-fit summary, score, or recommended alternative exists yet. A mismatch is surfaced immediately after placement, alongside the existing companion/spacing feedback; the full four-state result (including the unmodeled cases) is shown in persistent inspection.
+
+---
+
+# Spatial Foundation — Physical Garden Coordinates
+
+**Status:** implemented.
+
+## Goal
+
+Make the garden a physical two-dimensional space, rather than a grid of cells, as the foundation for later freeform placement, planting beds, plant footprints, and the illustrated visual redesign.
+
+> The domain model describes the physical garden; the UI visualizes that model.
+
+This slice changes the spatial foundation only. It deliberately preserves current user-visible behavior wherever the new model allows.
+
+## Model
+
+- **Unit:** inches, for garden dimensions, plant positions, distances, and plant spacing.
+- **Garden:** a bounded rectangle with a physical width and height.
+- **Placement:** a placed plant has its own identity and a continuous physical position `(x, y)`. Any position inside the garden is valid domain state, including non-grid positions such as `(31.4, 67.8)`. A plant exists independently of any cell, bed, or grid.
+- **Distance:** the basic spatial primitive is Euclidean distance between two placement positions. Each rule decides whether distance matters and how to interpret it.
+- **Derived, not stored:** proximity, neighbors, spacing status, cell membership, and (later) bed membership are calculated from current positions when needed. Neighbor lists are never stored.
+
+## Three Separate Concepts
+
+These are deliberately independent:
+
+1. **Physical garden coordinates** — the continuous domain positions of placements.
+2. **Environmental-cell resolution** — the size of the cells that hold cell-level environmental data such as sunlight (currently 12 inches). This belongs to the garden's environment, not to plant placement.
+3. **Rendering and input** — how the interface draws the garden at whatever size the screen allows, and how pointer and keyboard input become positions. This is UI behavior, not domain state.
+
+Plants are placed and moved freely on a continuous canvas. User input is rounded to the nearest whole inch. That is input precision, not a grid: the model stays continuous, and positions don't snap to the environmental cells.
+
+## Rules Under the New Model
+
+- **Companion/incompatible:** placements within 12 inches (inclusive) of each other, as a product rule preserving V1 behavior (see [Companion Planting](#companion-planting)).
+- **Spacing:** Euclidean distance compared against sourced same-species minimum spacing in inches (see [Spacing](#spacing)).
+- **Sunlight:** a placement's position maps to the environmental cell containing it, and existing sunlight-fit reasoning applies unchanged.
+- **Composition and garden-wide opportunities:** unchanged. They do not use distance.
+
+## Behavior Changes Users Will Notice
+
+Replacing abstract spacing tiers with sourced physical spacing changes which spacing warnings appear: warnings now follow each plant's sourced minimum at actual distances. This is a deliberate move toward truthful data, not a regression.
+
+## Out of Scope for This Slice
+
+- plant footprints, mature spread, and clearance reasoning
+- the illustrated visual redesign
+- persistence
+- spatial indexes such as quadtrees, R-trees, or spatial hashes; pairwise comparison is sufficient at expected garden sizes
+
+---
+
+# Planting Beds
+
+**Status:** implemented.
+
+## Goal
+
+Move toward a visual garden-design tool where users lay out planting boxes and beds, then place plants within and around them.
+
+## Model
+
+- A bed is a rectangle in physical garden coordinates (inches). It has its own id, a name, a top-left position, a width, and a height.
+- A garden can have many beds. Beds must lie entirely inside the garden and may not overlap each other; touching edges is allowed.
+- Beds are not tied to the 12-inch environmental grid. Any position and size is valid domain state, even though the current UI snaps bed edges to 6 inches.
+- Plants remain independent positioned objects. A plant never stores which bed it belongs to: it is "in" a bed when its position lies inside the bed's rectangle, and otherwise it is in open ground. Plants can be placed anywhere, inside or outside beds.
+- New beds are auto-named "Bed 1", "Bed 2", and so on (the lowest unused number), and can be renamed.
+
+## Behavior
+
+- **Moving a bed moves the plants inside it** by the same distance, so a planted bed behaves as one unit. Plants remain independent objects; this is an operation on positions, not stored ownership.
+- **Resizing a bed never moves plants.** A plant that ends up outside the resized bed is simply in open ground.
+- **Deleting a bed leaves its plants in place**, in open ground.
+- **Clear Garden** removes plants and keeps beds and sunlight, which describe the site layout. **New Garden** resets everything.
+- Sunlight belongs to the ground, not to beds. It is drawn as a translucent wash over beds, and painting sunlight passes straight through them.
+
+## Interaction
+
+Beds can be selected and edited without a special tool:
+
+- with no tool selected, click empty ground inside a bed to select it; click a plant to inspect it instead, or open ground (or press Escape) to deselect
+- a selected bed shows a name tab and corner handles above the plants: drag the tab to move the bed, or a corner to resize it, so plants inside stay clickable
+- delete with the bed panel's Delete button or the Delete/Backspace key
+- a change that would leave the garden or overlap another bed previews in red and does not apply
+
+The **Beds** tool is for drawing: drag on open ground to draw a bed, with a live size readout. With the Beds tool active, a bed can also be dragged by its body. Plant and sunlight tools hide bed selection, so their clicks and keys never edit a bed. Every existing plant interaction works the same inside and outside beds. Persistent inspection shows whether a plant is in a bed (and which one) or in open ground. The bed panel shows the bed's size and the plants currently inside it.
+
+## Not in This Slice
+
+- bed types (raised bed, in-ground, container), rotation, or non-rectangular shapes
+- reasoning about beds (per-bed composition, bed-aware feedback)
+- undo, multi-select, duplicating beds
+
+---
+
+# Free Placement Canvas
+
+**Status:** implemented.
+
+## Goal
+
+Make the garden a true 2D physical canvas: plants sit at their actual positions, and spacing and relationship feedback follows actual distances.
+
+## Placement and Movement
+
+- Drag a plant from the picker to any point in the garden, or select a plant in the picker and click anywhere to place it. Clicking an existing plant inspects it instead of placing on top of it.
+- Drag an existing plant to move it. The point you grabbed stays under the pointer, and the plant keeps its identity, so inspection follows it.
+- Plants can be placed inside or outside beds and moved between them. There is no "one plant per square" rule: plants may sit close together or overlap.
+- Removal is through the eraser or the Delete key, never by clicking a plant again.
+- Positions are rounded to the nearest whole inch and kept inside the garden.
+
+## Spacing Envelopes
+
+The sourced same-species minimum spacing is shown as a dashed circle (an *envelope*) of radius `spacingInches.min`. It means: **another plant of the same species whose center lies inside this circle breaks the sourced minimum spacing.** It is not the plant's size or mature footprint, and the UI says so.
+
+- While dragging a plant, envelopes appear around the other plants of its species, showing the zones its center should stay out of. Any the candidate position breaks turn red. The dragged plant shows its own dashed envelope.
+- While inspecting a plant, only its own envelope is shown, red if another same-species plant is inside it.
+- Different species never get envelopes and can overlap freely. No cross-species spacing rule exists, and envelopes don't need to fit inside beds.
+
+While dragging, plants within the 12-inch interaction distance are outlined green (companion) or red (incompatible). Text feedback stays authoritative and appears on drop. Nothing blocks a drop: imperfect layouts are allowed.
+
+## Keyboard
+
+- Plants are focusable, in top-to-bottom, left-to-right order. Enter/Space inspects; Arrow keys move by 1 inch; Shift+Arrow moves by 12 inches; Delete removes.
+- With a plant selected in the picker, focus the garden and press Enter to place it at the physical center of the garden, then use the arrow keys to position it.
+- A selected bed's name tab is focusable; Arrow keys move the bed by 6 inches.
+
+## Undo
+
+An **Undo** button, plus Cmd+Z (Mac) or Ctrl+Z (Windows), undoes the last change to the garden: placing, moving or removing a plant, a sunlight stroke, a bed change, or Clear Garden. While typing in a text field, the shortcut undoes the text instead. Starting a New Garden clears the undo history. There is no redo yet.
+
+## Not in This Slice
+
+- mature plant footprints, spread, height, or growth habit
+- cross-species spacing rules or new companion rules
+- illustrated plant assets
+- a temporary snapping modifier or a free keyboard placement cursor
+
+---
+
+# Canvas-First Workspace
+
+**Status:** approved direction, delivered in slices. **Slice 1 is implemented:** the workspace layout, toolbar with sunlight brush, status line, collapsible inspector (current panels, plus the temporary feedback list), inventory bar, catalog popup, Escape and Delete behavior, and undo/redo. The Strengths / Issues / Opportunities inspector, short-lived canvas feedback, fit/zoom/pan, and the visual pass are still to come. Where earlier sections describe the old picker or "no tool" mode, this section takes precedence.
+
+## Goal
+
+Turn the planner from a scrolling web page into a full-screen, canvas-centered garden design workspace. The garden dominates the screen. Tools, plants, and reasoning sit around it in compact panels.
+
+This is a presentation and interaction redesign. It does not change the domain model, the reasoning rules, or what the product claims to know. It applies existing principles rather than replacing them: [the garden is the interface](#core-product-principle), [immediate feedback vs. persistent status](#part-2-product-principle-immediate-feedback-vs-persistent-status), and [Product Feel](#product-feel).
+
+## Layout
+
+- **Top bar:** garden name and size; Undo and Redo; a menu holding New Garden and the secondary, destructive Clear Garden.
+- **Left toolbar:** compact mode buttons: Select/Move, Beds, Sunlight (with a Full / Partial / Shade / Clear brush), Eraser. There is no separate Plant button: choosing a plant is what arms the plant tool.
+- **Canvas:** fills the remaining space and remains the visual focus.
+- **Right inspector:** persistent and collapsible (see [Inspector](#inspector)).
+- **Bottom inventory bar:** quick access to the plants in use in this garden, plus **Add plants**, which opens the catalog.
+- **Status line:** always states the active tool and setting and what a click will do (for example "Planting Tomato — click to place · Esc to stop").
+
+Desktop-first. Small screens and touch are not a goal of this redesign.
+
+It replaces today's plant picker column, sunlight picker, and the feedback list below the garden.
+
+## Catalog, Inventory, Canvas, Inspector
+
+| Surface | Role |
+|---|---|
+| **Catalog** | Everything available, for fast discovery and choosing, like a creative-mode inventory |
+| **Inventory bar** | Quick access to the plants I'm actively working with |
+| **Canvas** | Where I build the garden |
+| **Inspector** | Where I understand plants and garden reasoning |
+
+**Catalog.** A centered popup over the garden, opened from **Add plants**. The garden stays visible but dimmed behind it. It is a temporary choosing state, not another workspace panel.
+
+- A dense, scrolling grid of plant tiles. Each tile shows a plant visual (placeholder for now) and the plant's name, and nothing else: no category, lifecycle, roles, sunlight, or spacing on tiles. Details belong in the inspector.
+- Prominent search, plus lightweight category filters drawn from the plant data (for example All / Vegetables / Herbs / Flowers, growing as the dataset does). Richer data can drive filters without being displayed on tiles.
+- Plants already in the inventory have a subtle indicator.
+- Tiles say *choose this plant*, not *add this plant*. **Choosing a plant** makes it the active plant brush, adds its type to the inventory if it isn't there (incidentally, not as a separate step), closes the catalog, and returns to the canvas ready to place.
+- Escape or clicking outside closes the catalog without changing anything.
+
+**Inventory bar.** A persistent palette of the plant types in use in this garden, not a gate: a plant never has to be in the inventory before it can be placed.
+
+- Types are reusable, not quantities: placing a plant never uses it up.
+- A new garden starts with an **empty inventory**, whose empty state guides the first action ("Add plants to start designing").
+- Choosing an inventory plant arms the plant brush with it. Inventory plants can also be dragged onto the canvas.
+- No fixed slot count. The bar shows what fits and scrolls horizontally for more.
+- Removing a type from the inventory never removes plants already placed.
+- Clear Garden keeps the inventory: it removes plants, not the plan. New Garden starts with an empty inventory.
+
+**Boundaries.** The inventory is part of the garden plan and belongs with it once persistence exists. It is **not** a garden fact and does not feed the reasoning engine. Rules and opportunities use the full plant data and the placed plants, never the inventory. The UI may mark which suggested plants are already in the inventory, as a presentation aid only. Inventory changes are not undoable in the first implementation; undo and redo cover garden changes.
+
+## Interaction Principles
+
+The user should always understand: **what tool is active**, **what plant or setting is active**, **what will happen on click**, and **what is selected**.
+
+Committed:
+
+- **Tools are persistent brushes.** Choosing Tomato places Tomatoes on every click until another plant or tool is chosen, or Escape returns to Select. Beds and sunlight work the same way; sunlight keeps its Full / Partial / Shade / Clear setting.
+- **Selection is lightweight.** In Select mode: click to inspect, drag to move, Delete/Backspace to remove, Escape to deselect. Moving existing plants happens in Select mode; with a plant brush active, clicking a plant inspects it and never places on top of it. The eraser remains for repeated deletion.
+- **Escape steps back:** first out of the active tool to Select, then clears the selection.
+- **Click is enough.** Catalog and inventory work by clicking; dragging is an optional shortcut.
+- **Undo and redo are first-class**, with standard shortcuts (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z, Ctrl+Y), covering placement, movement, deletion, beds, and sunlight painting.
+- **Empty states guide the first action.**
+
+Direction (not yet committed):
+
+- **Preview before commitment:** with a plant brush active, a ghost plant and its sourced spacing ring follow the pointer before placing; placement then gives short-lived feedback while the inspector updates.
+- **Show me** pans and zooms to the relevant plants and briefly highlights them.
+- Lightweight hover labels identify plants and beds; detailed reasoning stays in the inspector.
+- **Physical scale:** subtle rulers or measurements, and distances shown while placing or moving.
+- **Fit to garden** as a prominent recovery action alongside zoom and pan.
+
+## Inspector
+
+The inspector is the home of persistent "what is true now?" reasoning. It has two parts.
+
+**Selected:** the inspected plant or selected bed, as today: identity, location, nearby relationships, same-species spacing, sunlight fit, local opportunities; or a bed's name, size, and contents.
+
+**Garden:** garden-wide reasoning, kept in the existing mixed form, not an error checker:
+
+- **Strengths:** positive facts that are currently true, such as represented ecological roles (composition) and companion pairings within the interaction distance. Descriptive, as composition already is: an absent strength is never shown as a weakness.
+- **Issues:** existing rule violations anywhere in the garden: same-species spacing violations, incompatible pairs within the interaction distance, and sunlight mismatches. Unmodeled sunlight (cell or plant requirement) is missing information, not an issue.
+- **Opportunities:** the existing, deliberately scoped opportunity policies ([Part 2D](#part-2d--opportunities)), unchanged.
+
+Every item explains *why* and may offer an action that leads somewhere useful:
+
+- **Find plants:** open the catalog showing the plants the finding is about, for example pollinator-support plants, or the inspected plant's modeled companions.
+- **Show me:** select and reveal the plants involved.
+
+Actions navigate and filter; they never change the garden on their own. Listing issues garden-wide uses the existing evaluators across all placements. It adds no new rule.
+
+## Immediate Feedback on the Canvas
+
+"What just happened?" feedback appears as short-lived messages on the canvas, near the plant that changed (for example "Great pairing: Tomato + Basil"), then fades. There is no permanent feedback log. Anything that remains true is shown in the inspector. Live drag feedback (spacing envelopes, companion/incompatible outlines) is unchanged.
+
+## Canvas Navigation
+
+A full-screen canvas needs fit-to-screen, zoom, and pan. These change only the view: positions remain physical inches, and the current conversion between screen and garden space already supports it.
+
+## Visual Direction
+
+- **App shell:** clean, modern, and quiet. The cozy feel does not come from the chrome.
+- **Canvas:** tactile: ground texture, bed frames with soft depth, sunlight drawn as warm light and cool shade rather than flat tints.
+- **Plants:** warm, whimsical, consistent top-down illustrations eventually replace today's markers. Until mature size is modeled, plant art stays a fixed display size and never suggests a footprint.
+- **Motion:** small, satisfying responses (placement, hover, drop) that never imply facts the product doesn't model, such as growth or seasons.
+- **No game mechanics:** see [No Garden Score](#no-garden-score).
+
+## Scope
+
+**Committed for this redesign** (to be delivered in slices):
+
+- the full-screen layout: top bar (with Redo and a menu for New/Clear), left toolbar with an explicit Select/Move mode and a sunlight brush, status line, collapsible inspector, inventory bar
+- the catalog popup (search, category filters, plant tiles) where choosing a plant arms it and adds it to the inventory; the inventory bar with click to arm and drag to place
+- the inspector's Selected and Garden (Strengths, Issues, Opportunities) sections with Find plants / Show me actions
+- short-lived canvas feedback in place of the feedback list
+- fit, zoom, and pan
+- a visual pass on the shell and canvas using placeholder plant visuals
+
+**Later enhancements (not committed):**
+
+- number-key (1–9) shortcuts for inventory plants
+- the interaction directions listed under [Interaction Principles](#interaction-principles)
+- final illustrated plant art and an asset pipeline
+- optional, off-by-default sound
+
+**Out of scope:** backend, accounts, persistence of gardens or inventories, final plant art, new reasoning rules or opportunity policies, scores or other game mechanics, mobile/touch-first design.
+
+## Open Questions
+
+- Should the inspector show sources for curated plant facts? Part 2E currently keeps provenance out of the UI.
+- Should the inventory show plants that are placed in the garden but no longer in the inventory?
+- How should short-lived canvas messages behave when several findings happen at once, for example one move creating a pairing and a spacing issue?
 
 ---
 
@@ -583,7 +841,7 @@ Games such as Stardew Valley are useful inspiration for the feeling of interacti
 - the garden should feel alive
 - placing or rearranging something should feel satisfying
 
-The product should not attempt to imitate Stardew Valley's specific pixel-art style or interface.
+The product borrows *interaction metaphors* from such games, such as a hotbar of chosen plants and tactile placement, but not their pixel-art style, overall interface, or game mechanics. Game inspiration shapes interaction and art, never reasoning: there are no scores, XP, levels, or health meters (see [No Garden Score](#no-garden-score)). The "strategy game" in the product vision means experimenting with a layout and seeing consequences, not winning.
 
 Over time, plants and garden elements should be represented through cohesive illustrations rather than relying on generic icons, emoji, or text labels as the primary visual representation.
 
@@ -603,7 +861,7 @@ The experience should feel:
 Avoid making the application feel like:
 
 - a spreadsheet
-- a database browser
+- a database browser (the plant catalog is a quick visual chooser of plant tiles, not a data table; details live in the inspector)
 - an enterprise dashboard
 - a generic SaaS application
 - a long gardening questionnaire
@@ -667,7 +925,7 @@ should be derived from current state and structured data rather than stored as s
 
 ### Do Not Imply Unsupported Precision
 
-If the model is abstract, feedback must remain appropriately abstract.
+Feedback must not be more precise than the model and data behind it. Physical positions do not make every rule physically precise: a placed position is design intent, and a product rule such as the 12-inch companion interaction distance is not a horticultural measurement.
 
 Do not silently translate real-world horticultural values into precise spatial claims the current model cannot support. The same discipline applies to provenance (see Part 2E): a source that informed an abstract value is not a source that states that value.
 

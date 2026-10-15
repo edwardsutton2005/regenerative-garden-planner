@@ -23,18 +23,13 @@ function PlacementFeedback({
 }: PlacementFeedbackProps) {
   const notableNeighbors = neighbors.filter((n) => n.relationship !== 'neutral')
 
-  if (
-    notableNeighbors.length === 0 &&
-    spacingViolations.length === 0 &&
-    sunlightMismatches.length === 0
-  )
-    return null
-
+  // The live region stays mounted (even when empty) so screen readers
+  // announce feedback after a placement or keyboard move.
   return (
-    <ul className="placement-feedback">
-      {notableNeighbors.map(({ plant, relationship, coordinate, focusCoordinate, focusPlant }) => (
+    <ul className="placement-feedback" aria-live="polite">
+      {notableNeighbors.map(({ plant, relationship, placementId, focusPlacementId, focusPlant }) => (
         <li
-          key={`relationship-${focusCoordinate.row},${focusCoordinate.col}-${coordinate.row},${coordinate.col}`}
+          key={`relationship-${focusPlacementId}-${placementId}`}
           className={`placement-feedback__item placement-feedback__item--${relationship}`}
         >
           {relationship === 'companion'
@@ -42,17 +37,17 @@ function PlacementFeedback({
             : `${focusPlant.name} and ${plant.name} may not grow well together.`}
         </li>
       ))}
-      {spacingViolations.map(({ coordinate, requiredDistance, focusCoordinate, focusPlant }) => (
+      {spacingViolations.map(({ placementId, requiredDistance, focusPlacementId, focusPlant }) => (
         <li
-          key={`spacing-${focusCoordinate.row},${focusCoordinate.col}-${coordinate.row},${coordinate.col}`}
+          key={`spacing-${focusPlacementId}-${placementId}`}
           className="placement-feedback__item placement-feedback__item--spacing"
         >
-          {`Two ${focusPlant.name} plants are too close together — keep at least ${requiredDistance} cells apart.`}
+          {`Two ${focusPlant.name} plants are too close together — keep at least ${requiredDistance} inches apart.`}
         </li>
       ))}
-      {sunlightMismatches.map(({ coordinate, plant, cellSunlight }) => (
+      {sunlightMismatches.map(({ placementId, plant, cellSunlight }) => (
         <li
-          key={`sunlight-${coordinate.row},${coordinate.col}`}
+          key={`sunlight-${placementId}`}
           className="placement-feedback__item placement-feedback__item--sunlight"
         >
           {`${plant.name} may not suit the modeled sunlight here (${formatEnumLabel(cellSunlight!)}).`}

@@ -4,16 +4,22 @@ import {
   evaluateGardenOpportunities,
 } from './opportunities'
 import { createGarden, placePlant } from './garden'
-import type { GardenState } from './garden'
+import type { GardenState, Position } from './garden'
 import type { Plant } from './plant'
 import type { PlantRelationshipRule } from './relationships'
+
+// Center of a 12" cell — where the current UI snaps placements. Placement
+// ids in these tests are the "row,col" they were placed at.
+function at(row: number, col: number): Position {
+  return { x: col * 12 + 6, y: row * 12 + 6 }
+}
 
 describe('evaluateGardenOpportunities', () => {
   const bushBean: Plant = {
     id: 'bush-bean',
     name: 'Bush Bean',
     category: 'vegetable',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'annual',
     ecologicalRoles: ['nitrogen-fixation'],
   }
@@ -21,7 +27,7 @@ describe('evaluateGardenOpportunities', () => {
     id: 'marigold',
     name: 'Marigold',
     category: 'flower',
-    minimumSpacingCells: 1,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
   }
@@ -29,49 +35,49 @@ describe('evaluateGardenOpportunities', () => {
     id: 'carrot',
     name: 'Carrot',
     category: 'vegetable',
-    minimumSpacingCells: 1,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'biennial',
     ecologicalRoles: [],
   }
   const plantsById: Record<string, Plant> = { 'bush-bean': bushBean, marigold, carrot }
 
   it('surfaces the opportunity for an empty garden', () => {
-    expect(evaluateGardenOpportunities(createGarden(4, 4), plantsById)).toEqual([
+    expect(evaluateGardenOpportunities(createGarden(48, 48), plantsById)).toEqual([
       { type: 'pollinator-support-absent' },
     ])
   })
 
   it('surfaces the opportunity when only roleless plants are placed', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'carrot')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'carrot', at(0, 0))
     expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([
       { type: 'pollinator-support-absent' },
     ])
   })
 
   it('still surfaces the opportunity when nitrogen-fixation is represented but pollinator-support is not', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'bush-bean')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'bush-bean', at(0, 0))
     expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([
       { type: 'pollinator-support-absent' },
     ])
   })
 
   it('does not surface the opportunity once pollinator-support is represented', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'marigold')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'marigold', at(0, 0))
     expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([])
   })
 
   it('is unaffected by repeated pollinator-support placements', () => {
-    let garden = createGarden(4, 4)
-    garden = placePlant(garden, 0, 0, 'marigold')
-    garden = placePlant(garden, 1, 1, 'marigold')
-    garden = placePlant(garden, 2, 2, 'marigold')
+    let garden = createGarden(48, 48)
+    garden = placePlant(garden, '0,0', 'marigold', at(0, 0))
+    garden = placePlant(garden, '1,1', 'marigold', at(1, 1))
+    garden = placePlant(garden, '2,2', 'marigold', at(2, 2))
     expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([])
   })
 
   it('handles an unknown placed plant id defensively, reflecting the rest of the garden', () => {
     const garden: GardenState = {
-      ...createGarden(4, 4),
-      placements: { '0,0': { plantId: 'unknown-plant' } },
+      ...createGarden(48, 48),
+      placements: { '0,0': { id: '0,0', plantId: 'unknown-plant', position: at(0, 0) } },
     }
     expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([
       { type: 'pollinator-support-absent' },
@@ -84,7 +90,7 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     id: 'tomato',
     name: 'Tomato',
     category: 'vegetable',
-    minimumSpacingCells: 4,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
   }
@@ -92,7 +98,7 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     id: 'basil',
     name: 'Basil',
     category: 'herb',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
   }
@@ -100,7 +106,7 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     id: 'marigold',
     name: 'Marigold',
     category: 'flower',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
   }
@@ -108,7 +114,7 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     id: 'potato',
     name: 'Potato',
     category: 'vegetable',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
   }
@@ -116,7 +122,7 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     id: 'carrot',
     name: 'Carrot',
     category: 'vegetable',
-    minimumSpacingCells: 1,
+    spacingInches: { min: 12, max: 12 },
     lifecycle: 'biennial',
     ecologicalRoles: [],
   }
@@ -128,31 +134,31 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     { plantAId: 'tomato', plantBId: 'potato', relationship: 'incompatible' },
   ]
 
-  it('returns catalogue companion candidates when nothing adjacent is a companion', () => {
-    const garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
-    expect(evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)).toEqual({
+  it('returns catalogue companion candidates when nothing nearby is a companion', () => {
+    const garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
+    expect(evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)).toEqual({
       candidatePlantIds: ['basil', 'marigold'],
     })
   })
 
-  it('returns null once an adjacent modeled companion is present', () => {
-    let garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
-    garden = placePlant(garden, 1, 2, 'basil')
-    expect(evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)).toBeNull()
+  it('returns null once a nearby modeled companion is present', () => {
+    let garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
+    garden = placePlant(garden, '1,2', 'basil', at(1, 2))
+    expect(evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)).toBeNull()
   })
 
-  it('does not treat an adjacent incompatible plant as a companion, and never suggests it', () => {
-    let garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
-    garden = placePlant(garden, 1, 2, 'potato')
-    const result = evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)
+  it('does not treat a nearby incompatible plant as a companion, and never suggests it', () => {
+    let garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
+    garden = placePlant(garden, '1,2', 'potato', at(1, 2))
+    const result = evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)
     expect(result).toEqual({ candidatePlantIds: ['basil', 'marigold'] })
     expect(result?.candidatePlantIds).not.toContain('potato')
   })
 
-  it('does not treat an adjacent neutral plant as a companion', () => {
-    let garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
-    garden = placePlant(garden, 1, 2, 'carrot')
-    expect(evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)).toEqual({
+  it('does not treat a nearby neutral plant as a companion', () => {
+    let garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
+    garden = placePlant(garden, '1,2', 'carrot', at(1, 2))
+    expect(evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)).toEqual({
       candidatePlantIds: ['basil', 'marigold'],
     })
   })
@@ -162,11 +168,10 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
       ...rules,
       { plantAId: 'basil', plantBId: 'tomato', relationship: 'companion' },
     ]
-    const garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
+    const garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
     const result = evaluateCompanionOpportunityForPlacement(
       garden,
-      1,
-      1,
+      '1,1',
       plantsById,
       rulesWithDuplicate,
     )
@@ -178,11 +183,10 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
       ...rules,
       { plantAId: 'tomato', plantBId: 'kale', relationship: 'companion' },
     ]
-    const garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
+    const garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
     const result = evaluateCompanionOpportunityForPlacement(
       garden,
-      1,
-      1,
+      '1,1',
       plantsById,
       rulesWithUnknownPlant,
     )
@@ -190,33 +194,33 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
   })
 
   it('produces a stable candidate order across calls', () => {
-    const garden = placePlant(createGarden(4, 4), 1, 1, 'tomato')
-    const first = evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)
-    const second = evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)
+    const garden = placePlant(createGarden(48, 48), '1,1', 'tomato', at(1, 1))
+    const first = evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)
+    const second = evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)
     expect(first).toEqual(second)
   })
 
-  it('returns null for an empty coordinate rather than treating it as "no adjacent companion"', () => {
-    const garden = createGarden(4, 4)
-    expect(evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)).toBeNull()
+  it('returns null for an empty garden rather than treating it as "no nearby companion"', () => {
+    const garden = createGarden(48, 48)
+    expect(evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)).toBeNull()
   })
 
-  it('returns null for an out-of-bounds coordinate', () => {
-    const garden = createGarden(4, 4)
-    expect(evaluateCompanionOpportunityForPlacement(garden, 99, 99, plantsById, rules)).toBeNull()
+  it('returns null for an unknown placement id', () => {
+    const garden = createGarden(48, 48)
+    expect(evaluateCompanionOpportunityForPlacement(garden, 'missing', plantsById, rules)).toBeNull()
   })
 
   it('returns null when the placed plant id is unknown to plantsById', () => {
     const garden: GardenState = {
-      ...createGarden(4, 4),
-      placements: { '1,1': { plantId: 'unknown-plant' } },
+      ...createGarden(48, 48),
+      placements: { '1,1': { id: '1,1', plantId: 'unknown-plant', position: at(1, 1) } },
     }
-    expect(evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)).toBeNull()
+    expect(evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)).toBeNull()
   })
 
   it('finds candidates symmetrically from the other side of a companion pair', () => {
-    const garden = placePlant(createGarden(4, 4), 1, 1, 'basil')
-    const result = evaluateCompanionOpportunityForPlacement(garden, 1, 1, plantsById, rules)
+    const garden = placePlant(createGarden(48, 48), '1,1', 'basil', at(1, 1))
+    const result = evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)
     expect(result?.candidatePlantIds).toContain('tomato')
   })
 })

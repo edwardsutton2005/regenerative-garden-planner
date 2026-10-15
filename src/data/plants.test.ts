@@ -5,13 +5,49 @@ import { plants } from './plants'
 import { sources } from './sources'
 
 describe('plants seed data', () => {
-  it('gives every plant a positive integer minimumSpacingCells', () => {
+  it('gives every plant a positive spacingInches range with min <= max', () => {
+    for (const plant of plants) {
+      const { min, max } = plant.spacingInches
+      expect(min > 0 && min <= max, `${plant.name} has an invalid spacingInches: ${min}-${max}`).toBe(
+        true,
+      )
+    }
+  })
+
+  it('backs every spacingInches value with at least one registered source', () => {
+    // Spacing values are physical claims taken from sources, never
+    // conversions — see docs/data-sources.md "Spacing".
     for (const plant of plants) {
       expect(
-        Number.isInteger(plant.minimumSpacingCells) && plant.minimumSpacingCells > 0,
-        `${plant.name} has an invalid minimumSpacingCells: ${plant.minimumSpacingCells}`,
-      ).toBe(true)
+        plant.evidence?.spacingGuidance?.length ?? 0,
+        `${plant.name} has spacingInches but no evidence.spacingGuidance source`,
+      ).toBeGreaterThan(0)
     }
+  })
+
+  // Regression coverage for the researched spacing values in
+  // docs/data-sources.md, so a silent edit to a sourced figure fails a test.
+  const expectedSpacing: Record<string, [number, number]> = {
+    tomato: [24, 36],
+    carrot: [2, 3],
+    lettuce: [4, 4],
+    basil: [6, 12],
+    mint: [18, 18],
+    rosemary: [24, 24],
+    marigold: [8, 10],
+    sunflower: [18, 24],
+    onion: [3, 4],
+    'bush-bean': [2, 3],
+    pea: [1, 2],
+    'bell-pepper': [18, 18],
+    cucumber: [24, 24],
+    cabbage: [12, 18],
+    potato: [10, 12],
+    dill: [10, 12],
+  }
+
+  it.each(Object.entries(expectedSpacing))('assigns the sourced spacingInches for %s', (id, [min, max]) => {
+    expect(plants.find((p) => p.id === id)?.spacingInches).toEqual({ min, max })
   })
 
   it('gives every plant a unique id', () => {

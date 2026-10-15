@@ -10,9 +10,9 @@ Evidence metadata and deterministic reasoning are separate. Adding or omitting a
 
 ## Registered Claim-Level Sources
 
-The structured source registry (`src/data/sources.ts`) currently holds 19 sources: one attached to Sunflower's spacing guidance, and 18 university/college Extension sources backing every seed plant's `sunlightRequirement` — see "Sunlight" below for the full table.
+The structured source registry (`src/data/sources.ts`) currently holds 28 university/college Extension sources backing every seed plant's `spacingInches` and `sunlightRequirement`. See "Spacing" and "Sunlight" below for the full tables.
 
-Every registered source gives real-world horticultural guidance. None states the application's abstract `minimumSpacingCells` value or its `SunlightLevel` category directly; those are project-level normalizations informed by, not copied from, the source.
+Every registered source gives real-world horticultural guidance. None states the application's `SunlightLevel` category directly; that is a project-level normalization informed by, not copied from, the source. The former abstract `minimumSpacingCells` tiers were also project normalizations; they are being replaced by physical spacing values taken from sources (see "Spacing").
 
 ## Companion and Incompatible Relationships
 
@@ -28,17 +28,53 @@ Pairs with material disagreement, such as Tomato/Carrot, were omitted. Incompati
 
 ## Spacing
 
-Plant comments document approximate real-world spacing guidance used to assign relative tiers from 1 through 4. The dataset notes the following source pool:
+### Policy (physical-coordinate model)
 
-- University of Minnesota Extension where available
-- The Old Farmer's Almanac plant guides
-- Farmers' Almanac
-- Gardening Know How spacing material
-- Blooming Expert spacing material
+Same-species spacing is curated as a physical distance in inches, taken from a cited source. It is held to the same standard as `sunlightRequirement`: every curated spacing value must carry at least one registered source in `evidence.spacingGuidance`, enforced by a data test.
 
-The domain rule applies a plant's tier only to another placement of the same plant and uses Chebyshev distance. The grid has no physical scale, so the tiers must not be presented as an inches-to-cells conversion.
+- **What is recorded:** the source's plant-to-plant spacing (how far apart to set or thin plants of this crop), not between-row spacing. Row spacing describes a planting layout this app does not model.
+- **Range:** when a source gives a range (e.g. "24 to 36 inches"), record both ends as a minimum and maximum. When it gives a single value, minimum and maximum are equal. The current spacing rule uses only the minimum; the maximum is kept so the source statement is not lost.
+- **No conversions:** values are never derived from the former 1–4 tiers, never multiplied from a cell size, and never inferred from a plant's mature spread unless a source explicitly states that as spacing guidance.
+- **Precedence:** prefer university Extension or similarly authoritative sources, consistent with "Adding New Knowledge" below. Where reputable sources disagree materially, record the source actually used and note the disagreement in the table below.
+- **Unresolved plants:** if no adequate source is found for a plant, leave its spacing absent rather than guessing. An absent value means spacing is not evaluated for that plant; it is not reported as "spacing OK."
 
-**Outstanding provenance issue:** except for Sunflower, individual spacing assignments do not yet carry precise source records. Several source-pool references also lack exact page URLs in the existing project notes. Those claims should be researched and attributed individually before the dataset is presented as fully sourced.
+### History
+
+The former abstract `minimumSpacingCells` tiers (1–4) were assigned from approximate guidance without per-plant citations, except for Sunflower. They were replaced, not converted, by the individually researched values below.
+
+### Provenance table
+
+Researched 2026-10-15. Every value below was checked against the linked page's own wording, not a search summary. Values are plant-to-plant (in-row or thinning) spacing; row spacing is ignored. `src/data/plants.ts` and `src/data/sources.ts` are the machine-readable source of truth; this table is documentation for human review.
+
+| Plant | Spacing (in) min–max | Source | Quoted guidance | Notes |
+|---|---|---|---|---|
+| Tomato | 24–36 | [Growing tomatoes in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-tomatoes) *(registered)* | "Allow two to three feet in all directions between vining plants. You can set bush-type plants closer together." | Vining (indeterminate) types. Bush types: "closer," with no figure. |
+| Carrot | 2–3 | [How to Grow Carrots in Your Garden — USU Extension](https://extension.usu.edu/yardandgarden/research/carrots-in-the-garden) | "Seeded carrots should be spaced 2-3 inches between plants in the row" | Same page's summary says "Thin seedling carrots to 3 inches apart." |
+| Lettuce | 4–4 | [Lettuce — Illinois Extension](https://extension.illinois.edu/gardening/lettuce) *(registered)* | "Thin seedlings to 4 inches apart for leaf lettuce and 6 to 8 inches apart for Cos or Butterhead." | Leaf lettuce, matching the catalogue's existing note. Head types need more: Cos/Butterhead 6–8, Crisphead 10–12 (same page); USU gives 8–12 for head lettuce. |
+| Basil | 6–12 | [Growing basil in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-basil) | "Thin and transplant seedlings to stand 6-12 inches apart once they have developed two to three pairs of true leaves." | Other Extension pages give wider final spacing (USU: thin to a final stand of 12 in; Penn State: 12–18 in for airflow). |
+| Mint | 18–18 | [Mentha x piperita — NC State Extension Plant Toolbox](https://plants.ces.ncsu.edu/plants/mentha-x-piperita/) | "If planting in the ground, space plants 18" apart." | **Peppermint-specific.** No Extension page found gives a plant-to-plant figure for mint generally (USU's registered mint page gives only row spacing; Illinois and Penn State recommend containment instead). The catalogue entry is the generic "Mint". |
+| Rosemary | 24–24 | [Herb Garden Plants: Rosemary — Penn State Extension](https://extension.psu.edu/herb-garden-plants-rosemary) | "transplant out in full sun (two feet apart)" | Disagreement: UF/IFAS Santa Rosa County gives 36–48 in for a 4–5 ft spread. Penn State is used as the more general temperate-garden statement. |
+| Marigold | 8–10 | [How to Grow and Care for Marigolds in South Carolina — Clemson HGIC](https://hgic.clemson.edu/factsheet/how-to-grow-and-care-for-marigolds-in-south-carolina/) | "French Marigold Spacing – 8 to 10 inches apart." | French marigold, matching the catalogue's existing note. African: 12–16 in (same page). UMN gives no French figure ("can be spaced fairly close together"). |
+| Sunflower | 18–24 | [Sunflowers — UMN Extension](https://extension.umn.edu/flowers/sunflowers) *(registered)* | "They require a good deal of room, so space them 18 to 24 inches apart." | Branching cultivars, matching the catalogue's existing note. Same page: 2–5 ft varieties ~6 in; taller ≥12 in; giants 24 in. |
+| Onion | 3–4 | [Growing onions in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-onions) *(registered)* | "After seedlings emerge, thin to 3 to 4 inches apart." | Transplants also "3 to 4 inches apart." |
+| Bush Bean | 2–3 | [How to Grow Beans in Your Garden — USU Extension](https://extension.usu.edu/yardandgarden/research/beans-in-the-garden) *(registered)* | "Plant seeds 1 inch deep, spaced 2-3 inches apart, in rows 18-24 inches wide." | Applies to beans generally; no separate bush-bean figure. |
+| Pea | 1–2 | [How to Grow Peas in Your Garden — USU Extension](https://extension.usu.edu/yardandgarden/research/peas-in-the-garden) | "Plant seeds ½-1 inch deep, spaced 1-2 inches apart, in rows 12-24 inches apart." | **Disagreement:** the registered UMN pea page says "Place the seeds in a shallow trench, six to seven inches apart," but the same page gives "about two inches apart in all directions" for wide rows. USU's 1–2 in is used, consistent with UMN's wide-row figure. |
+| Bell Pepper | 18–18 | [How to Grow Peppers in Your Garden — USU Extension](https://extension.usu.edu/yardandgarden/research/peppers-in-the-garden) | "Transplants should be planted 18 inches apart in row, with rows 18-24 inches apart." | |
+| Cucumber | 24–24 | [How to Grow Cucumber in Your Garden — USU Extension](https://extension.usu.edu/yardandgarden/research/cucumber-in-the-garden) | "Transplants should be planted 2 feet apart in row, with rows 4 feet apart." | **Interpretation:** the same page seeds "4-6 seeds every 12-18 inches" then thins "to 2 plants per location", so 12–18 in is a spacing between groups of two plants, not single plants. The single-plant transplant figure is used. |
+| Cabbage | 12–18 | [How to Grow Cabbage in Your Garden — USU Extension](https://extension.usu.edu/yardandgarden/research/cabbage-in-the-garden) *(registered)* | "Seeded or transplanted cabbage should be spaced 12-18 inches between plants in the row" | |
+| Potato | 10–12 | [Growing potatoes in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-potatoes) *(registered)* | "Plant tuber pieces cut side down, 10 to 12 inches apart" | |
+| Dill | 10–12 | [Growing dill in home gardens — UMN Extension](https://extension.umn.edu/vegetables/growing-dill) | "When seedlings are two inches high, thin them to stand 10-12 inches apart." | USU's dill guide gives 9 in. |
+
+*(registered)* means the source was already registered for another claim before the spacing research. All sources in the table are now in `src/data/sources.ts` and attached to `evidence.spacingGuidance`.
+
+**Effect under 12-inch snapping:** with placements snapped to 12-inch cell centers, same-species placements can only be 12, ~17, 24, ~26.8 … inches apart. A warning therefore appears only when the sourced minimum exceeds one of those distances:
+
+- Tomato, Rosemary and Cucumber (24): orthogonal and diagonal neighbors.
+- Mint, Sunflower and Bell Pepper (18): orthogonal and diagonal neighbors.
+- Cabbage (12): no warning, because 12 is not less than 12.
+- Every other plant: never.
+
+Today's tiers warn more often, for example Tomato at up to three cells away.
 
 ## Lifecycle and Ecological Roles
 

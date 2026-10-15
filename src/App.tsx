@@ -1,14 +1,20 @@
 import { useState } from 'react'
+import BedPanel from './components/BedPanel'
+import GardenCanvas from './components/GardenCanvas'
+import type { CanvasMode } from './components/GardenCanvas'
 import GardenComposition from './components/GardenComposition'
-import GardenControls from './components/GardenControls'
-import GardenGrid from './components/GardenGrid'
 import GardenInspector from './components/GardenInspector'
 import GardenOpportunities from './components/GardenOpportunities'
 import GardenSetup from './components/GardenSetup'
-import SunlightPicker from './components/SunlightPicker'
-import type { PlantDragPayload } from './components/dragPayload'
+import InventoryBar from './components/InventoryBar'
 import PlacementFeedback from './components/PlacementFeedback'
-import PlantPicker from './components/PlantPicker'
+import PlantCatalog from './components/PlantCatalog'
+import ToolRail from './components/ToolRail'
+import type { RailTool, SunlightBrush } from './components/ToolRail'
+import TopBar from './components/TopBar'
+import { toPlantPosition } from './components/canvasGeometry'
+import { addToInventory, removeFromInventory } from './components/plantChoice'
+import { useWorkspaceShortcuts } from './components/useWorkspaceShortcuts'
 import { plants } from './data/plants'
 import { relationshipRules } from './data/relationships'
 import { evaluateGardenComposition } from './domain/composition'
@@ -18,375 +24,508 @@ import {
 } from './domain/opportunities'
 import {
   GARDEN_DEFAULT_SIZE,
+  addBed,
   clearGarden,
   clearSunlightAt,
   createGarden,
-  getPlantIdAt,
+  getBed,
+  getBedAt,
+  getPlacement,
+  getPlacementsInBed,
   hasPlacements,
-  isValidCoordinate,
+  moveBed,
   movePlant,
+  nextBedName,
   placePlant,
+  removeBed,
   removePlant,
+  renameBed,
+  resizeBed,
   setSunlightAt,
 } from './domain/garden'
-import type { GardenState, SunlightLevel } from './domain/garden'
+import type { BedRect, GardenState, Position } from './domain/garden'
 import type { Plant } from './domain/plant'
 import { evaluateNeighborsForFocuses } from './domain/relationships'
 import { evaluateSpacingForFocuses } from './domain/spacing'
 import { evaluateSunlightFit } from './domain/sunlightFit'
 import type { SunlightFitResult } from './domain/sunlightFit'
+import {
+  EMPTY_HISTORY,
+  applyChange,
+  applyWithoutRecording,
+  recordCheckpoint,
+  redo,
+  startHistory,
+  undo,
+} from './gardenHistory'
+import type { GardenHistory } from './gardenHistory'
 import './App.css'
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
   plants.map((plant) => [plant.id, plant]),
 )
 
-type LastPlacement = {
-  row: number
-  col: number
-}
-
+// Inches.
 type SetupDimensions = {
-  rows: number
-  columns: number
+  width: number
+  height: number
 }
 
-// The placement currently being inspected, or null if nothing is (see
-// ARCHITECTURE.md "Inspection Is UI State" — not part of GardenState).
-type InspectedCoordinate = {
-  row: number
-  col: number
-} | null
-
-// Exactly one tool is active at a time, and each variant only carries the
-// data that tool actually needs — an invalid combination (e.g. a plant
-// selected and the eraser selected at once) is unrepresentable, rather than
-// tracked as separate booleans that could drift out of sync.
+// Exactly one tool is active at a time, and each variant carries only the
+// data that tool needs. Every tool is a persistent brush: it stays active
+// until another tool or plant is chosen, or Escape returns to Select.
 type ActiveTool =
-  | { type: 'neutral' }
-  | { type: 'plant'; plantId: string }
-  | { type: 'eraser' }
-  | { type: 'sunlight'; level: SunlightLevel }
-  | { type: 'sunlight-clear' }
+  | { kind: 'select' }
+  | { kind: 'plant'; plantId: string }
+  | { kind: 'beds' }
+  | { kind: 'sunlight'; brush: SunlightBrush }
+  | { kind: 'eraser' }
+
+// What is selected, if anything: one plant or one bed, never both.
+type Selection = { kind: 'plant'; id: string } | { kind: 'bed'; id: string } | null
+
+const SELECT: ActiveTool = { kind: 'select' }
 
 function App() {
-  // No garden yet means the app is on the setup screen; once created, a
-  // garden's dimensions are fixed for its lifetime (see ARCHITECTURE.md).
-  const [garden, setGarden] = useState<GardenState | null>(null)
+  // The garden and its undo/redo history (see gardenHistory.ts). No garden
+  // yet means the app is on the setup screen.
+  const [history, setHistory] = useState<GardenHistory>(EMPTY_HISTORY)
+  const { garden } = history
   const [setupDimensions, setSetupDimensions] = useState<SetupDimensions>({
-    rows: GARDEN_DEFAULT_SIZE,
-    columns: GARDEN_DEFAULT_SIZE,
+    width: GARDEN_DEFAULT_SIZE,
+    height: GARDEN_DEFAULT_SIZE,
   })
-  const [activeTool, setActiveTool] = useState<ActiveTool>({ type: 'neutral' })
-  // Coordinates to show transient feedback for. Usually one (the cell just
-  // placed or moved to); a garden-to-garden swap changes two cells, so both
-  // go here.
-  const [lastPlacements, setLastPlacements] = useState<LastPlacement[]>([])
-  const [inspectedCoordinate, setInspectedCoordinate] = useState<InspectedCoordinate>(null)
+  const [activeTool, setActiveTool] = useState<ActiveTool>(SELECT)
+  // Remembered across tool switches, so Sunlight resumes with the last brush.
+  const [sunlightBrush, setSunlightBrush] = useState<SunlightBrush>('full-sun')
+  const [selection, setSelection] = useState<Selection>(null)
+  // Plant types in use in this garden, in order: a palette, not a gate, and
+  // never an input to reasoning. Not part of undo history.
+  const [inventory, setInventory] = useState<string[]>([])
+  const [catalogOpen, setCatalogOpen] = useState(false)
+  const [inspectorOpen, setInspectorOpen] = useState(true)
+  // Placement ids to show transient feedback for: the plant just placed or
+  // moved.
+  const [lastPlacementIds, setLastPlacementIds] = useState<string[]>([])
+  // The plant type being dragged from the inventory, for the canvas preview.
+  const [draggedPlantTypeId, setDraggedPlantTypeId] = useState<string | null>(null)
 
-  function isInspected(row: number, col: number): boolean {
-    return inspectedCoordinate?.row === row && inspectedCoordinate?.col === col
+  // Bed selection is only shown (and only editable) in Select and Beds, so
+  // other tools' clicks and keys never edit a bed.
+  const bedSelectionVisible = activeTool.kind === 'select' || activeTool.kind === 'beds'
+  const selectedPlacementId = selection?.kind === 'plant' ? selection.id : null
+  const selectedBedId = selection?.kind === 'bed' && bedSelectionVisible ? selection.id : null
+
+  // --- garden changes (all undoable) ----------------------------------------
+
+  function updateGarden(change: (current: GardenState) => GardenState) {
+    setHistory((h) => applyChange(h, change))
   }
 
-  function handleCreateGarden(rows: number, columns: number) {
-    setGarden(createGarden(rows, columns))
+  function handleUndo() {
+    setHistory(undo)
+    setLastPlacementIds([]) // feedback described the change being undone
   }
 
-  function handleSelectPlant(plantId: string) {
-    // Selecting the already-selected plant returns to the neutral state;
-    // selecting/deselecting never touches inspection.
-    setActiveTool((current) =>
-      current.type === 'plant' && current.plantId === plantId
-        ? { type: 'neutral' }
-        : { type: 'plant', plantId },
+  function handleRedo() {
+    setHistory(redo)
+    setLastPlacementIds([])
+  }
+
+  // A sunlight stroke paints many cells but is one undo step.
+  function handlePaintStart() {
+    setHistory(recordCheckpoint)
+  }
+
+  function handlePaint(row: number, col: number) {
+    if (activeTool.kind !== 'sunlight') return
+    const { brush } = activeTool
+    setHistory((h) =>
+      applyWithoutRecording(h, (g) =>
+        brush === 'clear' ? clearSunlightAt(g, row, col) : setSunlightAt(g, row, col, brush),
+      ),
     )
   }
 
-  function handleSelectEraser() {
-    setActiveTool((current) => (current.type === 'eraser' ? { type: 'neutral' } : { type: 'eraser' }))
+  function addPlacement(plantId: string, position: Position): string {
+    const id = crypto.randomUUID()
+    updateGarden((current) => placePlant(current, id, plantId, position))
+    setLastPlacementIds([id])
+    return id
   }
 
-  function handleSelectSunlight(level: SunlightLevel) {
-    setActiveTool((current) =>
-      current.type === 'sunlight' && current.level === level
-        ? { type: 'neutral' }
-        : { type: 'sunlight', level },
-    )
+  function removePlacement(placementId: string) {
+    updateGarden((current) => removePlant(current, placementId))
+    setLastPlacementIds((prev) => prev.filter((id) => id !== placementId))
+    setSelection((current) => (current?.id === placementId ? null : current))
   }
 
-  function handleSelectSunlightClear() {
-    setActiveTool((current) =>
-      current.type === 'sunlight-clear' ? { type: 'neutral' } : { type: 'sunlight-clear' },
-    )
+  function handleMovePlant(placementId: string, position: Position) {
+    updateGarden((current) => movePlant(current, placementId, position))
+    setLastPlacementIds([placementId])
   }
 
-  function handleCellClick(row: number, col: number) {
-    if (!garden) return
+  function deleteBed(bedId: string) {
+    updateGarden((current) => removeBed(current, bedId))
+    setSelection((current) => (current?.id === bedId ? null : current))
+  }
 
-    switch (activeTool.type) {
-      case 'plant': {
-        const { plantId } = activeTool
-        // Clicking a cell that already holds the selected plant toggles it
-        // off instead of "replacing" it with itself — saves switching to
-        // the eraser for a quick undo of the same plant.
-        if (getPlantIdAt(garden, row, col) === plantId) {
-          setGarden((current) => (current ? removePlant(current, row, col) : current))
-          setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
-          if (isInspected(row, col)) setInspectedCoordinate(null)
-          return
-        }
+  // --- tools ----------------------------------------------------------------
 
-        setGarden((current) => (current ? placePlant(current, row, col, plantId) : current))
-        setLastPlacements([{ row, col }])
-        // A placement landing on the inspected cell is a replace — the
-        // inspected placement no longer exists as it was, so close.
-        if (isInspected(row, col)) setInspectedCoordinate(null)
+  function handleSelectRailTool(tool: RailTool) {
+    switch (tool) {
+      case 'select':
+        setActiveTool(SELECT)
         return
-      }
-
-      case 'eraser': {
-        if (getPlantIdAt(garden, row, col) === undefined) return
-        setGarden((current) => (current ? removePlant(current, row, col) : current))
-        setLastPlacements((prev) => prev.filter((p) => !(p.row === row && p.col === col)))
-        if (isInspected(row, col)) setInspectedCoordinate(null)
+      case 'beds':
+        setActiveTool({ kind: 'beds' })
         return
-      }
-
       case 'sunlight':
-      case 'sunlight-clear':
-        // Painting happens via pointer sweep (handleCellPaint), not click —
-        // a sunlight tool being active must never place/replace/remove a
-        // plant or change inspection, so a plain click here is a no-op.
+        setActiveTool({ kind: 'sunlight', brush: sunlightBrush })
         return
-
-      case 'neutral':
-      default: {
-        // Neutral: click an occupied cell to inspect it, an empty cell to
-        // clear inspection.
-        const plantId = getPlantIdAt(garden, row, col)
-        setInspectedCoordinate(plantId ? { row, col } : null)
-      }
+      case 'eraser':
+        setActiveTool({ kind: 'eraser' })
+        return
     }
   }
 
-  function handleCellPaint(row: number, col: number) {
-    if (!garden) return
-
-    if (activeTool.type === 'sunlight') {
-      const { level } = activeTool
-      setGarden((current) => (current ? setSunlightAt(current, row, col, level) : current))
-    } else if (activeTool.type === 'sunlight-clear') {
-      setGarden((current) => (current ? clearSunlightAt(current, row, col) : current))
-    }
+  function handleSelectSunlightBrush(brush: SunlightBrush) {
+    setSunlightBrush(brush)
+    setActiveTool({ kind: 'sunlight', brush })
   }
 
-  function handleCellDrop(row: number, col: number, payload: PlantDragPayload) {
-    if (!garden) return
-
-    if (payload.kind === 'picker') {
-      if (!plantsById[payload.plantId]) return // unknown plant id — ignore
-      setGarden((current) => (current ? placePlant(current, row, col, payload.plantId) : current))
-      setLastPlacements([{ row, col }])
-      if (isInspected(row, col)) setInspectedCoordinate(null)
-      return
-    }
-
-    // payload.kind === 'garden': never trust a caller-supplied plant id for
-    // an existing placement — validate the source cell and let movePlant
-    // derive the actual plant from current garden state.
-    const { row: fromRow, col: fromCol } = payload.source
-    if (!isValidCoordinate(garden, fromRow, fromCol)) return
-    if (getPlantIdAt(garden, fromRow, fromCol) === undefined) return
-    if (fromRow === row && fromCol === col) return
-
-    // A swap (destination already occupied) changes both cells; an ordinary
-    // move-to-empty only changes the destination.
-    const isSwap = getPlantIdAt(garden, row, col) !== undefined
-
-    setGarden((current) => (current ? movePlant(current, fromRow, fromCol, row, col) : current))
-    setLastPlacements(
-      isSwap ? [{ row, col }, { row: fromRow, col: fromCol }] : [{ row, col }],
+  // Inventory click arms the plant brush; clicking the armed plant disarms
+  // it, back to Select.
+  function handleChooseInventoryPlant(plantId: string) {
+    setActiveTool((current) =>
+      current.kind === 'plant' && current.plantId === plantId ? SELECT : { kind: 'plant', plantId },
     )
+  }
 
-    // Follow the inspected plant through a move or swap rather than closing
-    // inspection — its coordinate changed, its identity didn't.
-    setInspectedCoordinate((current) => {
-      if (!current) return current
-      if (current.row === fromRow && current.col === fromCol) return { row, col }
-      if (isSwap && current.row === row && current.col === col) {
-        return { row: fromRow, col: fromCol }
-      }
-      return current
-    })
+  // Choosing in the catalog: arm the brush, add the type to the inventory
+  // (incidentally), close the catalog, and return to the canvas.
+  function handleChooseCatalogPlant(plantId: string) {
+    if (!plantsById[plantId]) return
+    setActiveTool({ kind: 'plant', plantId })
+    setInventory((inv) => addToInventory(inv, plantId))
+    setCatalogOpen(false)
+  }
+
+  // Escape steps back: out of the active tool to Select, then clears the
+  // selection.
+  function handleEscape() {
+    if (activeTool.kind !== 'select') setActiveTool(SELECT)
+    else setSelection(null)
+  }
+
+  function handleDeleteSelection() {
+    if (selectedPlacementId) removePlacement(selectedPlacementId)
+    else if (selectedBedId) deleteBed(selectedBedId)
+  }
+
+  useWorkspaceShortcuts({
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+    onEscape: handleEscape,
+    onDelete: handleDeleteSelection,
+    enabled: garden !== null && !catalogOpen,
+  })
+
+  // --- canvas events --------------------------------------------------------
+
+  // A click on empty canvas, at a whole-inch position.
+  function handleCanvasClick(position: Position) {
+    if (!garden) return
+    if (activeTool.kind === 'plant') {
+      addPlacement(activeTool.plantId, position)
+    } else if (activeTool.kind === 'select') {
+      // Select the bed at this exact point, or clear the selection.
+      const bed = getBedAt(garden, position)
+      setSelection(bed ? { kind: 'bed', id: bed.id } : null)
+    }
+    // Eraser: nothing to erase here. Sunlight paints on pointer down and
+    // Beds handles its own input, so a click never touches plants.
+  }
+
+  // A click (or Enter/Space) on a plant: the eraser removes it; otherwise
+  // it's selected for inspection. A plant brush never places on top of an
+  // existing plant.
+  function handlePlantClick(placementId: string) {
+    if (activeTool.kind === 'eraser') removePlacement(placementId)
+    else setSelection({ kind: 'plant', id: placementId })
+  }
+
+  function handlePlantTypeDrop(plantId: string, position: Position) {
+    if (!plantsById[plantId]) return // unknown plant id — ignore
+    addPlacement(plantId, position)
+    setDraggedPlantTypeId(null)
+  }
+
+  // Keyboard placement: the active plant at the garden's physical center —
+  // deterministic, independent of scroll position.
+  function handlePlaceAtCenter(): string | null {
+    if (!garden || activeTool.kind !== 'plant') return null
+    const center = toPlantPosition({ x: garden.width / 2, y: garden.height / 2 }, garden)
+    return addPlacement(activeTool.plantId, center)
+  }
+
+  // --- garden lifecycle -----------------------------------------------------
+
+  function handleCreateGarden(width: number, height: number) {
+    setHistory(startHistory(createGarden(width, height)))
   }
 
   function handleClearGarden() {
-    setGarden((current) => (current ? clearGarden(current) : current))
-    setLastPlacements([])
-    setInspectedCoordinate(null)
+    updateGarden((current) => clearGarden(current))
+    setLastPlacementIds([])
+    setSelection((current) => (current?.kind === 'plant' ? null : current))
   }
 
   function handleNewGarden() {
     if (!garden) return
 
     if (hasPlacements(garden)) {
-      const confirmed = window.confirm(
-        'Start a new garden? This will discard the current layout.',
-      )
+      const confirmed = window.confirm('Start a new garden? This will discard the current layout.')
       if (!confirmed) return
     }
 
-    // Return to the setup screen, prefilled with the garden just left,
-    // rather than immediately creating a replacement.
-    setSetupDimensions({ rows: garden.rows, columns: garden.columns })
-    setGarden(null)
-    setLastPlacements([])
-    setInspectedCoordinate(null)
+    // Return to the setup screen, prefilled with the garden just left.
+    // A new garden starts with an empty inventory and no history.
+    setSetupDimensions({ width: garden.width, height: garden.height })
+    setHistory(EMPTY_HISTORY)
+    setInventory([])
+    setActiveTool(SELECT)
+    setLastPlacementIds([])
+    setSelection(null)
   }
 
   if (!garden) {
     return (
-      <div className="app">
+      <div className="setup-screen">
         <header className="app-header">
           <h1>Regenerative Garden Planner</h1>
           <p>Choose your garden size to get started.</p>
         </header>
         <GardenSetup
-          initialRows={setupDimensions.rows}
-          initialColumns={setupDimensions.columns}
+          initialWidth={setupDimensions.width}
+          initialHeight={setupDimensions.height}
           onCreateGarden={handleCreateGarden}
         />
       </div>
     )
   }
 
-  const focusEntries = lastPlacements
-    .map((p) => {
-      const plantId = getPlantIdAt(garden, p.row, p.col)
-      return plantId ? { coordinate: p, plantId } : null
-    })
-    .filter((f): f is { coordinate: LastPlacement; plantId: string } => f !== null)
+  // --- derived state ----------------------------------------------------------
+
+  const canvasMode: CanvasMode = activeTool.kind
 
   const neighbors = evaluateNeighborsForFocuses(
     garden,
-    focusEntries,
+    lastPlacementIds,
     plantsById,
     relationshipRules,
   )
-
-  const spacingFocusEntries = focusEntries
-    .map((f) => {
-      const plant = plantsById[f.plantId]
-      return plant ? { coordinate: f.coordinate, plant } : null
-    })
-    .filter((f): f is { coordinate: LastPlacement; plant: Plant } => f !== null)
-
-  const spacingViolations = evaluateSpacingForFocuses(garden, spacingFocusEntries)
-
-  const sunlightMismatches = lastPlacements
-    .map((p) => evaluateSunlightFit(garden, p.row, p.col, plantsById))
+  const spacingViolations = evaluateSpacingForFocuses(garden, lastPlacementIds, plantsById)
+  const sunlightMismatches = lastPlacementIds
+    .map((id) => evaluateSunlightFit(garden, id, plantsById))
     .filter((r): r is SunlightFitResult => r !== null && r.status === 'mismatch')
 
   const composition = evaluateGardenComposition(garden, plantsById)
   const gardenOpportunities = evaluateGardenOpportunities(garden, plantsById)
 
-  const inspectedPlantId = inspectedCoordinate
-    ? getPlantIdAt(garden, inspectedCoordinate.row, inspectedCoordinate.col)
+  const inspectedPlacement = selectedPlacementId
+    ? getPlacement(garden, selectedPlacementId)
     : undefined
-  const inspectedPlant = inspectedPlantId ? plantsById[inspectedPlantId] : undefined
+  const inspectedPlant = inspectedPlacement ? plantsById[inspectedPlacement.plantId] : undefined
+  const inspectedIds = inspectedPlacement ? [inspectedPlacement.id] : []
 
-  const inspectorNeighbors =
-    inspectedCoordinate && inspectedPlantId
-      ? evaluateNeighborsForFocuses(
-          garden,
-          [{ coordinate: inspectedCoordinate, plantId: inspectedPlantId }],
-          plantsById,
-          relationshipRules,
-        )
-      : []
-
-  const inspectorSpacing =
-    inspectedCoordinate && inspectedPlant
-      ? evaluateSpacingForFocuses(garden, [
-          { coordinate: inspectedCoordinate, plant: inspectedPlant },
-        ])
-      : []
-
-  const inspectorSunlightFit = inspectedCoordinate
-    ? evaluateSunlightFit(garden, inspectedCoordinate.row, inspectedCoordinate.col, plantsById)
+  const inspectorNeighbors = evaluateNeighborsForFocuses(
+    garden,
+    inspectedIds,
+    plantsById,
+    relationshipRules,
+  )
+  const inspectorSpacing = evaluateSpacingForFocuses(garden, inspectedIds, plantsById)
+  const inspectorSunlightFit = inspectedPlacement
+    ? evaluateSunlightFit(garden, inspectedPlacement.id, plantsById)
     : null
-
-  const localCompanionOpportunity = inspectedCoordinate
+  const localCompanionOpportunity = inspectedPlacement
     ? evaluateCompanionOpportunityForPlacement(
         garden,
-        inspectedCoordinate.row,
-        inspectedCoordinate.col,
+        inspectedPlacement.id,
         plantsById,
         relationshipRules,
       )
     : null
+  const inspectedBed = inspectedPlacement ? getBedAt(garden, inspectedPlacement.position) : undefined
+
+  const selectedBed = selectedBedId ? getBed(garden, selectedBedId) : undefined
+  const selectedBedPlantNames = selectedBed
+    ? getPlacementsInBed(garden, selectedBed.id)
+        .map((p) => plantsById[p.plantId]?.name)
+        .filter((name): name is string => name !== undefined)
+    : []
 
   const companionCandidates = (localCompanionOpportunity?.candidatePlantIds ?? [])
     .map((id) => plantsById[id])
     .filter((p): p is Plant => p !== undefined)
     .sort((a, b) => a.name.localeCompare(b.name))
 
+  const inventoryPlants = inventory
+    .map((id) => plantsById[id])
+    .filter((p): p is Plant => p !== undefined)
+  const activePlant = activeTool.kind === 'plant' ? plantsById[activeTool.plantId] : undefined
+
+  // The status line: what tool and setting are active and what a click does.
+  const status = (() => {
+    switch (activeTool.kind) {
+      case 'plant':
+        return `Planting ${activePlant?.name ?? 'plant'} — click to place · Esc to stop`
+      case 'beds':
+        return 'Beds — drag on open ground to draw a bed · Esc to stop'
+      case 'sunlight': {
+        const label = {
+          'full-sun': 'Full sun',
+          'partial-sun': 'Partial sun',
+          shade: 'Shade',
+          clear: 'Clear sunlight',
+        }[activeTool.brush]
+        return `Sunlight: ${label} — drag to paint · Esc to stop`
+      }
+      case 'eraser':
+        return 'Eraser — click plants to remove them · Esc to stop'
+      case 'select':
+        return selectedBed
+          ? `${selectedBed.name} selected — drag its tab to move, a corner to resize · Delete removes`
+          : inspectedPlant
+            ? `${inspectedPlant.name} selected — drag to move · Delete removes · Esc to deselect`
+            : inventory.length === 0
+              ? 'Select — choose a plant with + Add plants below'
+              : 'Select — click a plant or bed · drag plants to move them'
+    }
+  })()
+
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>Regenerative Garden Planner</h1>
-        <p>Select a plant, then place it in the garden. Select the eraser to remove one.</p>
-      </header>
-      <GardenControls onNewGarden={handleNewGarden} onClearGarden={handleClearGarden} />
-      <main className="app-main">
-        <div className="tool-column">
-          <PlantPicker
-            plants={plants}
-            selectedPlantId={activeTool.type === 'plant' ? activeTool.plantId : null}
-            eraserSelected={activeTool.type === 'eraser'}
-            onSelectPlant={handleSelectPlant}
-            onSelectEraser={handleSelectEraser}
+    <div className={`workspace${inspectorOpen ? '' : ' workspace--inspector-closed'}`}>
+      <TopBar
+        gardenWidth={garden.width}
+        gardenHeight={garden.height}
+        canUndo={history.past.length > 0}
+        canRedo={history.future.length > 0}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onNewGarden={handleNewGarden}
+        onClearGarden={handleClearGarden}
+      />
+
+      <ToolRail
+        activeTool={activeTool.kind}
+        sunlightBrush={sunlightBrush}
+        onSelectTool={handleSelectRailTool}
+        onSelectSunlightBrush={handleSelectSunlightBrush}
+      />
+
+      <main className="workspace__canvas">
+        <p className="workspace__status" aria-live="polite">
+          {status}
+        </p>
+        <div className="garden-canvas-viewport">
+          <GardenCanvas
+            garden={garden}
+            plantsById={plantsById}
+            rules={relationshipRules}
+            mode={canvasMode}
+            selectedPlacementId={selectedPlacementId}
+            draggedPlantTypeId={draggedPlantTypeId}
+            onCanvasClick={handleCanvasClick}
+            onPlantClick={handlePlantClick}
+            onMovePlant={handleMovePlant}
+            onRemovePlant={removePlacement}
+            onPlantTypeDrop={handlePlantTypeDrop}
+            onPaint={handlePaint}
+            onPaintStart={handlePaintStart}
+            onPlaceAtCenter={handlePlaceAtCenter}
+            beds={{
+              editing: activeTool.kind === 'beds',
+              selectedBedId,
+              onSelectBed: (id) => setSelection(id ? { kind: 'bed', id } : null),
+              onCreateBed: (rect: BedRect) => {
+                const id = crypto.randomUUID()
+                updateGarden((current) => addBed(current, id, nextBedName(current), rect))
+                setSelection({ kind: 'bed', id })
+              },
+              onMoveBed: (id, position) => updateGarden((current) => moveBed(current, id, position)),
+              onResizeBed: (id, rect) => updateGarden((current) => resizeBed(current, id, rect)),
+            }}
           />
-          <SunlightPicker
-            activeLevel={activeTool.type === 'sunlight' ? activeTool.level : null}
-            clearSelected={activeTool.type === 'sunlight-clear'}
-            onSelectLevel={handleSelectSunlight}
-            onSelectClear={handleSelectSunlightClear}
-          />
-        </div>
-        <div className="garden-column">
-          <div className="garden-grid-viewport">
-            <GardenGrid
-              garden={garden}
-              plantsById={plantsById}
-              inspectedCoordinate={inspectedCoordinate}
-              onCellClick={handleCellClick}
-              onCellDrop={handleCellDrop}
-              paintMode={activeTool.type === 'sunlight' || activeTool.type === 'sunlight-clear'}
-              onCellPaint={handleCellPaint}
-            />
-          </div>
-          <PlacementFeedback
-            neighbors={neighbors}
-            spacingViolations={spacingViolations}
-            sunlightMismatches={sunlightMismatches}
-          />
-        </div>
-        <div className="garden-rail">
-          <GardenComposition composition={composition} plantsById={plantsById} />
-          <GardenOpportunities opportunities={gardenOpportunities} />
-          {inspectedPlant && (
-            <GardenInspector
-              plant={inspectedPlant}
-              neighbors={inspectorNeighbors}
-              spacingViolations={inspectorSpacing}
-              sunlightFit={inspectorSunlightFit}
-              companionCandidates={companionCandidates}
-              onClose={() => setInspectedCoordinate(null)}
-            />
-          )}
         </div>
       </main>
+
+      <aside className="workspace__inspector" aria-label="Inspector">
+        <button
+          type="button"
+          className="workspace__inspector-toggle"
+          onClick={() => setInspectorOpen((open) => !open)}
+          aria-expanded={inspectorOpen}
+          aria-label={inspectorOpen ? 'Collapse inspector' : 'Expand inspector'}
+        >
+          {inspectorOpen ? '›' : '‹'}
+        </button>
+        {inspectorOpen && (
+          <div className="workspace__inspector-body">
+            {selectedBed && (
+              <BedPanel
+                key={selectedBed.id}
+                bed={selectedBed}
+                plantNames={selectedBedPlantNames}
+                onRename={(name) =>
+                  updateGarden((current) => renameBed(current, selectedBed.id, name))
+                }
+                onDelete={() => deleteBed(selectedBed.id)}
+                onClose={() => setSelection(null)}
+              />
+            )}
+            {inspectedPlant && (
+              <GardenInspector
+                plant={inspectedPlant}
+                bedName={inspectedBed?.name}
+                neighbors={inspectorNeighbors}
+                spacingViolations={inspectorSpacing}
+                sunlightFit={inspectorSunlightFit}
+                companionCandidates={companionCandidates}
+                onClose={() => setSelection(null)}
+              />
+            )}
+            {/* Temporary home for "what just happened?" feedback; Slice 2
+                replaces it with short-lived messages on the canvas. */}
+            <PlacementFeedback
+              neighbors={neighbors}
+              spacingViolations={spacingViolations}
+              sunlightMismatches={sunlightMismatches}
+            />
+            <GardenComposition composition={composition} plantsById={plantsById} />
+            <GardenOpportunities opportunities={gardenOpportunities} />
+          </div>
+        )}
+      </aside>
+
+      <InventoryBar
+        plants={inventoryPlants}
+        activePlantId={activePlant?.id ?? null}
+        onChoose={handleChooseInventoryPlant}
+        onRemove={(plantId) => setInventory((inv) => removeFromInventory(inv, plantId))}
+        onOpenCatalog={() => setCatalogOpen(true)}
+        onDragPlant={setDraggedPlantTypeId}
+      />
+
+      {catalogOpen && (
+        <PlantCatalog
+          plants={plants}
+          inventory={inventory}
+          onChoose={handleChooseCatalogPlant}
+          onClose={() => setCatalogOpen(false)}
+        />
+      )}
     </div>
   )
 }

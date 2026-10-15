@@ -1,16 +1,17 @@
 import type { KnowledgeSource } from '../domain/source'
 
 // Registered only when actually attached to a specific curated claim
-// elsewhere (currently: sunflower's spacingGuidance, and every plant's
+// elsewhere (currently: every plant's spacingGuidance and
 // sunlightRequirement, in data/plants.ts) — not merely because a source is
 // named in an existing dataset-wide sourcing comment. Dataset-wide
-// vetting-policy sources (e.g. the general spacing or companion-planting
-// source pools described in data/plants.ts and data/relationships.ts) are
+// vetting-policy sources (e.g. the companion-planting source pool described
+// in data/relationships.ts) are
 // deliberately not registered here until a specific claim can be honestly
 // attributed to one of them.
 //
-// The sunlightRequirement sources below are the machine-readable source of
-// truth for Part 3B provenance; see docs/data-sources.md "Sunlight" for a
+// The spacingGuidance and sunlightRequirement sources below are the
+// machine-readable source of truth for their provenance; see
+// docs/data-sources.md "Spacing" and "Sunlight" for a
 // human-readable table cross-referencing each plant, its normalized
 // sunlightRequirement, and exactly what each source below does and does not
 // explicitly state (kept in sync by hand — this file is not generated from
@@ -129,5 +130,59 @@ export const sources: KnowledgeSource[] = [
     title: 'Basil',
     publisher: 'Illinois Extension',
     url: 'https://extension.illinois.edu/herbs/basil',
+  },
+  {
+    id: 'usu-extension-carrots',
+    title: 'How to Grow Carrots in Your Garden',
+    publisher: 'Utah State University Extension',
+    url: 'https://extension.usu.edu/yardandgarden/research/carrots-in-the-garden',
+  },
+  {
+    id: 'umn-extension-basil',
+    title: 'Growing basil in home gardens',
+    publisher: 'University of Minnesota Extension',
+    url: 'https://extension.umn.edu/vegetables/growing-basil',
+  },
+  {
+    id: 'ncsu-extension-peppermint',
+    title: 'Mentha x piperita',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/mentha-x-piperita/',
+  },
+  {
+    id: 'pennstate-extension-rosemary',
+    title: 'Herb Garden Plants: Rosemary',
+    publisher: 'Penn State Extension',
+    url: 'https://extension.psu.edu/herb-garden-plants-rosemary',
+  },
+  {
+    id: 'clemson-hgic-marigolds',
+    title: 'How to Grow and Care for Marigolds in South Carolina',
+    publisher: 'Clemson Cooperative Extension Home & Garden Information Center',
+    url: 'https://hgic.clemson.edu/factsheet/how-to-grow-and-care-for-marigolds-in-south-carolina/',
+  },
+  {
+    id: 'usu-extension-peas',
+    title: 'How to Grow Peas in Your Garden',
+    publisher: 'Utah State University Extension',
+    url: 'https://extension.usu.edu/yardandgarden/research/peas-in-the-garden',
+  },
+  {
+    id: 'usu-extension-peppers',
+    title: 'How to Grow Peppers in Your Garden',
+    publisher: 'Utah State University Extension',
+    url: 'https://extension.usu.edu/yardandgarden/research/peppers-in-the-garden',
+  },
+  {
+    id: 'usu-extension-cucumber',
+    title: 'How to Grow Cucumber in Your Garden',
+    publisher: 'Utah State University Extension',
+    url: 'https://extension.usu.edu/yardandgarden/research/cucumber-in-the-garden',
+  },
+  {
+    id: 'umn-extension-dill',
+    title: 'Growing dill in home gardens',
+    publisher: 'University of Minnesota Extension',
+    url: 'https://extension.umn.edu/vegetables/growing-dill',
   },
 ]

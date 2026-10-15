@@ -5,6 +5,8 @@ import type { Plant } from '../domain/plant'
 
 type GardenInspectorProps = {
   plant: Plant
+  /** The bed containing this placement, derived from its position. */
+  bedName: string | undefined
   neighbors: FocusedNeighborRelationship[]
   spacingViolations: FocusedSpacingViolation[]
   sunlightFit: SunlightFitResult | null
@@ -34,6 +36,7 @@ function sunlightFitMessage(result: SunlightFitResult): string {
 
 function GardenInspector({
   plant,
+  bedName,
   neighbors,
   spacingViolations,
   sunlightFit,
@@ -71,14 +74,19 @@ function GardenInspector({
       </section>
 
       <section className="garden-inspector__section">
-        <h3>Adjacent relationships</h3>
+        <h3>Location</h3>
+        <p className="garden-inspector__lifecycle">{bedName ? `In ${bedName}` : 'In open ground'}</p>
+      </section>
+
+      <section className="garden-inspector__section">
+        <h3>Nearby relationships</h3>
         {notableNeighbors.length === 0 ? (
-          <p className="garden-inspector__empty">No notable adjacent relationships</p>
+          <p className="garden-inspector__empty">No notable nearby relationships</p>
         ) : (
           <ul className="garden-inspector__list">
-            {notableNeighbors.map(({ plant: neighborPlant, relationship, coordinate }) => (
+            {notableNeighbors.map(({ plant: neighborPlant, relationship, placementId }) => (
               <li
-                key={`${coordinate.row},${coordinate.col}`}
+                key={placementId}
                 className={`garden-inspector__item garden-inspector__item--${relationship}`}
               >
                 {relationship === 'companion'
@@ -96,12 +104,12 @@ function GardenInspector({
           <p className="garden-inspector__ok">No same-species spacing issues</p>
         ) : (
           <ul className="garden-inspector__list">
-            {spacingViolations.map(({ coordinate, requiredDistance }) => (
+            {spacingViolations.map(({ placementId, requiredDistance }) => (
               <li
-                key={`${coordinate.row},${coordinate.col}`}
+                key={placementId}
                 className="garden-inspector__item garden-inspector__item--spacing"
               >
-                {`Too close to another ${plant.name} (same-species spacing) — keep at least ${requiredDistance} cells apart.`}
+                {`Too close to another ${plant.name} (same-species spacing) — keep at least ${requiredDistance} inches apart.`}
               </li>
             ))}
           </ul>

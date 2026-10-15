@@ -20,22 +20,28 @@ export const ECOLOGICAL_ROLES = ['pollinator-support', 'nitrogen-fixation'] as c
 
 export type EcologicalRole = (typeof ECOLOGICAL_ROLES)[number]
 
+/**
+ * A sourced plant-to-plant spacing range, in inches. When a source states a
+ * single value, min and max are equal.
+ */
+export type SpacingRange = {
+  min: number
+  max: number
+}
+
 export type Plant = {
   id: string
   name: string
   category: PlantCategory
   /**
-   * Minimum required spacing between two placements of *this same plant*,
-   * in abstract grid cells (Chebyshev distance). V1 applies this only
-   * between same-species placements (e.g. Tomato-to-Tomato) — real spacing
-   * guidance describes how far apart to space a crop from itself, not a
-   * cross-species distance requirement, so it is not applied between
-   * different species. Cross-species relationships are handled separately
-   * by companion/incompatible feedback. Informed by real horticultural
-   * spacing guidance but not a stated real-world unit conversion — see
-   * data/plants.ts.
+   * Sourced plant-to-plant spacing between two placements of *this same
+   * plant*, in inches (not between-row spacing). Applied only between
+   * same-species placements — real spacing guidance describes how far apart
+   * to space a crop from itself, not a cross-species distance requirement.
+   * The spacing rule uses only `min`; `max` preserves the source's stated
+   * range. See docs/data-sources.md "Spacing".
    */
-  minimumSpacingCells: number
+  spacingInches: SpacingRange
   /**
    * How this plant normally completes its life cycle. 'tender-perennial'
    * means biologically capable of persisting multiple years but frost-
@@ -74,12 +80,7 @@ export type Plant = {
  */
 export type PlantEvidence = {
   lifecycle?: SourceId[]
-  /**
-   * Sources here inform this plant's normalized minimumSpacingCells tier —
-   * they state real-world horticultural spacing guidance, never the
-   * abstract cell number itself. See minimumSpacingCells and
-   * ARCHITECTURE.md "Physical Plant Data Does Not Define Grid Scale."
-   */
+  /** Sources stating this plant's spacingInches. */
   spacingGuidance?: SourceId[]
   ecologicalRoles?: Partial<Record<EcologicalRole, SourceId[]>>
   /**

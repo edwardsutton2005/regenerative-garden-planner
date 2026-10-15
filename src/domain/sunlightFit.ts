@@ -1,5 +1,5 @@
-import type { CellCoordinate, GardenState, SunlightLevel } from './garden'
-import { getPlantIdAt, getSunlightAt, isValidCoordinate } from './garden'
+import type { GardenState, SunlightLevel } from './garden'
+import { cellAt, getPlacement, getSunlightAt } from './garden'
 import type { Plant } from './plant'
 
 /**
@@ -11,15 +11,16 @@ import type { Plant } from './plant'
 export type SunlightFitStatus = 'fit' | 'mismatch' | 'unmodeled-cell' | 'unmodeled-requirement'
 
 export type SunlightFitResult = {
-  coordinate: CellCoordinate
+  placementId: string
   plant: Plant
   cellSunlight: SunlightLevel | undefined
   status: SunlightFitStatus
 }
 
 /**
- * Whether the plant placed at (row, col) fits the sunlight modeled for that
- * cell. The plant is looked up from GardenState + plantsById rather than
+ * Whether the given placement's plant fits the sunlight modeled for the
+ * environmental cell containing its position. The plant is looked up from
+ * GardenState + plantsById rather than
  * accepted as a separate argument, so it can never disagree with what's
  * actually placed there (same reasoning as
  * evaluateCompanionOpportunityForPlacement).
@@ -33,23 +34,20 @@ export type SunlightFitResult = {
  * cell, and it is a data-curation gap on our side rather than something the
  * user can resolve by painting the cell.
  *
- * Returns null for an invalid coordinate, an empty cell, or an unknown
- * placed plant id — nothing to report, matching the rest of this module's
+ * Returns null for an unknown placement or plant id — nothing to report, matching the rest of this module's
  * null-for-nothing-to-say convention.
  */
 export function evaluateSunlightFit(
   garden: GardenState,
-  row: number,
-  col: number,
+  placementId: string,
   plantsById: Record<string, Plant>,
 ): SunlightFitResult | null {
-  if (!isValidCoordinate(garden, row, col)) return null
+  const placement = getPlacement(garden, placementId)
+  const plant = placement ? plantsById[placement.plantId] : undefined
+  const cell = placement ? cellAt(garden, placement.position) : undefined
+  if (!plant || !cell) return null
 
-  const plantId = getPlantIdAt(garden, row, col)
-  const plant = plantId ? plantsById[plantId] : undefined
-  if (!plant) return null
-
-  const cellSunlight = getSunlightAt(garden, row, col)
+  const cellSunlight = getSunlightAt(garden, cell.row, cell.col)
   const requirement = plant.sunlightRequirement
 
   const status: SunlightFitStatus = !requirement
@@ -60,5 +58,5 @@ export function evaluateSunlightFit(
         ? 'fit'
         : 'mismatch'
 
-  return { coordinate: { row, col }, plant, cellSunlight, status }
+  return { placementId, plant, cellSunlight, status }
 }

@@ -8,126 +8,545 @@
   --sun-full-sun: #f0b429;
   --sun-partial-sun: #c98a3e;
   --sun-shade: #5b7a9c;
+  --ground: #f1efe4;
+  --grid-line: rgba(90, 80, 60, 0.12);
+  --bed-soil: #b48a5c;
+  --bed-frame: #8a6440;
+  --invalid: #d64545;
 }
 
-.app {
+/* --- Setup screen ---------------------------------------------------------- */
+
+.setup-screen {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 32px 20px;
-  flex-grow: 1;
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: 48px 20px;
+  box-sizing: border-box;
+}
+
+/* --- Workspace shell ------------------------------------------------------- */
+
+/* Full-screen: top bar; tools | canvas | inspector; inventory bar. */
+.workspace {
+  --panel: #fbfaf6;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 300px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'top top top'
+    'tools canvas inspector'
+    'inventory inventory inventory';
+  height: 100svh;
+  font-size: 15px;
   text-align: left;
 }
+
+.workspace--inspector-closed {
+  grid-template-columns: auto minmax(0, 1fr) 36px;
+}
+
+.top-bar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.top-bar__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.top-bar__app {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.top-bar__garden {
+  font-size: 13px;
+}
+
+.top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.top-bar button,
+.top-bar__menu summary {
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.top-bar button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.top-bar__menu {
+  position: relative;
+}
+
+.top-bar__menu summary {
+  list-style: none;
+}
+
+.top-bar__menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.top-bar__menu-items {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 170px;
+  padding: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.top-bar__menu-items button {
+  border: none;
+  text-align: left;
+}
+
+.top-bar__menu-items button:hover {
+  background: var(--code-bg);
+}
+
+.top-bar .top-bar__danger {
+  color: var(--invalid);
+}
+
+.tool-rail {
+  grid-area: tools;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 6px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+
+.tool-rail__tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 64px;
+  padding: 8px 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.tool-rail__tool:hover {
+  background: var(--code-bg);
+}
+
+.tool-rail__tool--active {
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.tool-rail__icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.tool-rail__brushes {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.tool-rail__brush {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 64px;
+  padding: 4px;
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tool-rail__brush--active {
+  color: var(--text-h);
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.tool-rail__swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: var(--brush-color, transparent);
+}
+
+.tool-rail__brush--full-sun {
+  --brush-color: var(--sun-full-sun);
+}
+
+.tool-rail__brush--partial-sun {
+  --brush-color: var(--sun-partial-sun);
+}
+
+.tool-rail__brush--shade {
+  --brush-color: var(--sun-shade);
+}
+
+.workspace__canvas {
+  grid-area: canvas;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: color-mix(in srgb, var(--ground) 40%, var(--bg));
+}
+
+.workspace__status {
+  padding: 8px 16px 0;
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.workspace__inspector {
+  grid-area: inspector;
+  position: relative;
+  min-height: 0;
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+}
+
+.workspace__inspector-toggle {
+  position: absolute;
+  top: 8px;
+  left: 6px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.workspace__inspector-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 40px 12px 12px;
+  overflow-y: auto;
+}
+
+/* --- Inventory bar --------------------------------------------------------- */
+
+.inventory {
+  grid-area: inventory;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+}
+
+.inventory__empty {
+  font-size: 14px;
+  color: var(--text-h);
+}
+
+.inventory__slots {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  overflow-x: auto;
+}
+
+.inventory__slot-wrap {
+  position: relative;
+  flex: none;
+}
+
+.inventory__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 72px;
+  padding: 6px 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.inventory__slot:hover {
+  border-color: var(--accent-border);
+}
+
+.inventory__slot--active {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.inventory__name {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.inventory__remove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.inventory__slot-wrap:hover .inventory__remove,
+.inventory__remove:focus-visible {
+  opacity: 1;
+}
+
+.inventory__add {
+  flex: none;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--bg);
+  border: 2px dashed var(--accent-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.inventory__add:hover {
+  background: var(--accent-bg);
+}
+
+/* Placeholder plant visual until illustrated art exists. */
+.plant-swatch {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--plant-color, var(--text));
+}
+
+.plant-swatch--vegetable {
+  --plant-color: var(--cat-vegetable);
+}
+
+.plant-swatch--herb {
+  --plant-color: var(--cat-herb);
+}
+
+.plant-swatch--flower {
+  --plant-color: var(--cat-flower);
+}
+
+/* --- Plant catalog popup --------------------------------------------------- */
+
+.catalog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(30, 28, 20, 0.35);
+}
+
+.catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(720px, calc(100vw - 48px));
+  max-height: min(620px, calc(100svh - 96px));
+  padding: 16px;
+  box-sizing: border-box;
+  font-size: 15px;
+  text-align: left;
+  background: var(--bg);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+.catalog__header {
+  display: flex;
+  gap: 8px;
+}
+
+.catalog__search {
+  flex: 1;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text-h);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.catalog__close {
+  width: 40px;
+  font: inherit;
+  font-size: 20px;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.catalog__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.catalog__filter {
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.catalog__filter--active {
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border-color: var(--accent);
+}
+
+.catalog__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.catalog__tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-h);
+  background: var(--panel, #fbfaf6);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.catalog__tile:hover,
+.catalog__tile:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+  outline: none;
+}
+
+.catalog__tile .plant-swatch {
+  width: 44px;
+  height: 44px;
+  font-size: 15px;
+}
+
+/* Subtle "already in your plants" mark. */
+.catalog__in-inventory {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.catalog__empty {
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* --- Garden ----------------------------------------------------------------- */
 
 .app-header h1 {
   margin: 0 0 4px;
 }
 
 .app-header p {
-  color: var(--text);
-}
-
-.app-main {
-  display: grid;
-  grid-template-columns: 160px 600px 240px;
-  gap: 32px;
-  align-items: flex-start;
-}
-
-.tool-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  min-width: 160px;
-}
-
-.plant-picker {
-  min-width: 160px;
-}
-
-.sunlight-picker h2 {
-  margin: 0 0 12px;
-}
-
-.sunlight-picker ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sunlight-option {
-  cursor: pointer;
-}
-
-.sunlight-option--full-sun {
-  --plant-color: var(--sun-full-sun);
-}
-
-.sunlight-option--partial-sun {
-  --plant-color: var(--sun-partial-sun);
-}
-
-.sunlight-option--shade {
-  --plant-color: var(--sun-shade);
-}
-
-.plant-picker h2 {
-  margin: 0 0 12px;
-}
-
-.plant-picker ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.plant-option {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  padding: 8px 12px;
-  font: inherit;
-  color: var(--text-h);
-  background: var(--code-bg);
-  border: 2px solid transparent;
-  border-left: 4px solid var(--plant-color, var(--border));
-  border-radius: 6px;
-  cursor: grab;
-  text-align: left;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
-}
-
-.plant-option:hover {
-  border-color: var(--accent-border);
-}
-
-.plant-option--selected {
-  background: var(--accent-bg);
-  border-color: var(--accent);
-}
-
-.plant-option--vegetable {
-  --plant-color: var(--cat-vegetable);
-}
-
-.plant-option--herb {
-  --plant-color: var(--cat-herb);
-}
-
-.plant-option--flower {
-  --plant-color: var(--cat-flower);
-}
-
-.plant-option--eraser {
-  --plant-color: var(--border);
   color: var(--text);
 }
 
@@ -193,87 +612,390 @@
   border-color: var(--border);
 }
 
-.garden-column {
+/* A size container, so the canvas can fit both its width and height
+ * (see GardenCanvas's inline width). */
+.garden-canvas-viewport {
+  flex: 1;
+  min-height: 0;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  overflow: auto;
+  /* Room for markers and labels that sit on the garden's edges. */
+  padding: 26px 44px 26px 20px;
+}
+
+/* Layers (z-index): beds 1 → sunlight 2 → envelopes 3 → plants 4 → bed
+ * selection 5; the Beds tool raises the bed layer to 6. Everything inside is
+ * positioned in percentages of the garden's physical size. */
+.garden-canvas {
+  position: relative;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  background-color: var(--ground);
+  /* Grid lines at every environmental cell; background-size is set inline
+   * from the cell size. */
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  cursor: default;
+  outline-offset: 3px;
+}
+
+.garden-canvas--plant {
+  cursor: copy;
+}
+
+.garden-canvas--sunlight {
+  cursor: cell;
+  touch-action: none;
+}
+
+.garden-sunlight,
+.garden-envelopes,
+.garden-plants {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.garden-sunlight {
+  z-index: 2;
+}
+
+/* Sunlight belongs to the ground, so it's a translucent wash drawn over
+ * beds — stronger while a sunlight tool is active. */
+.garden-sunlight__cell {
+  position: absolute;
+  --sun-strength: 22%;
+}
+
+.garden-canvas--sunlight .garden-sunlight__cell {
+  --sun-strength: 50%;
+}
+
+.garden-sunlight__cell--full-sun {
+  background: color-mix(in srgb, var(--sun-full-sun) var(--sun-strength), transparent);
+}
+
+.garden-sunlight__cell--partial-sun {
+  background: color-mix(in srgb, var(--sun-partial-sun) var(--sun-strength), transparent);
+}
+
+.garden-sunlight__cell--shade {
+  background: color-mix(in srgb, var(--sun-shade) var(--sun-strength), transparent);
+}
+
+.garden-canvas--sunlight .garden-bed,
+.garden-canvas--sunlight .plant-marker {
+  opacity: 0.45;
+}
+
+.garden-canvas--beds .plant-marker {
+  opacity: 0.6;
+}
+
+/* Spacing envelopes: the sourced same-species minimum spacing, drawn as a
+ * dashed outline with no fill so it never reads as a plant's size. */
+.garden-envelopes {
+  z-index: 3;
+  overflow: hidden;
+}
+
+.spacing-envelope {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1.5px dotted color-mix(in srgb, var(--text) 55%, transparent);
+  border-radius: 50%;
+}
+
+.spacing-envelope--own {
+  border: 2px dashed var(--accent);
+}
+
+.spacing-envelope--violated {
+  border-color: var(--invalid);
+  border-style: dashed;
+  background: color-mix(in srgb, var(--invalid) 6%, transparent);
+}
+
+.spacing-envelope__caption {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, calc(-100% - 2px));
+  pointer-events: none;
+  padding: 1px 6px;
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  border-radius: 4px;
+}
+
+.garden-plants {
+  z-index: 4;
+}
+
+/* A fixed-size marker (never scaled by inches, so it never suggests a
+ * footprint): the dot's center is the plant's position. */
+.plant-marker {
+  position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: min(600px, 100%);
-}
-
-.garden-grid-viewport {
-  max-width: 100%;
-  max-height: 70vh;
-  overflow: auto;
-}
-
-.garden-grid {
-  display: grid;
-  gap: 4px;
-  width: 100%;
-}
-
-.garden-cell {
-  aspect-ratio: 1;
-  padding: 2px;
-  font-size: 12px;
-  line-height: 1.2;
-  color: var(--text-h);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  overflow: hidden;
-  transition:
-    border-color 0.2s,
-    background 0.2s;
+  gap: 1px;
+  padding: 0;
+  font: inherit;
+  background: none;
+  border: none;
+  transform: translate(-50%, -7px);
+  pointer-events: none;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  --plant-color: var(--border);
 }
 
-.garden-cell:hover {
-  border-color: var(--accent-border);
+.garden-canvas--select .plant-marker,
+.garden-canvas--plant .plant-marker,
+.garden-canvas--eraser .plant-marker {
+  pointer-events: auto;
 }
 
-.garden-cell--drag-over {
-  border-color: var(--accent);
-  background: var(--accent-bg);
+.garden-canvas--plant .plant-marker {
+  cursor: pointer;
 }
 
-.garden-cell--inspected {
+.garden-canvas--eraser .plant-marker {
+  cursor: not-allowed;
+}
+
+.plant-marker--vegetable {
+  --plant-color: var(--cat-vegetable);
+}
+
+.plant-marker--herb {
+  --plant-color: var(--cat-herb);
+}
+
+.plant-marker--flower {
+  --plant-color: var(--cat-flower);
+}
+
+.plant-marker__dot {
+  width: 14px;
+  height: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--plant-color);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--plant-color) 70%, black);
+}
+
+.plant-marker__label {
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 1.3;
+  white-space: nowrap;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  border-radius: 3px;
+}
+
+.plant-marker:focus-visible {
+  outline: none;
+}
+
+.plant-marker:focus-visible .plant-marker__dot,
+.plant-marker--inspected .plant-marker__dot {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--plant-color) 70%, black),
+    0 0 0 4px var(--accent);
+}
+
+.plant-marker--dragging {
+  z-index: 1;
+  cursor: grabbing;
+}
+
+.plant-marker--dragging .plant-marker__dot {
+  transform: scale(1.25);
+}
+
+.plant-marker--ghost {
+  opacity: 0.6;
+}
+
+/* Live drag highlights. */
+.plant-marker--companion .plant-marker__dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cat-herb) 80%, transparent);
+}
+
+.plant-marker--incompatible .plant-marker__dot,
+.plant-marker--spacing .plant-marker__dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--invalid) 80%, transparent);
+}
+
+.garden-beds {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.garden-beds--editing {
+  z-index: 6;
+  pointer-events: auto;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.garden-bed {
+  position: absolute;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--bed-soil) 45%, transparent);
+  border: 3px solid var(--bed-frame);
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+.garden-beds--editing .garden-bed {
+  cursor: move;
+  background: color-mix(in srgb, var(--bed-soil) 30%, transparent);
+}
+
+/* Above the plants; only the tab and handles take pointer input, so plants
+ * inside a selected bed stay clickable. */
+.garden-bed-selection {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.garden-bed-selection__frame {
+  position: absolute;
+  box-sizing: border-box;
   outline: 2px solid var(--accent);
-  outline-offset: -2px;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-.garden-cell--vegetable {
-  background: color-mix(in srgb, var(--cat-vegetable) 20%, var(--bg));
-  border-color: var(--cat-vegetable);
+.garden-bed-selection__tab {
+  position: absolute;
+  /* Offset to clear the top-left resize handle, so grabbing the tab never
+   * starts a resize. */
+  top: 6px;
+  left: 10px;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 4px;
+  cursor: move;
+  pointer-events: auto;
+  touch-action: none;
+  user-select: none;
 }
 
-.garden-cell--herb {
-  background: color-mix(in srgb, var(--cat-herb) 20%, var(--bg));
-  border-color: var(--cat-herb);
+.garden-bed--highlighted {
+  border-color: var(--accent);
 }
 
-.garden-cell--flower {
-  background: color-mix(in srgb, var(--cat-flower) 20%, var(--bg));
-  border-color: var(--cat-flower);
+.garden-bed--draft {
+  border-style: dashed;
 }
 
-/* A thin inset stripe, not a real border or background — plant category
- * (background + name) stays the dominant signal; sunlight is a secondary
- * accent that layers on top regardless of occupancy. */
-.garden-cell--sun-full-sun {
-  box-shadow: inset 0 3px 0 0 var(--sun-full-sun);
+.garden-bed--invalid {
+  border-color: var(--invalid);
+  background: color-mix(in srgb, var(--invalid) 20%, transparent);
 }
 
-.garden-cell--sun-partial-sun {
-  box-shadow: inset 0 3px 0 0 var(--sun-partial-sun);
+.garden-bed__label {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--bed-frame);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
-.garden-cell--sun-shade {
-  box-shadow: inset 0 3px 0 0 var(--sun-shade);
+.garden-bed--invalid .garden-bed__label {
+  color: var(--invalid);
+}
+
+.garden-bed__handle {
+  position: absolute;
+  pointer-events: auto;
+  touch-action: none;
+  width: 12px;
+  height: 12px;
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+}
+
+.garden-bed__handle--nw {
+  top: -8px;
+  left: -8px;
+  cursor: nwse-resize;
+}
+
+.garden-bed__handle--ne {
+  top: -8px;
+  right: -8px;
+  cursor: nesw-resize;
+}
+
+.garden-bed__handle--sw {
+  bottom: -8px;
+  left: -8px;
+  cursor: nesw-resize;
+}
+
+.garden-bed__handle--se {
+  bottom: -8px;
+  right: -8px;
+  cursor: nwse-resize;
+}
+
+.bed-panel__name {
+  min-width: 0;
+  flex: 1;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.bed-panel__name:hover,
+.bed-panel__name:focus {
+  border-color: var(--border);
+  background: var(--bg);
+}
+
+.bed-panel__delete {
+  margin-top: 16px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--invalid);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--invalid) 40%, transparent);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.bed-panel__delete:hover {
+  background: color-mix(in srgb, var(--invalid) 10%, transparent);
 }
 
 .placement-feedback {
@@ -316,15 +1038,9 @@
   border-color: color-mix(in srgb, var(--sun-full-sun) 40%, transparent);
 }
 
-.garden-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .garden-composition {
   box-sizing: border-box;
-  width: 240px;
+  width: 100%;
   padding: 16px;
   color: var(--text-h);
   background: var(--code-bg);
@@ -382,7 +1098,7 @@
 
 .garden-opportunities {
   box-sizing: border-box;
-  width: 240px;
+  width: 100%;
   padding: 16px;
   color: var(--text-h);
   background: var(--code-bg);
@@ -419,7 +1135,7 @@
 
 .garden-inspector {
   box-sizing: border-box;
-  width: 240px;
+  width: 100%;
   padding: 16px;
   color: var(--text-h);
   background: var(--code-bg);
@@ -556,8 +1272,7 @@
   border-color: var(--border);
 }
 
-@media (max-width: 1105px) {
-  .app-main {
-    grid-template-columns: minmax(0, 600px);
-  }
+.garden-bed-selection__tab:focus-visible {
+  outline: 2px solid var(--text-h);
+  outline-offset: 2px;
 }

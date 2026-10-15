@@ -1,6 +1,6 @@
 import { evaluateGardenComposition } from './composition'
 import type { GardenState } from './garden'
-import { getPlantIdAt, isValidCoordinate } from './garden'
+import { getPlacement } from './garden'
 import type { Plant } from './plant'
 import { evaluateNeighbors, getRelationship } from './relationships'
 import type { PlantRelationshipRule } from './relationships'
@@ -33,34 +33,30 @@ export type LocalCompanionOpportunity = {
 }
 
 /**
- * For the plant actually placed at (row, col): if it has no orthogonally
- * adjacent modeled companion, which other catalogue plants have a modeled
+ * For the given placement: if it has no modeled companion within the
+ * interaction distance, which other catalogue plants have a modeled
  * companion relationship with it. GardenState is the sole source of truth
- * for what's placed there — the plant id is derived from (row, col), never
+ * for what's placed — the plant id is derived from the placement, never
  * passed independently, so this can't drift from what's actually placed.
  *
  * Reuses evaluateNeighbors/getRelationship rather than reimplementing
- * adjacency or relationship symmetry. Returns null when there's no
- * opportunity to show: the coordinate is invalid or empty, the placed
- * plant id is unknown, it already has an adjacent companion, or there are
- * no companion candidates at all.
+ * proximity or relationship symmetry. Returns null when there's no
+ * opportunity to show: the placement or its plant id is unknown, it
+ * already has a nearby companion, or there are no companion candidates.
  */
 export function evaluateCompanionOpportunityForPlacement(
   garden: GardenState,
-  row: number,
-  col: number,
+  placementId: string,
   plantsById: Record<string, Plant>,
   rules: PlantRelationshipRule[],
 ): LocalCompanionOpportunity | null {
-  if (!isValidCoordinate(garden, row, col)) return null
-
-  const plantId = getPlantIdAt(garden, row, col)
+  const plantId = getPlacement(garden, placementId)?.plantId
   if (!plantId || !plantsById[plantId]) return null
 
-  const hasAdjacentCompanion = evaluateNeighbors(garden, row, col, plantId, plantsById, rules).some(
+  const hasNearbyCompanion = evaluateNeighbors(garden, placementId, plantsById, rules).some(
     (n) => n.relationship === 'companion',
   )
-  if (hasAdjacentCompanion) return null
+  if (hasNearbyCompanion) return null
 
   const candidatePlantIds = Object.keys(plantsById)
     .filter((id) => id !== plantId)

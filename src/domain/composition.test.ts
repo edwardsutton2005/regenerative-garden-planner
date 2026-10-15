@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import { evaluateGardenComposition } from './composition'
-import { createGarden, placePlant, removePlant, type GardenState } from './garden'
+import { createGarden, placePlant, removePlant, type GardenState, type Position } from './garden'
 import type { Plant } from './plant'
+
+// Center of a 12" cell — where the current UI snaps placements. Placement
+// ids in these tests are the "row,col" they were placed at.
+function at(row: number, col: number): Position {
+  return { x: col * 12 + 6, y: row * 12 + 6 }
+}
 
 const bushBean: Plant = {
   id: 'bush-bean',
   name: 'Bush Bean',
   category: 'vegetable',
-  minimumSpacingCells: 2,
+  spacingInches: { min: 12, max: 12 },
   lifecycle: 'annual',
   ecologicalRoles: ['nitrogen-fixation'],
 }
@@ -15,7 +21,7 @@ const pea: Plant = {
   id: 'pea',
   name: 'Pea',
   category: 'vegetable',
-  minimumSpacingCells: 2,
+  spacingInches: { min: 12, max: 12 },
   lifecycle: 'annual',
   ecologicalRoles: ['nitrogen-fixation'],
 }
@@ -23,7 +29,7 @@ const marigold: Plant = {
   id: 'marigold',
   name: 'Marigold',
   category: 'flower',
-  minimumSpacingCells: 1,
+  spacingInches: { min: 12, max: 12 },
   lifecycle: 'annual',
   ecologicalRoles: ['pollinator-support'],
 }
@@ -31,7 +37,7 @@ const carrot: Plant = {
   id: 'carrot',
   name: 'Carrot',
   category: 'vegetable',
-  minimumSpacingCells: 1,
+  spacingInches: { min: 12, max: 12 },
   lifecycle: 'biennial',
   ecologicalRoles: [],
 }
@@ -40,7 +46,7 @@ const clover: Plant = {
   id: 'clover',
   name: 'Clover',
   category: 'flower',
-  minimumSpacingCells: 1,
+  spacingInches: { min: 12, max: 12 },
   lifecycle: 'perennial',
   ecologicalRoles: ['nitrogen-fixation', 'pollinator-support'],
 }
@@ -49,25 +55,25 @@ const plantsById: Record<string, Plant> = { 'bush-bean': bushBean, pea, marigold
 
 describe('evaluateGardenComposition', () => {
   it('returns nothing for an empty garden', () => {
-    expect(evaluateGardenComposition(createGarden(4, 4), plantsById)).toEqual([])
+    expect(evaluateGardenComposition(createGarden(48, 48), plantsById)).toEqual([])
   })
 
   it('returns nothing when placed plants carry no ecological roles', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'carrot')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'carrot', at(0, 0))
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([])
   })
 
   it('reports a single represented role', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'bush-bean')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'bush-bean', at(0, 0))
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([
       { role: 'nitrogen-fixation', plantIds: ['bush-bean'] },
     ])
   })
 
   it('reports multiple represented roles in canonical order', () => {
-    let garden = createGarden(4, 4)
-    garden = placePlant(garden, 0, 0, 'bush-bean')
-    garden = placePlant(garden, 0, 1, 'marigold')
+    let garden = createGarden(48, 48)
+    garden = placePlant(garden, '0,0', 'bush-bean', at(0, 0))
+    garden = placePlant(garden, '0,1', 'marigold', at(0, 1))
 
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([
       { role: 'pollinator-support', plantIds: ['marigold'] },
@@ -76,9 +82,9 @@ describe('evaluateGardenComposition', () => {
   })
 
   it('lists multiple plant types that provide the same role, sorted by id', () => {
-    let garden = createGarden(4, 4)
-    garden = placePlant(garden, 0, 0, 'bush-bean')
-    garden = placePlant(garden, 0, 1, 'pea')
+    let garden = createGarden(48, 48)
+    garden = placePlant(garden, '0,0', 'bush-bean', at(0, 0))
+    garden = placePlant(garden, '0,1', 'pea', at(0, 1))
 
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([
       { role: 'nitrogen-fixation', plantIds: ['bush-bean', 'pea'] },
@@ -86,10 +92,10 @@ describe('evaluateGardenComposition', () => {
   })
 
   it('deduplicates repeated placements of the same plant type', () => {
-    let garden = createGarden(4, 4)
-    garden = placePlant(garden, 0, 0, 'bush-bean')
-    garden = placePlant(garden, 1, 1, 'bush-bean')
-    garden = placePlant(garden, 2, 2, 'bush-bean')
+    let garden = createGarden(48, 48)
+    garden = placePlant(garden, '0,0', 'bush-bean', at(0, 0))
+    garden = placePlant(garden, '1,1', 'bush-bean', at(1, 1))
+    garden = placePlant(garden, '2,2', 'bush-bean', at(2, 2))
 
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([
       { role: 'nitrogen-fixation', plantIds: ['bush-bean'] },
@@ -97,7 +103,7 @@ describe('evaluateGardenComposition', () => {
   })
 
   it('lists a plant under every role it carries', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'clover')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'clover', at(0, 0))
 
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([
       { role: 'pollinator-support', plantIds: ['clover'] },
@@ -106,15 +112,15 @@ describe('evaluateGardenComposition', () => {
   })
 
   it('produces the same result regardless of placement order', () => {
-    let gardenA = createGarden(4, 4)
-    gardenA = placePlant(gardenA, 0, 0, 'pea')
-    gardenA = placePlant(gardenA, 0, 1, 'bush-bean')
+    let gardenA = createGarden(48, 48)
+    gardenA = placePlant(gardenA, '0,0', 'pea', at(0, 0))
+    gardenA = placePlant(gardenA, '0,1', 'bush-bean', at(0, 1))
 
-    let gardenB = createGarden(4, 4)
-    gardenB = placePlant(gardenB, 0, 1, 'bush-bean')
-    gardenB = placePlant(gardenB, 0, 0, 'pea')
-    gardenB = removePlant(gardenB, 0, 0)
-    gardenB = placePlant(gardenB, 0, 0, 'pea')
+    let gardenB = createGarden(48, 48)
+    gardenB = placePlant(gardenB, '0,1', 'bush-bean', at(0, 1))
+    gardenB = placePlant(gardenB, '0,0', 'pea', at(0, 0))
+    gardenB = removePlant(gardenB, '0,0')
+    gardenB = placePlant(gardenB, '0,0', 'pea', at(0, 0))
 
     expect(evaluateGardenComposition(gardenA, plantsById)).toEqual(
       evaluateGardenComposition(gardenB, plantsById),
@@ -122,7 +128,7 @@ describe('evaluateGardenComposition', () => {
   })
 
   it('omits an unrepresented role entirely rather than flagging it as missing', () => {
-    const garden = placePlant(createGarden(4, 4), 0, 0, 'marigold')
+    const garden = placePlant(createGarden(48, 48), '0,0', 'marigold', at(0, 0))
     const result = evaluateGardenComposition(garden, plantsById)
 
     expect(result).toHaveLength(1)
@@ -131,8 +137,8 @@ describe('evaluateGardenComposition', () => {
 
   it('ignores a placement whose plant id is not in plantsById', () => {
     const garden: GardenState = {
-      ...createGarden(4, 4),
-      placements: { '0,0': { plantId: 'unknown-plant' } },
+      ...createGarden(48, 48),
+      placements: { '0,0': { id: '0,0', plantId: 'unknown-plant', position: at(0, 0) } },
     }
 
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([])

@@ -9,12 +9,13 @@ This layer answers: **What is true about the garden?**
 Facts come from two places:
 
 1. Current garden state:
-   - dimensions
-   - plant IDs at coordinates
-   - user-declared sunlight categories by cell
+   - physical dimensions in inches
+   - placements: placement id, plant ID, and continuous physical position
+   - planting beds: named rectangles in physical coordinates (layout only; no evaluator reads them yet)
+   - user-declared sunlight categories by environmental cell
 2. Curated knowledge:
    - plant category and lifecycle
-   - same-species spacing tier
+   - same-species spacing in inches (sourced)
    - ecological roles
    - companion and incompatible pairs
    - accepted sunlight categories (a set, not an ordered scale)
@@ -27,16 +28,16 @@ This layer answers: **What do those facts imply under the implemented rules?**
 
 Current evaluators include:
 
-- adjacent companion/incompatible classification
+- companion/incompatible classification within the interaction distance
 - same-species spacing violations
 - garden-wide ecological-role composition
 - absence of garden-wide pollinator support
 - local companion candidates for an inspected placement
 - sunlight fit for an inspected placement
 
-Each evaluator is deliberately narrow. For example, relationship evaluation uses orthogonal adjacency, while spacing uses Chebyshev distance. Composition reports representation, not quantity or quality. Opportunity logic is limited to explicitly approved policies rather than treating every absent fact as a deficiency. Sunlight fit is a categorical set-membership test, not an ordered scale — it reports `fit`, `mismatch`, or one of two distinct "not modeled" outcomes (unmodeled cell sunlight, unmodeled plant requirement), and the two "not modeled" outcomes are never presented as a mismatch.
+Each evaluator is deliberately narrow and decides for itself whether distance matters. The garden supplies spatial facts (positions and Euclidean distance); each rule interprets them. Relationship evaluation uses a 12-inch interaction distance, which is a product rule preserving V1's orthogonal-adjacency behavior, not a sourced horticultural distance. Spacing compares Euclidean distance against a plant's sourced minimum spacing in inches. Sunlight fit reads the environmental cell containing a placement's position. Composition reports representation, not quantity or quality. Opportunity logic is limited to explicitly approved policies rather than treating every absent fact as a deficiency. Sunlight fit is a categorical set-membership test, not an ordered scale — it reports `fit`, `mismatch`, or one of two distinct "not modeled" outcomes (unmodeled cell sunlight, unmodeled plant requirement), and the two "not modeled" outcomes are never presented as a mismatch.
 
-The functions return structured results with the coordinates, plant identities, relationship type, role, sunlight-fit status, or required distance needed to explain a conclusion. Results are recomputed from current state instead of cached in the garden.
+The functions return structured results with the placement ids, plant identities, distances, relationship type, role, sunlight-fit status, or required distance needed to explain a conclusion. Results, including which plants are near each other, are recomputed from current state instead of cached in the garden.
 
 ## Layer 3 — Explanation
 

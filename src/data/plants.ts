@@ -1,15 +1,12 @@
 import type { Plant } from '../domain/plant'
 
-// minimumSpacingCells is a relative tier (1 = least room needed, 4 = most),
-// informed by the real spacing-apart guidance noted per plant below — not a
-// stated inches-per-cell conversion. It governs spacing between two
-// placements of the SAME plant only (V1 does not apply it across species —
-// see domain/plant.ts and domain/spacing.ts). Where guidance varies by
-// variety or planting method, a representative common-garden figure was
-// used. Sources: UMN Extension (https://extension.umn.edu/flowers/sunflowers)
-// where available, otherwise The Old Farmer's Almanac plant guides, Farmers'
-// Almanac, or cross-checked spacing charts (Gardening Know How, Blooming
-// Expert).
+// spacingInches is the source's plant-to-plant spacing in inches (not
+// between-row spacing), stored as a min-max range; the spacing rule uses
+// only min. It governs spacing between two placements of the SAME plant only
+// (see domain/plant.ts and domain/spacing.ts). Every value is backed by a
+// registered source in evidence.spacingGuidance — see docs/data-sources.md
+// "Spacing" for each quoted statement, the variety each figure assumes, and
+// where sources disagree.
 //
 // lifecycle and ecologicalRoles are curated per the Part 2B taxonomy fixed
 // in PRODUCT.md — lifecycle is the standard horticultural classification,
@@ -33,57 +30,65 @@ import type { Plant } from '../domain/plant'
 // there. sunlightRequirement is held to a stricter standard — every plant's
 // accepted set is backed by a registered source (see data/sources.ts).
 export const plants: Plant[] = [
-  // ~24-36 in apart.
+  // Spacing: 24-36 in apart for vining types; bush types can be set closer (UMN).
   // Lifecycle: tender perennial; commonly grown as an annual in colder
   // climates.
   {
     id: 'tomato',
     name: 'Tomato',
     category: 'vegetable',
-    minimumSpacingCells: 4,
+    spacingInches: { min: 24, max: 36 },
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['umn-extension-tomatoes'] },
+    evidence: {
+      spacingGuidance: ['umn-extension-tomatoes'],
+      sunlightRequirement: ['umn-extension-tomatoes'],
+    },
   },
-  // ~2-3 in apart — by far the tightest-packed of the seed plants.
+  // Spacing: 2-3 in apart in the row (USU).
   // Lifecycle: biennial, though typically harvested in its first year.
   {
     id: 'carrot',
     name: 'Carrot',
     category: 'vegetable',
-    minimumSpacingCells: 1,
+    spacingInches: { min: 2, max: 3 },
     lifecycle: 'biennial',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun', 'partial-sun'],
-    evidence: { sunlightRequirement: ['illinois-extension-salad-in-the-shade'] },
+    evidence: {
+      spacingGuidance: ['usu-extension-carrots'],
+      sunlightRequirement: ['illinois-extension-salad-in-the-shade'],
+    },
   },
-  // ~4-8 in apart (leaf lettuce).
+  // Spacing: 4 in apart for leaf lettuce; head types need more (Illinois).
   // Lifecycle: annual.
   {
     id: 'lettuce',
     name: 'Lettuce',
     category: 'vegetable',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 4, max: 4 },
     lifecycle: 'annual',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun', 'partial-sun'],
     evidence: {
+      spacingGuidance: ['illinois-extension-lettuce'],
       sunlightRequirement: ['illinois-extension-salad-in-the-shade', 'illinois-extension-lettuce'],
     },
   },
-  // ~10-12 in apart.
+  // Spacing: 6-12 in apart (UMN).
   // Lifecycle: annual. Pollinator support is a capability when the plant is
   // allowed to flower — the app does not model flowering stage.
   {
     id: 'basil',
     name: 'Basil',
     category: 'herb',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 6, max: 12 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      spacingGuidance: ['umn-extension-basil'],
       sunlightRequirement: [
         'umn-extension-herbs',
         'pennstate-extension-basil',
@@ -91,50 +96,59 @@ export const plants: Plant[] = [
       ],
     },
   },
-  // ~18 in apart.
+  // Spacing: 18 in apart — peppermint-specific; no general mint figure found (NC State).
   // Lifecycle: perennial.
   {
     id: 'mint',
     name: 'Mint',
     category: 'herb',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 18, max: 18 },
     lifecycle: 'perennial',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun', 'partial-sun'],
-    evidence: { sunlightRequirement: ['usu-extension-mint'] },
+    evidence: {
+      spacingGuidance: ['ncsu-extension-peppermint'],
+      sunlightRequirement: ['usu-extension-mint'],
+    },
   },
-  // ~24-36 in apart (mature shrub spacing).
+  // Spacing: 2 ft apart (Penn State); UF/IFAS gives 36-48 in.
   // Lifecycle: tender perennial; commonly grown as an annual in colder
   // climates.
   {
     id: 'rosemary',
     name: 'Rosemary',
     category: 'herb',
-    minimumSpacingCells: 4,
+    spacingInches: { min: 24, max: 24 },
     lifecycle: 'tender-perennial',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['illinois-extension-rosemary'] },
+    evidence: {
+      spacingGuidance: ['pennstate-extension-rosemary'],
+      sunlightRequirement: ['illinois-extension-rosemary'],
+    },
   },
-  // ~6-10 in apart (French marigold, a common garden variety).
+  // Spacing: 8-10 in apart for French marigold (Clemson HGIC).
   // Lifecycle: annual.
   {
     id: 'marigold',
     name: 'Marigold',
     category: 'flower',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 8, max: 10 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['umn-extension-marigolds'] },
+    evidence: {
+      spacingGuidance: ['clemson-hgic-marigolds'],
+      sunlightRequirement: ['umn-extension-marigolds'],
+    },
   },
-  // ~18 in apart (typical branching garden variety, per UMN Extension).
+  // Spacing: 18-24 in apart for branching cultivars (UMN).
   // Lifecycle: annual.
   {
     id: 'sunflower',
     name: 'Sunflower',
     category: 'flower',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 18, max: 24 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun'],
@@ -143,103 +157,127 @@ export const plants: Plant[] = [
       sunlightRequirement: ['illinois-extension-sunflowers'],
     },
   },
-  // ~3-6 in apart.
+  // Spacing: 3-4 in apart (UMN).
   // Lifecycle: biennial, though typically harvested in its first year.
   {
     id: 'onion',
     name: 'Onion',
     category: 'vegetable',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 3, max: 4 },
     lifecycle: 'biennial',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['umn-extension-onions'] },
+    evidence: {
+      spacingGuidance: ['umn-extension-onions'],
+      sunlightRequirement: ['umn-extension-onions'],
+    },
   },
-  // ~1-4 in apart, depending on planting method/source.
+  // Spacing: 2-3 in apart in the row (USU).
   // Lifecycle: annual. Nitrogen-fixation reflects the plant's capability
   // via symbiotic rhizobia, not active transfer to neighboring plants.
   {
     id: 'bush-bean',
     name: 'Bush Bean',
     category: 'vegetable',
-    minimumSpacingCells: 1,
+    spacingInches: { min: 2, max: 3 },
     lifecycle: 'annual',
     ecologicalRoles: ['nitrogen-fixation'],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['usu-extension-beans'] },
+    evidence: {
+      spacingGuidance: ['usu-extension-beans'],
+      sunlightRequirement: ['usu-extension-beans'],
+    },
   },
-  // ~2 in apart, per common garden guidance.
+  // Spacing: 1-2 in apart in the row (USU); UMN's narrow-trench figure differs — see docs/data-sources.md.
   // Lifecycle: annual. See Bush Bean note on nitrogen-fixation.
   {
     id: 'pea',
     name: 'Pea',
     category: 'vegetable',
-    minimumSpacingCells: 1,
+    spacingInches: { min: 1, max: 2 },
     lifecycle: 'annual',
     ecologicalRoles: ['nitrogen-fixation'],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['umn-extension-peas'] },
+    evidence: {
+      spacingGuidance: ['usu-extension-peas'],
+      sunlightRequirement: ['umn-extension-peas'],
+    },
   },
-  // ~12-18 in apart.
+  // Spacing: 18 in apart in the row (USU).
   // Lifecycle: tender perennial; commonly grown as an annual in colder
   // climates.
   {
     id: 'bell-pepper',
     name: 'Bell Pepper',
     category: 'vegetable',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 18, max: 18 },
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['umn-extension-raised-bed-gardens'] },
+    evidence: {
+      spacingGuidance: ['usu-extension-peppers'],
+      sunlightRequirement: ['umn-extension-raised-bed-gardens'],
+    },
   },
-  // ~12-18 in apart.
+  // Spacing: 2 ft apart for single transplants (USU).
   // Lifecycle: annual.
   {
     id: 'cucumber',
     name: 'Cucumber',
     category: 'vegetable',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 24, max: 24 },
     lifecycle: 'annual',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['illinois-extension-get-started'] },
+    evidence: {
+      spacingGuidance: ['usu-extension-cucumber'],
+      sunlightRequirement: ['illinois-extension-get-started'],
+    },
   },
-  // ~15-18 in apart.
+  // Spacing: 12-18 in apart in the row (USU).
   // Lifecycle: biennial, though typically harvested in its first year.
   {
     id: 'cabbage',
     name: 'Cabbage',
     category: 'vegetable',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 12, max: 18 },
     lifecycle: 'biennial',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['usu-extension-cabbage'] },
+    evidence: {
+      spacingGuidance: ['usu-extension-cabbage'],
+      sunlightRequirement: ['usu-extension-cabbage'],
+    },
   },
-  // ~12-18 in apart, depending on planting method/type.
+  // Spacing: 10-12 in apart (UMN).
   // Lifecycle: tender perennial; commonly grown as an annual in colder
   // climates.
   {
     id: 'potato',
     name: 'Potato',
     category: 'vegetable',
-    minimumSpacingCells: 3,
+    spacingInches: { min: 10, max: 12 },
     lifecycle: 'tender-perennial',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['umn-extension-potatoes'] },
+    evidence: {
+      spacingGuidance: ['umn-extension-potatoes'],
+      sunlightRequirement: ['umn-extension-potatoes'],
+    },
   },
-  // ~10-12 in apart.
+  // Spacing: 10-12 in apart (UMN).
   // Lifecycle: annual.
   {
     id: 'dill',
     name: 'Dill',
     category: 'herb',
-    minimumSpacingCells: 2,
+    spacingInches: { min: 10, max: 12 },
     lifecycle: 'annual',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun'],
-    evidence: { sunlightRequirement: ['illinois-extension-dill'] },
+    evidence: {
+      spacingGuidance: ['umn-extension-dill'],
+      sunlightRequirement: ['illinois-extension-dill'],
+    },
   },
 ]
