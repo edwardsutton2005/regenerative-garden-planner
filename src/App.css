@@ -475,6 +475,12 @@
   text-underline-offset: 2px;
 }
 
+.nav-drawer__privacy {
+  align-self: flex-start;
+  font-size: 13px;
+  color: var(--text);
+}
+
 /* --- Workspace shell ------------------------------------------------------- */
 
 /* Full-screen: top bar; tools | canvas | inspector; inventory bar. */
@@ -1475,6 +1481,32 @@
   color: var(--text-h);
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   border-radius: 4px;
+}
+
+/* The decorative gardener (Gardener.tsx): above the envelopes, below the
+ * plants, so it never blocks a plant. Its animation loop sets its position
+ * and frame. */
+.gardener {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none;
+  touch-action: none;
+  filter: drop-shadow(0 2px 2px rgba(30, 18, 8, 0.35));
+}
+
+.gardener--draggable {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.gardener--draggable:active {
+  cursor: grabbing;
+}
+
+.gardener__sprite {
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
 }
 
 .garden-plants {

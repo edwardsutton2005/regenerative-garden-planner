@@ -141,5 +141,11 @@
       "file": "art/approved/bed/corner.png",
       "source": "art/candidates/bed/bed-framework.png (ChatGPT sheet): left post, middle row"
     }
+  },
+  "characters": {
+    "gardener": {
+      "file": "art/approved/characters/gardener-source.png",
+      "source": "ChatGPT sprite sheet, 2026-10-17 (painted background, removed at build)"
+    }
   }
 }

@@ -835,6 +835,27 @@ Sharing, collaboration, public galleries, payments, and new reasoning rules.
 
 ---
 
+# The Gardener
+
+## Goal
+
+A small character who lives in the garden, adding life and the game-like feel without adding information. *Implemented.*
+
+## Behavior
+
+- Drawn to scale (about 20 inches across), so it shows the garden's size in human terms; plant art, by contrast, keeps a fixed size.
+- Wanders the open ground when nothing is happening, and never walks into a bed.
+- Can be dragged anywhere in Select; dropped on a bed, it hops to the nearest open ground.
+- Walks over and kneels beside the selected plant.
+- Reacts to a placement or move using the planner's existing findings: a happy hop at a companion pairing, a puzzled head-scratch at an issue. It never says or implies anything the rules don't.
+- Never blocks plants, never saved, and hidden from the ⋯ menu. With reduced motion, it stands still.
+
+## Not Yet
+
+Speech bubbles, delivering the deferred Garden Assistant's answers (see "Role of AI"), and depth-sorting with plants.
+
+---
+
 # Part 4 — Regenerative Systems
 
 The planner can expand beyond individual plants and local conditions toward interactions between ecological systems.

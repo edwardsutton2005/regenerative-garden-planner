@@ -52,6 +52,22 @@
   background: color-mix(in srgb, var(--leaf) 88%, white);
 }
 
+.button--secondary {
+  min-height: 44px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  box-shadow: var(--lip);
+  cursor: pointer;
+}
+
+.button--secondary:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
 .button--primary:active {
   transform: translateY(3px);
   box-shadow: 0 1px 0 var(--leaf-dark);
@@ -141,6 +157,34 @@
 @media (max-width: 860px) {
   .hero {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Phone visitors: the planner is desktop-first, so offer to send the link. */
+.phone-note {
+  display: none;
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--panel);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--lip);
+}
+
+.phone-note p {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+.phone-note__link {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+@media (max-width: 700px) {
+  .phone-note {
+    display: block;
   }
 }
 
@@ -354,4 +398,53 @@
   text-align: center;
   background: var(--panel);
   border-top: 3px solid var(--wood);
+}
+
+.landing__footer a {
+  color: var(--text-h);
+  font-weight: 700;
+}
+
+/* --- Privacy page (privacy/index.html) -------------------------------------- */
+
+.privacy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 760px;
+}
+
+.privacy h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 40px);
+}
+
+.privacy h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+
+.privacy .card p,
+.privacy .card li {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.privacy .card p + p {
+  margin-top: 10px;
+}
+
+.privacy ul {
+  margin: 8px 0 10px;
+  padding-left: 22px;
+}
+
+.privacy a {
+  color: var(--leaf-dark);
+  font-weight: 700;
+}
+
+.privacy__updated {
+  margin: -8px 0 4px;
+  font-size: 14px;
 }

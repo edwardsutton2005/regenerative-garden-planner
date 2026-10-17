@@ -5,3 +5,8 @@
 export const SPRITE_PLANT_IDS: ReadonlySet<string> = new Set(["basil","bell-pepper","bush-bean","cabbage","carrot","cucumber","dill","lettuce","marigold","mint","onion","pea","potato","rosemary","sunflower","tomato"])
 
 export const ICON_PLANT_IDS: ReadonlySet<string> = new Set(["basil","bell-pepper","bush-bean","cabbage","carrot","cucumber","dill","lettuce","marigold","mint","onion","pea","potato","rosemary","sunflower","tomato"])
+
+// The gardener sheet (public/art/characters/gardener.png): a grid of
+// equal frames, in pixels. Each figure's head center is at anchorX and its
+// feet at baseline; referenceWidth is the idle figure's width.
+export const GARDENER_SHEET = {"columns":4,"rows":6,"frameWidth":189,"frameHeight":239,"anchorX":94,"baseline":234,"referenceWidth":165} as const

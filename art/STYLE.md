@@ -117,3 +117,30 @@ Requires `GEMINI_API_KEY` in `.env.local` (git-ignored; see `.env.example`).
 - **Output format:** Gemini currently returns JPEG, so pixel edges are slightly soft and carry faint color noise at full size. It is not visible once downscaled to app sizes; a later step could snap images to their pixel grid if needed.
 - **Unfinished icon bottoms:** icons repeatedly come back with the bottom edge half-rendered (blurred, pink-tinted). Plant sprites have not shown this. Step 3 above cleans small cases; large ones (where the subject itself is blurred) must be regenerated. Suspected cause: the mostly transparent icon reference; a version of it on flat magenta is worth trying.
 - **No seeds:** prompts are deterministic, but the model's output is not; expect variation between runs.
+
+## Character: the Gardener
+
+A decorative character who walks the garden (see PRODUCT.md). Same shared look as the plants, but drawn as a **three-quarter top-down game character** (the camera above and in front, like cozy farming games), not straight overhead: a person seen from directly above reads as a hat. Like all art, it carries no horticultural meaning and is not drawn to scale with the plants.
+
+**Design:** a friendly, approachable gardener with a wide-brimmed straw hat, a green apron or overalls over a simple shirt, gloves, and boots. Clear silhouette, chunky proportions (head about a third of the height), no fine detail. Avoid magenta, pink, and purple anywhere on the character, since magenta is the background key.
+
+**Sheet layout:** one image, **1024 × 1536**, a grid of **4 columns × 6 rows** of 256 × 256 frames. No grid lines, borders, labels, or shadows on the ground.
+
+| Row | Animation | Frames |
+|---|---|---|
+| 1 | Walk toward the viewer (down) | 4-frame walk cycle |
+| 2 | Walk away from the viewer (up) | 4-frame walk cycle |
+| 3 | Walk facing left (right is mirrored in code) | 4-frame walk cycle |
+| 4 | Idle, facing the viewer | 4 frames: subtle breathing, one blink |
+| 5 | Kneel to inspect a plant, facing the viewer | 4 frames: crouch, kneel, look closely, stand |
+| 6 | Reactions, facing the viewer | 2 frames happy hop, 2 frames puzzled head-scratch |
+
+**Frame rules:** the same character at the same size in every frame; horizontally centered in its cell; feet on the same baseline, about 20 px above each cell's bottom; nothing crosses into a neighboring cell. Background: flat solid magenta `#FF00FF`, so `scripts/remove-background.ts` can make it transparent.
+
+**Files:** raw sheets go in `art/candidates/gardener/` (for example `gardener-sheet.png`, `-2`, …). The approved sheet is `art/approved/characters/gardener-source.png` (the first ChatGPT sheet, approved 2026-10-17), and `npm run art:build` turns it into `public/art/characters/gardener.png`.
+
+**In practice ChatGPT ignored the magenta background** and painted a dark gradient with a glow. The build handles that: `scripts/sprite-sheet.ts` removes a gradually shaded background by stopping at the figures' dark outlines, so a sheet works as long as every figure has a closed dark outline. It also re-packs the figures into an even grid, since generated sheets drift from their own grid; the 24 figures only need to be separate and in the stated row order. If one sheet can't stay consistent, generate one row per image instead (1024 × 256, the same row order, named `gardener-walk-down.png` and so on).
+
+**Prompt to use** (attach `references/tomato-plant-reference.png` and `references/tomato-icon-reference.png` as style references):
+
+> A pixel-art-inspired sprite sheet of a friendly gardener character for a cozy top-down garden game, matching the attached reference images in pixel scale, saturation, lighting, outline darkness, and crisp blocky edges. Three-quarter top-down view. The gardener wears a wide-brimmed straw hat, a green apron over a simple shirt, gloves, and boots; chunky proportions, head about a third of the body height, strong readable silhouette, minimal micro-detail. Layout: 1024 × 1536 image, an invisible grid of 4 columns × 6 rows of 256 × 256 cells, one pose per cell, character centered in each cell with feet on the same baseline, same size in every cell, nothing crossing cell edges. Row 1: 4-frame walk cycle facing the viewer. Row 2: 4-frame walk cycle facing away. Row 3: 4-frame walk cycle facing left. Row 4: 4 idle frames facing the viewer (subtle breathing, one blink). Row 5: 4 frames kneeling to inspect a plant (crouch, kneel, look closely, stand). Row 6: 2 frames of a happy hop, then 2 frames of a puzzled head-scratch. Flat solid magenta (#FF00FF) background everywhere. No grid lines, borders, text, labels, ground, shadows, or scenery. No pink or purple on the character.

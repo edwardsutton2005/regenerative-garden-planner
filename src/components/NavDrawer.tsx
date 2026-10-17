@@ -242,6 +242,9 @@ function NavDrawer({
                 )}
               </>
             )}
+            <a className="nav-drawer__privacy" href="/privacy/">
+              Privacy
+            </a>
           </section>
         )}
       </div>

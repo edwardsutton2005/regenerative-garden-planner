@@ -28,10 +28,13 @@ type TopBarProps = {
   onUndo: () => void
   onRedo: () => void
   onClearGarden: () => void
+  gardenerVisible: boolean
+  onToggleGardener: () => void
 }
 
 /** The menu button, garden identity (an editable name) and save status,
- * undo/redo, and a menu for the destructive Clear Garden. */
+ * undo/redo, and a menu for showing the gardener and the destructive Clear
+ * Garden. */
 function TopBar({
   gardenName,
   saveStatus,
@@ -45,6 +48,8 @@ function TopBar({
   onUndo,
   onRedo,
   onClearGarden,
+  gardenerVisible,
+  onToggleGardener,
 }: TopBarProps) {
   const menuRef = useRef<HTMLDetailsElement>(null)
 
@@ -107,6 +112,9 @@ function TopBar({
             <Icon name="more" />
           </summary>
           <div className="top-bar__menu-items">
+            <button type="button" onClick={() => fromMenu(onToggleGardener)}>
+              {gardenerVisible ? 'Hide gardener' : 'Show gardener'}
+            </button>
             <button
               type="button"
               className="top-bar__danger"

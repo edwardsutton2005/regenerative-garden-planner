@@ -90,7 +90,7 @@ npm install
 npm run dev
 ```
 
-The landing page is at `/` and the planner at `/plan/`.
+The landing page is at `/`, the planner at `/plan/`, and the privacy page at `/privacy/`.
 
 ### Accounts
 
@@ -124,6 +124,8 @@ npm run build
 ```
 
 The test suite covers garden-state invariants, coordinate boundaries, relationship symmetry and conflicts, spacing boundaries, composition, opportunity policies, and data/provenance integrity. Pure helpers behind the canvas and art build (screen↔inch conversion, spacing previews, scale-bar lengths, textures, background removal) are tested too. Drag interactions, zoom/pan, and visual layout are verified manually in the browser.
+
+GitHub Actions runs the same checks (lint, tests, build) on every push and pull request (`.github/workflows/ci.yml`).
 
 ## Plant Art Pipeline
 

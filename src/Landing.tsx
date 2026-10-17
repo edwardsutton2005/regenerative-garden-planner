@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Icon from './components/Icon'
 import { plantIconUrl, plantSpriteUrl } from './components/plantArt'
 import { plants } from './data/plants'
@@ -65,6 +66,46 @@ function PlannerLink({ className }: { className: string }) {
   )
 }
 
+/**
+ * Shown only on phone-sized screens (see Landing.css): the planner needs a
+ * bigger screen, so offer to send the link onward, through the phone's own
+ * share sheet where there is one, otherwise by copying it.
+ */
+function SendToComputer() {
+  const [status, setStatus] = useState<'idle' | 'copied' | 'failed'>('idle')
+  const url = `${location.origin}${PLANNER_URL}`
+
+  async function send() {
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Regenerative Garden Planner', url })
+      } catch {
+        // Closing the share sheet is fine.
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setStatus('copied')
+    } catch {
+      setStatus('failed')
+    }
+  }
+
+  return (
+    <div className="phone-note">
+      <p>
+        <strong>On your phone?</strong> The planner needs a computer-sized screen. Send yourself the
+        link for later.
+      </p>
+      <button type="button" className="button button--secondary" onClick={send}>
+        {status === 'copied' ? 'Link copied' : 'Send me the link'}
+      </button>
+      {status === 'failed' && <p className="phone-note__link">{url}</p>}
+    </div>
+  )
+}
+
 function GardenScene() {
   return (
     <div className="scene" role="img" aria-label="A garden plot with a raised bed of tomato, basil, marigold, and lettuce, and notes about which plants pair well.">
@@ -112,6 +153,7 @@ function Landing() {
             </p>
             <PlannerLink className="button button--primary" />
             <p className="hero__small">Free · No account needed · Saves in your browser · Best on desktop</p>
+            <SendToComputer />
           </div>
           <GardenScene />
         </section>
@@ -178,7 +220,9 @@ function Landing() {
         </section>
       </main>
 
-      <footer className="landing__footer">Regenerative Garden Planner</footer>
+      <footer className="landing__footer">
+        Regenerative Garden Planner · <a href="/privacy/">Privacy</a>
+      </footer>
     </div>
   )
 }

@@ -15,7 +15,7 @@ const SCALE_BAR_MAX_PX = 120
 /** Movement before a press becomes a pan; less stays a click. */
 const PAN_THRESHOLD_PX = 4
 /** Things that keep their own drag (or click) even when drag-to-pan is on. */
-const OWN_DRAG = '.plant-marker, .garden-bed-selection__tab, .garden-bed__handle'
+const OWN_DRAG = '.plant-marker, .garden-bed-selection__tab, .garden-bed__handle, .gardener'
 
 type Anchor = { fx: number; fy: number; clientX: number; clientY: number }
 type Pan = { pointerId: number; x: number; y: number; left: number; top: number; active: boolean }

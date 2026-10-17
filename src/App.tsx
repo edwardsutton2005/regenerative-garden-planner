@@ -1,30 +1,21 @@
 import { useEffect, useEffectEvent, useState } from 'react'
-import BedPanel from './components/BedPanel'
 import CanvasViewport from './components/CanvasViewport'
 import GardenCanvas from './components/GardenCanvas'
 import type { CanvasMode } from './components/GardenCanvas'
-import GardenComposition from './components/GardenComposition'
-import GardenInspector from './components/GardenInspector'
-import GardenOpportunities from './components/GardenOpportunities'
 import GardenSetup from './components/GardenSetup'
 import Icon from './components/Icon'
 import InventoryBar from './components/InventoryBar'
-import PlacementFeedback from './components/PlacementFeedback'
 import PlantCatalog from './components/PlantCatalog'
 import ToolRail from './components/ToolRail'
 import type { RailTool, SunlightBrush } from './components/ToolRail'
 import TopBar from './components/TopBar'
+import WorkspaceInspector from './components/WorkspaceInspector'
 import type { SaveStatus } from './components/TopBar'
 import { toPlantPosition } from './components/canvasGeometry'
 import { addToInventory, removeFromInventory } from './components/plantChoice'
 import { useWorkspaceShortcuts } from './components/useWorkspaceShortcuts'
 import { plants } from './data/plants'
 import { relationshipRules } from './data/relationships'
-import { evaluateGardenComposition } from './domain/composition'
-import {
-  evaluateCompanionOpportunityForPlacement,
-  evaluateGardenOpportunities,
-} from './domain/opportunities'
 import {
   GARDEN_DEFAULT_SIZE,
   addBed,
@@ -34,7 +25,6 @@ import {
   getBed,
   getBedAt,
   getPlacement,
-  getPlacementsInBed,
   moveBed,
   movePlant,
   nextBedName,
@@ -47,10 +37,6 @@ import {
 } from './domain/garden'
 import type { BedRect, GardenState, Position } from './domain/garden'
 import type { Plant } from './domain/plant'
-import { evaluateNeighborsForFocuses } from './domain/relationships'
-import { evaluateSpacingForFocuses } from './domain/spacing'
-import { evaluateSunlightFit } from './domain/sunlightFit'
-import type { SunlightFitResult } from './domain/sunlightFit'
 import {
   EMPTY_HISTORY,
   applyChange,
@@ -89,6 +75,25 @@ type ActiveTool =
 type Selection = { kind: 'plant'; id: string } | { kind: 'bed'; id: string } | null
 
 const SELECT: ActiveTool = { kind: 'select' }
+
+// Whether the decorative gardener is shown: a per-browser preference.
+const SHOW_GARDENER_KEY = 'regenerative-garden:show-gardener'
+
+function loadShowGardener(): boolean {
+  try {
+    return localStorage.getItem(SHOW_GARDENER_KEY) !== 'false'
+  } catch {
+    return true
+  }
+}
+
+function saveShowGardener(show: boolean) {
+  try {
+    localStorage.setItem(SHOW_GARDENER_KEY, String(show))
+  } catch {
+    // Without storage the choice lasts until the page reloads.
+  }
+}
 
 type AppProps = {
   /** The plan to open, or null for the setup screen. */
@@ -135,6 +140,7 @@ function App({
       ? "1 saved plant couldn't be restored and was left out."
       : `${dropped} saved plants couldn't be restored and were left out.`
   })
+  const [showGardener, setShowGardener] = useState(loadShowGardener)
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [inspectorOpen, setInspectorOpen] = useState(true)
   // Placement ids to show transient feedback for: the plant just placed or
@@ -346,57 +352,11 @@ function App({
 
   const canvasMode: CanvasMode = activeTool.kind
 
-  const neighbors = evaluateNeighborsForFocuses(
-    garden,
-    lastPlacementIds,
-    plantsById,
-    relationshipRules,
-  )
-  const spacingViolations = evaluateSpacingForFocuses(garden, lastPlacementIds, plantsById)
-  const sunlightMismatches = lastPlacementIds
-    .map((id) => evaluateSunlightFit(garden, id, plantsById))
-    .filter((r): r is SunlightFitResult => r !== null && r.status === 'mismatch')
-
-  const composition = evaluateGardenComposition(garden, plantsById)
-  const gardenOpportunities = evaluateGardenOpportunities(garden, plantsById)
-
   const inspectedPlacement = selectedPlacementId
     ? getPlacement(garden, selectedPlacementId)
     : undefined
   const inspectedPlant = inspectedPlacement ? plantsById[inspectedPlacement.plantId] : undefined
-  const inspectedIds = inspectedPlacement ? [inspectedPlacement.id] : []
-
-  const inspectorNeighbors = evaluateNeighborsForFocuses(
-    garden,
-    inspectedIds,
-    plantsById,
-    relationshipRules,
-  )
-  const inspectorSpacing = evaluateSpacingForFocuses(garden, inspectedIds, plantsById)
-  const inspectorSunlightFit = inspectedPlacement
-    ? evaluateSunlightFit(garden, inspectedPlacement.id, plantsById)
-    : null
-  const localCompanionOpportunity = inspectedPlacement
-    ? evaluateCompanionOpportunityForPlacement(
-        garden,
-        inspectedPlacement.id,
-        plantsById,
-        relationshipRules,
-      )
-    : null
-  const inspectedBed = inspectedPlacement ? getBedAt(garden, inspectedPlacement.position) : undefined
-
   const selectedBed = selectedBedId ? getBed(garden, selectedBedId) : undefined
-  const selectedBedPlantNames = selectedBed
-    ? getPlacementsInBed(garden, selectedBed.id)
-        .map((p) => plantsById[p.plantId]?.name)
-        .filter((name): name is string => name !== undefined)
-    : []
-
-  const companionCandidates = (localCompanionOpportunity?.candidatePlantIds ?? [])
-    .map((id) => plantsById[id])
-    .filter((p): p is Plant => p !== undefined)
-    .sort((a, b) => a.name.localeCompare(b.name))
 
   const inventoryPlants = inventory
     .map((id) => plantsById[id])
@@ -447,6 +407,11 @@ function App({
         onUndo={handleUndo}
         onRedo={handleRedo}
         onClearGarden={handleClearGarden}
+        gardenerVisible={showGardener}
+        onToggleGardener={() => {
+          setShowGardener(!showGardener)
+          saveShowGardener(!showGardener)
+        }}
       />
 
       <ToolRail
@@ -493,57 +458,23 @@ function App({
               onMoveBed: (id, position) => updateGarden((current) => moveBed(current, id, position)),
               onResizeBed: (id, rect) => updateGarden((current) => resizeBed(current, id, rect)),
             }}
+            gardener={showGardener ? { lastPlacementIds } : null}
           />
         </CanvasViewport>
       </main>
 
-      <aside className="workspace__inspector" aria-label="Inspector">
-        <button
-          type="button"
-          className="workspace__inspector-toggle"
-          onClick={() => setInspectorOpen((open) => !open)}
-          aria-expanded={inspectorOpen}
-          aria-label={inspectorOpen ? 'Collapse inspector' : 'Expand inspector'}
-        >
-          <Icon name={inspectorOpen ? 'chevronRight' : 'chevronLeft'} size={16} />
-        </button>
-        {inspectorOpen && (
-          <div className="workspace__inspector-body">
-            {selectedBed && (
-              <BedPanel
-                key={selectedBed.id}
-                bed={selectedBed}
-                plantNames={selectedBedPlantNames}
-                onRename={(name) =>
-                  updateGarden((current) => renameBed(current, selectedBed.id, name))
-                }
-                onDelete={() => deleteBed(selectedBed.id)}
-                onClose={() => setSelection(null)}
-              />
-            )}
-            {inspectedPlant && (
-              <GardenInspector
-                plant={inspectedPlant}
-                bedName={inspectedBed?.name}
-                neighbors={inspectorNeighbors}
-                spacingViolations={inspectorSpacing}
-                sunlightFit={inspectorSunlightFit}
-                companionCandidates={companionCandidates}
-                onClose={() => setSelection(null)}
-              />
-            )}
-            {/* Temporary home for "what just happened?" feedback; Slice 2
-                replaces it with short-lived messages on the canvas. */}
-            <PlacementFeedback
-              neighbors={neighbors}
-              spacingViolations={spacingViolations}
-              sunlightMismatches={sunlightMismatches}
-            />
-            <GardenComposition composition={composition} plantsById={plantsById} />
-            <GardenOpportunities opportunities={gardenOpportunities} />
-          </div>
-        )}
-      </aside>
+      <WorkspaceInspector
+        garden={garden}
+        plantsById={plantsById}
+        open={inspectorOpen}
+        onToggleOpen={() => setInspectorOpen((open) => !open)}
+        lastPlacementIds={lastPlacementIds}
+        inspectedPlacementId={selectedPlacementId}
+        selectedBed={selectedBed}
+        onRenameBed={(id, name) => updateGarden((current) => renameBed(current, id, name))}
+        onDeleteBed={deleteBed}
+        onCloseSelection={() => setSelection(null)}
+      />
 
       <InventoryBar
         plants={inventoryPlants}

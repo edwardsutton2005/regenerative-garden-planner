@@ -14,6 +14,7 @@ import type { PlantRelationshipRule } from '../domain/relationships'
 import { clientToGarden, percentCircle, percentPoint, percentRect, toPlantPosition } from './canvasGeometry'
 import { PLANT_DRAG_MIME_TYPE, isPlantDragPayload } from './dragPayload'
 import GardenBeds from './GardenBeds'
+import Gardener from './Gardener'
 import { candidateFeedback, inspectedEnvelope } from './spacingPreview'
 import type { DragCandidate } from './spacingPreview'
 import { plantSpriteUrl } from './plantArt'
@@ -66,14 +67,16 @@ type GardenCanvasProps = {
   onPlaceAtCenter: () => string | null
   /** Props for the planting-bed layers, minus garden and highlight. */
   beds: Omit<ComponentProps<typeof GardenBeds>, 'garden' | 'highlightedBedId'>
+  /** The decorative gardener, or null when hidden. */
+  gardener: { lastPlacementIds: string[] } | null
 }
 
 /**
  * The garden as a continuous physical canvas. Everything is drawn in
  * percentages of the garden's size; pointer input converts to inches through
  * canvasGeometry at event time. Layers, bottom to top: ground and grid lines
- * (CSS background), beds, sunlight wash, spacing envelopes, plant markers,
- * the selected bed's tab and handles. See ARCHITECTURE.md "Coordinate Spaces
+ * (CSS background), beds, sunlight wash, spacing envelopes, the gardener,
+ * plant markers, the selected bed's tab and handles. See ARCHITECTURE.md "Coordinate Spaces
  * and the Canvas".
  */
 function GardenCanvas({
@@ -92,6 +95,7 @@ function GardenCanvas({
   onPaintStart,
   onPlaceAtCenter,
   beds,
+  gardener,
 }: GardenCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [plantDrag, setPlantDrag] = useState<PlantDrag | null>(null)
@@ -389,6 +393,18 @@ function GardenCanvas({
           />
         ))}
       </div>
+
+      {gardener && (
+        <Gardener
+          garden={garden}
+          plantsById={plantsById}
+          rules={rules}
+          canvasRef={canvasRef}
+          selectedPlacementId={selectedPlacementId}
+          lastPlacementIds={gardener.lastPlacementIds}
+          draggable={mode === 'select'}
+        />
+      )}
 
       <div className="garden-plants">
         {placements.map((placement) => {
