@@ -35,7 +35,9 @@ function TopBar({
   return (
     <header className="top-bar">
       <div className="top-bar__title">
-        <span className="top-bar__app">Regenerative Garden Planner</span>
+        <a className="top-bar__app" href="/">
+          Regenerative Garden Planner
+        </a>
         <span className="top-bar__garden">Garden · {formatSize(gardenWidth, gardenHeight)}</span>
       </div>
       <div className="top-bar__actions">

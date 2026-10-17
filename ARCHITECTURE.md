@@ -26,8 +26,11 @@ src/
 ├── components/   React interaction and presentation
 ├── data/         Curated plants, relationship rules, and source registry
 ├── domain/       Framework-independent state operations and evaluation rules
-├── App.tsx       Application orchestration and interaction state
-└── main.tsx      Browser entry point
+├── App.tsx       Planner orchestration and interaction state
+├── main.tsx      Planner entry point (plan/index.html)
+├── Landing.tsx   Landing page (index.html), entry landingMain.tsx
+index.html        Landing page at /
+plan/index.html   Planner at /plan/
 scripts/          Development-time art pipeline (generation, background removal, textures, build)
 art/              Style guide, references, and approved art masters (candidates are git-ignored)
 public/art/       Built app art: sprites, icons, textures, bed frame
@@ -272,4 +275,4 @@ The application remains client-side until accounts are introduced (see PRODUCT.m
 
 The boundary extends rather than changes: persistence stores plans; the domain layer understands and manipulates gardens; the reasoning engine evaluates gardens; the UI presents and edits them. `GardenState` and the deterministic operations stay independent of React, Supabase, or any storage representation, and the reasoning engine never operates on database rows.
 
-The landing page and the planner are separate pages of one Vite multi-page build (`/` and `/plan/`), so no client-side router is needed.
+The landing page and the planner are separate pages of one Vite multi-page build (`/` and `/plan/`, both listed in `vite.config.ts`), so no client-side router is needed. The landing page shares the design tokens, plant art, and plant list, but never imports planner components or domain logic, so its bundle stays small.

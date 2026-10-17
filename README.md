@@ -89,6 +89,8 @@ npm install
 npm run dev
 ```
 
+The landing page is at `/` and the planner at `/plan/`.
+
 Create a production build and preview it locally with:
 
 ```bash

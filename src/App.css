@@ -89,6 +89,29 @@
   font-size: 17px;
   font-weight: 800;
   color: var(--text-h);
+  text-decoration: none;
+}
+
+.top-bar__app:hover {
+  text-decoration: underline;
+}
+
+/* Shown above the planner on small screens (see plan/index.html). */
+.desktop-note {
+  display: none;
+  margin: 0;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-h);
+  background: var(--accent-bg);
+  border-bottom: 1px solid var(--accent-border);
+}
+
+@media (max-width: 900px) {
+  .desktop-note {
+    display: block;
+  }
 }
 
 .top-bar__garden {
@@ -116,6 +139,9 @@
   border-radius: var(--radius-sm);
   box-shadow: var(--lip);
   cursor: pointer;
+  transition:
+    transform var(--press),
+    box-shadow var(--press);
 }
 
 .top-bar__actions > button:hover:not(:disabled),
@@ -201,6 +227,11 @@
   border: 2px solid transparent;
   border-radius: var(--radius);
   cursor: pointer;
+  transition: transform var(--press);
+}
+
+.tool-rail__tool:active {
+  transform: translateY(1px);
 }
 
 .tool-rail__tool:hover {
@@ -378,12 +409,17 @@
   border-radius: var(--radius);
   box-shadow: inset 0 -3px 0 var(--inset), var(--lip);
   cursor: pointer;
-  transition: transform 0.1s ease-out;
+  transition: transform 160ms var(--ease-out);
 }
 
 .inventory__slot:hover {
   border-color: var(--accent-border);
-  transform: translateY(-2px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .inventory__slot:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .inventory__slot--active {
@@ -439,6 +475,9 @@
   border-radius: var(--radius);
   box-shadow: 0 3px 0 var(--leaf-dark);
   cursor: pointer;
+  transition:
+    transform var(--press),
+    box-shadow var(--press);
 }
 
 .inventory__add:hover,
@@ -506,6 +545,11 @@
   display: grid;
   place-items: center;
   background: rgba(40, 24, 10, 0.4);
+  transition: opacity 180ms var(--ease-out);
+
+  @starting-style {
+    opacity: 0;
+  }
 }
 
 .catalog {
@@ -521,6 +565,14 @@
   background: var(--panel);
   border: 3px solid var(--wood);
   border-radius: 16px;
+  transition:
+    transform 220ms var(--ease-out),
+    opacity 220ms var(--ease-out);
+
+  @starting-style {
+    transform: scale(0.96) translateY(6px);
+    opacity: 0;
+  }
   box-shadow:
     inset 0 0 0 2px var(--bg),
     0 4px 0 var(--wood-dark),
@@ -690,12 +742,12 @@
 }
 
 .garden-controls__field input[aria-invalid='true'] {
-  border-color: var(--cat-vegetable);
+  border-color: var(--issue);
 }
 
 .garden-controls__error {
   font-size: 12px;
-  color: color-mix(in srgb, var(--cat-vegetable) 65%, var(--text-h));
+  color: color-mix(in srgb, var(--issue) 65%, var(--text-h));
 }
 
 .garden-controls button {
@@ -1104,7 +1156,7 @@
 
 /* Live drag highlights. */
 .plant-marker--companion .plant-marker__dot {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cat-herb) 80%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 80%, transparent);
 }
 
 .plant-marker--incompatible .plant-marker__dot,
@@ -1308,36 +1360,37 @@
   gap: 6px;
 }
 
+/* Feedback items take a tint from --tone (set by their modifier): good,
+ * issue, or idea. Untoned items are neutral. */
+.placement-feedback__item,
+.garden-inspector__item,
+.garden-opportunities__item {
+  color: color-mix(in srgb, var(--tone, var(--text)) 65%, var(--text-h));
+  background: color-mix(in srgb, var(--tone, var(--text)) 9%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--tone, var(--text)) 32%, transparent);
+}
+
 .placement-feedback__item {
   padding: 8px 12px;
   border-radius: var(--radius-sm);
   font-size: 14px;
   font-weight: 600;
-  border: 1px solid transparent;
 }
 
 .placement-feedback__item--companion {
-  color: color-mix(in srgb, var(--cat-herb) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-herb) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-herb) 40%, transparent);
+  --tone: var(--good);
 }
 
 .placement-feedback__item--incompatible {
-  color: color-mix(in srgb, var(--cat-vegetable) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-vegetable) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-vegetable) 40%, transparent);
+  --tone: var(--issue);
 }
 
 .placement-feedback__item--spacing {
-  color: color-mix(in srgb, var(--cat-flower) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+  --tone: var(--issue);
 }
 
 .placement-feedback__item--sunlight {
-  color: color-mix(in srgb, var(--sun-full-sun) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--sun-full-sun) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--sun-full-sun) 40%, transparent);
+  --tone: var(--issue);
 }
 
 .garden-composition {
@@ -1352,11 +1405,30 @@
 }
 
 .garden-composition__summary {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 6px;
+  align-items: center;
+  list-style: none;
   cursor: pointer;
   font-weight: 800;
 }
 
+.garden-composition__summary::-webkit-details-marker {
+  display: none;
+}
+
+.garden-composition__summary .icon {
+  color: var(--text);
+  transition: transform 160ms var(--ease-out);
+}
+
+.garden-composition[open] .garden-composition__summary .icon {
+  transform: rotate(90deg);
+}
+
 .garden-composition__snapshot {
+  grid-column: 2;
   display: block;
   margin-top: 2px;
   font-weight: 400;
@@ -1429,12 +1501,10 @@
 }
 
 .garden-opportunities__item {
+  --tone: var(--idea);
   padding: 6px 8px;
   border-radius: 6px;
   font-size: 13px;
-  color: color-mix(in srgb, var(--cat-flower) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
-  border: 1px solid color-mix(in srgb, var(--cat-flower) 40%, transparent);
 }
 
 .garden-inspector {
@@ -1500,7 +1570,7 @@
 }
 
 .garden-inspector__ok {
-  color: color-mix(in srgb, var(--cat-herb) 65%, var(--text-h));
+  color: color-mix(in srgb, var(--good) 65%, var(--text-h));
 }
 
 .garden-inspector__list {
@@ -1516,31 +1586,22 @@
   padding: 6px 8px;
   border-radius: 6px;
   font-size: 13px;
-  border: 1px solid transparent;
 }
 
 .garden-inspector__item--companion {
-  color: color-mix(in srgb, var(--cat-herb) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-herb) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-herb) 40%, transparent);
+  --tone: var(--good);
 }
 
 .garden-inspector__item--incompatible {
-  color: color-mix(in srgb, var(--cat-vegetable) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-vegetable) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-vegetable) 40%, transparent);
+  --tone: var(--issue);
 }
 
 .garden-inspector__item--spacing {
-  color: color-mix(in srgb, var(--cat-flower) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+  --tone: var(--issue);
 }
 
 .garden-inspector__item--opportunity {
-  color: color-mix(in srgb, var(--cat-flower) 65%, var(--text-h));
-  background: color-mix(in srgb, var(--cat-flower) 12%, var(--bg));
-  border-color: color-mix(in srgb, var(--cat-flower) 40%, transparent);
+  --tone: var(--idea);
 }
 
 .garden-inspector__lifecycle {
@@ -1555,11 +1616,11 @@
 }
 
 .garden-inspector__sunlight-fit--fit {
-  color: color-mix(in srgb, var(--cat-herb) 65%, var(--text-h));
+  color: color-mix(in srgb, var(--good) 65%, var(--text-h));
 }
 
 .garden-inspector__sunlight-fit--mismatch {
-  color: color-mix(in srgb, var(--sun-full-sun) 65%, var(--text-h));
+  color: color-mix(in srgb, var(--issue) 65%, var(--text-h));
 }
 
 .garden-inspector__sunlight-fit--unmodeled-cell,
@@ -1569,12 +1630,6 @@
 
 .garden-inspector__list--roles {
   margin-top: 6px;
-}
-
-.garden-inspector__item--role {
-  color: var(--text);
-  background: color-mix(in srgb, var(--text) 6%, var(--bg));
-  border-color: var(--border);
 }
 
 .garden-bed-selection__tab:focus-visible {

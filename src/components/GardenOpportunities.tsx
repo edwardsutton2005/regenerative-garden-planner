@@ -7,7 +7,7 @@ type GardenOpportunitiesProps = {
 function opportunityMessage(opportunity: GardenOpportunity): string {
   switch (opportunity.type) {
     case 'pollinator-support-absent':
-      return 'Pollinator support is not currently represented. Consider adding a plant with pollinator-support.'
+      return 'Pollinator support is not currently represented. Consider adding a pollinator-support plant.'
   }
 }
 

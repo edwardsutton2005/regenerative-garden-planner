@@ -17,6 +17,11 @@
   --select: #ffd34d;
   --leaf: #4f8a35;
   --leaf-dark: #36622a;
+  /* Feedback meaning, never borrowed from plant-category colors: a modeled
+   * strength, a rule issue, and a possibility to consider (not a problem). */
+  --good: var(--leaf);
+  --issue: #c0492f;
+  --idea: #4a7fb0;
   --code-bg: var(--inset);
   --radius: 10px;
   --radius-sm: 6px;
@@ -24,6 +29,10 @@
   --lip: 0 2px 0 var(--border-strong);
   --shadow:
     rgba(58, 35, 15, 0.22) 0 10px 24px -6px, rgba(58, 35, 15, 0.12) 0 4px 8px -2px;
+
+  /* Motion: strong ease-out for responses, kept short. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --press: 120ms var(--ease-out);
 
   --sans: 'Nunito', system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: var(--sans);
@@ -106,4 +115,14 @@ button {
 .icon {
   flex: none;
   display: block;
+}
+
+/* Reduced motion: keep state changes, drop the movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

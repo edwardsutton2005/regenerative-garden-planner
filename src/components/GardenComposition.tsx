@@ -1,4 +1,5 @@
 import type { RoleComposition } from '../domain/composition'
+import Icon from './Icon'
 import type { Plant } from '../domain/plant'
 
 type GardenCompositionProps = {
@@ -23,6 +24,7 @@ function GardenComposition({ composition, plantsById }: GardenCompositionProps) 
   return (
     <details className="garden-composition">
       <summary className="garden-composition__summary">
+        <Icon name="chevronRight" size={14} />
         <span className="garden-composition__title">Garden composition</span>
         <span className="garden-composition__snapshot">{snapshotText(composition)}</span>
       </summary>
