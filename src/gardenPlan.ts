@@ -13,7 +13,7 @@ import type { GardenState, Position, SunlightLevel } from './domain/garden'
  * A garden plan: what gets saved. The garden's facts plus the things that
  * belong with this plan but aren't garden facts (its name and the inventory
  * palette). Undo history is not part of a plan. See ARCHITECTURE.md
- * "Planned Persistence Direction".
+ * "Persistence".
  */
 export type GardenPlan = {
   name: string
@@ -47,19 +47,22 @@ export function serializePlan(plan: GardenPlan): string {
   return JSON.stringify({ schemaVersion: PLAN_SCHEMA_VERSION, ...plan })
 }
 
-/**
- * Reads a saved plan without trusting it. Anything wrong with its overall
- * shape (bad JSON, unknown version, invalid garden size) discards the whole
- * plan. Individual items are rebuilt through the domain's own operations,
- * so an invalid placement, bed, or sunlight cell is skipped, never loaded.
- */
+/** Reads a plan saved as JSON text. See parsePlanData. */
 export function parsePlan(json: string): LoadedPlan | null {
-  let data: unknown
   try {
-    data = JSON.parse(json)
+    return parsePlanData(JSON.parse(json))
   } catch {
     return null
   }
+}
+
+/**
+ * Reads a saved plan without trusting it. Anything wrong with its overall
+ * shape (unknown version, invalid garden size) discards the whole plan.
+ * Individual items are rebuilt through the domain's own operations, so an
+ * invalid placement, bed, or sunlight cell is skipped, never loaded.
+ */
+export function parsePlanData(data: unknown): LoadedPlan | null {
   if (!isRecord(data) || data.schemaVersion !== PLAN_SCHEMA_VERSION) return null
 
   const saved = data.garden

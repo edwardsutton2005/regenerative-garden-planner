@@ -3,10 +3,23 @@ import { DEFAULT_GARDEN_NAME } from '../gardenPlan'
 import Icon from './Icon'
 import { formatSize } from './units'
 
+/** Where the plan is saved, and how that's going. */
+export type SaveStatus = 'browser' | 'unavailable' | 'saving' | 'saved' | 'error'
+
+const SAVE_STATUS_TEXT: Record<SaveStatus, string> = {
+  browser: 'Saved in this browser',
+  unavailable: 'Not saved: browser storage is unavailable',
+  saving: 'Saving…',
+  saved: 'Saved to your account',
+  error: "Couldn't save. Will retry.",
+}
+
 type TopBarProps = {
   gardenName: string
-  /** Whether the plan is saved in this browser. */
-  saved: boolean
+  saveStatus: SaveStatus
+  /** Whether signing in is offered. */
+  accountsAvailable: boolean
+  onOpenMenu: () => void
   onRenameGarden: (name: string) => void
   gardenWidth: number
   gardenHeight: number
@@ -14,15 +27,16 @@ type TopBarProps = {
   canRedo: boolean
   onUndo: () => void
   onRedo: () => void
-  onNewGarden: () => void
   onClearGarden: () => void
 }
 
-/** Garden identity (an editable name), undo/redo, and a menu for the less
- * frequent, more destructive actions (New Garden, Clear Garden). */
+/** The menu button, garden identity (an editable name) and save status,
+ * undo/redo, and a menu for the destructive Clear Garden. */
 function TopBar({
   gardenName,
-  saved,
+  saveStatus,
+  accountsAvailable,
+  onOpenMenu,
   onRenameGarden,
   gardenWidth,
   gardenHeight,
@@ -30,7 +44,6 @@ function TopBar({
   canRedo,
   onUndo,
   onRedo,
-  onNewGarden,
   onClearGarden,
 }: TopBarProps) {
   const menuRef = useRef<HTMLDetailsElement>(null)
@@ -42,10 +55,10 @@ function TopBar({
 
   return (
     <header className="top-bar">
+      <button type="button" className="top-bar__menu-button" onClick={onOpenMenu} aria-label="Menu">
+        <Icon name="menu" />
+      </button>
       <div className="top-bar__title">
-        <a className="top-bar__app" href="/">
-          Regenerative Garden Planner
-        </a>
         <input
           className="top-bar__name"
           aria-label="Garden name"
@@ -58,9 +71,16 @@ function TopBar({
             if (e.key === 'Enter') e.currentTarget.blur()
           }}
         />
-        <span className="top-bar__garden">
-          {formatSize(gardenWidth, gardenHeight)} ·{' '}
-          {saved ? 'Saved in this browser' : 'Not saved: browser storage is unavailable'}
+        <span className={`top-bar__garden top-bar__garden--${saveStatus}`} role="status">
+          {formatSize(gardenWidth, gardenHeight)} · {SAVE_STATUS_TEXT[saveStatus]}
+          {accountsAvailable && (saveStatus === 'browser' || saveStatus === 'unavailable') && (
+            <>
+              {' · '}
+              <button type="button" className="top-bar__sign-in" onClick={onOpenMenu}>
+                Sign in
+              </button>
+            </>
+          )}
         </span>
       </div>
       <div className="top-bar__actions">
@@ -87,9 +107,6 @@ function TopBar({
             <Icon name="more" />
           </summary>
           <div className="top-bar__menu-items">
-            <button type="button" onClick={() => fromMenu(onNewGarden)}>
-              New garden…
-            </button>
             <button
               type="button"
               className="top-bar__danger"

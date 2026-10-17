@@ -827,7 +827,7 @@ Turn the planner into a polished public product without changing the domain mode
 - **A. Visual foundation:** restyle the shell with shared design tokens (palette, type, radii, shadows) and drawn UI icons in place of text glyphs. No behavior changes.
 - **B. Landing page:** a responsive landing page at `/` and the planner at `/plan/`. The planner stays desktop-first, with a "best on desktop" note on small screens. *Implemented, along with A.* The landing page describes only what the planner does today, and its hero notes reuse the planner's own wording for real pairs in the data.
 - **C. Local save:** the current garden plan (name, garden, inventory) saves to the browser automatically and is validated when loaded. *Implemented.* The garden name is edited in place in the top bar, which also says whether the garden is saved in this browser. Returning visitors reopen their garden; New Garden starts over and clears the save. Undo history is not saved.
-- **D. Accounts:** magic-link sign-in, several saved gardens per user, and the local garden uploaded on first sign-in.
+- **D. Accounts:** sign-in with Google or an emailed link, several saved gardens per user, and the browser garden uploaded on first sign-in. *Implemented.* Signing in is optional and offered from the top bar's save status and the menu. The menu is a drawer that opens over the left of the workspace, with the way home, My gardens (open, delete with an inline confirmation, New), and the account. It covers the canvas only while open, since these are things done between editing sessions. Signed in, gardens save to the account automatically and a reload reopens the last one. Signing out leaves a fresh browser garden.
 
 ## Not in This Phase
 

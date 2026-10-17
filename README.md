@@ -36,6 +36,7 @@ The project is designed as a compact test bed for spatial interaction and transp
 - User-declared sunlight mapping on 12-inch environmental cells for full sun, partial sun, and shade
 - Sunlight-fit evaluation against each plant's sourced sunlight requirement
 - Illustrated canvas: plant sprites and icons, grass around the plot, soil and bed-soil textures, wooden raised-bed frames
+- Automatic saving in the browser, or, after signing in with Google or an emailed link, to an account with several gardens
 - Zoom (buttons, Cmd/Ctrl + = / − / 0, pinch), fit to screen, drag-to-pan, and a map-style scale bar
 
 Sunlight mapping records the user's description of the site.
@@ -56,7 +57,7 @@ transient feedback, inspection, composition, and opportunities
 
 `App.tsx` coordinates interaction state and garden mutations. The garden state contains dimensions, plant placements, and modeled environmental state. Framework-independent modules in `src/domain/` evaluate relationships, spacing, composition, and opportunities. Components render those structured results as user-facing explanations.
 
-No backend, account system, persistence layer, or AI API is currently involved.
+Signed out, the garden is saved in the browser. Signing in (Google or an emailed link, through Supabase) saves gardens to an account. There is no custom backend server and no AI API.
 
 ## Architecture
 
@@ -90,6 +91,14 @@ npm run dev
 ```
 
 The landing page is at `/` and the planner at `/plan/`.
+
+### Accounts
+
+Sign-in and saved gardens need a Supabase project. Without one, the planner runs and saves only in the browser. To enable them:
+
+1. Copy `.env.example` to `.env.local` and fill in `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` from the Supabase project's API settings. Both are public by design: row level security keeps each user's gardens private.
+2. Apply `supabase/migrations/` to the project.
+3. In Supabase, under Authentication → URL Configuration, allow `http://localhost:5173/**` and the deployed site as redirect URLs. Google sign-in also needs the Google provider configured with an OAuth client.
 
 Create a production build and preview it locally with:
 

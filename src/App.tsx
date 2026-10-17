@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useEffectEvent, useState } from 'react'
 import BedPanel from './components/BedPanel'
 import CanvasViewport from './components/CanvasViewport'
 import GardenCanvas from './components/GardenCanvas'
@@ -14,6 +14,7 @@ import PlantCatalog from './components/PlantCatalog'
 import ToolRail from './components/ToolRail'
 import type { RailTool, SunlightBrush } from './components/ToolRail'
 import TopBar from './components/TopBar'
+import type { SaveStatus } from './components/TopBar'
 import { toPlantPosition } from './components/canvasGeometry'
 import { addToInventory, removeFromInventory } from './components/plantChoice'
 import { useWorkspaceShortcuts } from './components/useWorkspaceShortcuts'
@@ -34,7 +35,6 @@ import {
   getBedAt,
   getPlacement,
   getPlacementsInBed,
-  hasPlacements,
   moveBed,
   movePlant,
   nextBedName,
@@ -61,13 +61,8 @@ import {
   undo,
 } from './gardenHistory'
 import type { GardenHistory } from './gardenHistory'
-import {
-  DEFAULT_GARDEN_NAME,
-  canSavePlans,
-  clearSavedPlan,
-  loadSavedPlan,
-  savePlan,
-} from './gardenPlan'
+import { DEFAULT_GARDEN_NAME } from './gardenPlan'
+import type { GardenPlan, LoadedPlan } from './gardenPlan'
 import './App.css'
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
@@ -95,32 +90,46 @@ type Selection = { kind: 'plant'; id: string } | { kind: 'bed'; id: string } | n
 
 const SELECT: ActiveTool = { kind: 'select' }
 
-function App() {
-  // The plan saved in this browser, if any, read once on startup.
-  const [initialLoad] = useState(loadSavedPlan)
+type AppProps = {
+  /** The plan to open, or null for the setup screen. */
+  initialPlan: LoadedPlan | null
+  /** Prefills the setup screen. */
+  setupSize?: SetupDimensions
+  saveStatus: SaveStatus
+  accountsAvailable: boolean
+  /** Told the plan after every change, and null while on the setup screen.
+   * Where it saves is the caller's business (see PlannerShell). */
+  onPlanChange: (plan: GardenPlan | null) => void
+  onOpenMenu: () => void
+}
+
+/** The workspace for one garden. Opening another garden mounts a new one. */
+function App({
+  initialPlan,
+  setupSize,
+  saveStatus,
+  accountsAvailable,
+  onPlanChange,
+  onOpenMenu,
+}: AppProps) {
   // The garden and its undo/redo history (see gardenHistory.ts). No garden
   // yet means the app is on the setup screen.
   const [history, setHistory] = useState<GardenHistory>(() =>
-    initialLoad ? startHistory(initialLoad.plan.garden) : EMPTY_HISTORY,
+    initialPlan ? startHistory(initialPlan.plan.garden) : EMPTY_HISTORY,
   )
   const { garden } = history
-  const [gardenName, setGardenName] = useState(initialLoad?.plan.name ?? DEFAULT_GARDEN_NAME)
-  const [setupDimensions, setSetupDimensions] = useState<SetupDimensions>({
-    width: GARDEN_DEFAULT_SIZE,
-    height: GARDEN_DEFAULT_SIZE,
-  })
+  const [gardenName, setGardenName] = useState(initialPlan?.plan.name ?? DEFAULT_GARDEN_NAME)
   const [activeTool, setActiveTool] = useState<ActiveTool>(SELECT)
   // Remembered across tool switches, so Sunlight resumes with the last brush.
   const [sunlightBrush, setSunlightBrush] = useState<SunlightBrush>('full-sun')
   const [selection, setSelection] = useState<Selection>(null)
   // Plant types in use in this garden, in order: a palette, not a gate, and
   // never an input to reasoning. Not part of undo history.
-  const [inventory, setInventory] = useState<string[]>(initialLoad?.plan.inventory ?? [])
-  const [saved] = useState(canSavePlans)
+  const [inventory, setInventory] = useState<string[]>(initialPlan?.plan.inventory ?? [])
   // Said once after loading if some saved plants couldn't be restored;
   // cleared by the next garden change.
   const [loadNotice, setLoadNotice] = useState(() => {
-    const dropped = initialLoad?.droppedPlacements ?? 0
+    const dropped = initialPlan?.droppedPlacements ?? 0
     if (dropped === 0) return null
     return dropped === 1
       ? "1 saved plant couldn't be restored and was left out."
@@ -140,12 +149,11 @@ function App() {
   const selectedPlacementId = selection?.kind === 'plant' ? selection.id : null
   const selectedBedId = selection?.kind === 'bed' && bedSelectionVisible ? selection.id : null
 
-  // Autosave: the current plan goes to browser storage on every change.
-  // Leaving the garden (New Garden) clears it.
-  useEffect(() => {
-    if (garden) savePlan({ name: gardenName, garden, inventory })
-    else clearSavedPlan()
-  }, [garden, gardenName, inventory])
+  // Autosave: every change reports the current plan.
+  const reportPlan = useEffectEvent(() => {
+    onPlanChange(garden && { name: gardenName, garden, inventory })
+  })
+  useEffect(() => reportPlan(), [garden, gardenName, inventory])
 
   // --- garden changes (all undoable) ----------------------------------------
 
@@ -313,37 +321,20 @@ function App() {
     setSelection((current) => (current?.kind === 'plant' ? null : current))
   }
 
-  function handleNewGarden() {
-    if (!garden) return
-
-    if (hasPlacements(garden)) {
-      const confirmed = window.confirm('Start a new garden? This will discard the current layout.')
-      if (!confirmed) return
-    }
-
-    // Return to the setup screen, prefilled with the garden just left.
-    // A new garden starts with an empty inventory and no history.
-    setSetupDimensions({ width: garden.width, height: garden.height })
-    setHistory(EMPTY_HISTORY)
-    setGardenName(DEFAULT_GARDEN_NAME)
-    setInventory([])
-    setLoadNotice(null)
-    setActiveTool(SELECT)
-    setLastPlacementIds([])
-    setSelection(null)
-  }
-
   if (!garden) {
     return (
       <div className="setup-screen">
+        <button type="button" className="setup-screen__menu" onClick={onOpenMenu}>
+          <Icon name="menu" /> Menu
+        </button>
         <div className="setup-screen__card">
           <header className="app-header">
             <h1>Regenerative Garden Planner</h1>
             <p>Choose your garden size to get started.</p>
           </header>
           <GardenSetup
-            initialWidth={setupDimensions.width}
-            initialHeight={setupDimensions.height}
+            initialWidth={setupSize?.width ?? GARDEN_DEFAULT_SIZE}
+            initialHeight={setupSize?.height ?? GARDEN_DEFAULT_SIZE}
             onCreateGarden={handleCreateGarden}
           />
         </div>
@@ -445,7 +436,9 @@ function App() {
     <div className={`workspace${inspectorOpen ? '' : ' workspace--inspector-closed'}`}>
       <TopBar
         gardenName={gardenName}
-        saved={saved}
+        saveStatus={saveStatus}
+        accountsAvailable={accountsAvailable}
+        onOpenMenu={onOpenMenu}
         onRenameGarden={setGardenName}
         gardenWidth={garden.width}
         gardenHeight={garden.height}
@@ -453,7 +446,6 @@ function App() {
         canRedo={history.future.length > 0}
         onUndo={handleUndo}
         onRedo={handleRedo}
-        onNewGarden={handleNewGarden}
         onClearGarden={handleClearGarden}
       />
 

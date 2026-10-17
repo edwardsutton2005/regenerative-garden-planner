@@ -14,10 +14,11 @@ The main constraint is explainability. A conclusion shown to a user should be tr
 - Nunito (Google Fonts) as the interface typeface
 - Vitest for domain and data tests
 - Oxlint for static analysis
-- Client-side state, saved to the browser's `localStorage`
+- Client-side state, saved to the browser's `localStorage` when signed out
+- Supabase (`@supabase/supabase-js`) for sign-in (Google and email links) and saved gardens; the browser talks to it directly, with no custom server
 - Development-time art tooling only (not shipped): `@google/genai` for image generation and `sharp` for image processing, run by Node scripts in `scripts/`
 
-There is currently no backend, database, authentication system, global state library, or AI API. The current garden plan is saved in the browser; see [Persistence](#persistence) for that and the planned Supabase accounts.
+There is no custom backend server, global state library, or AI API. Signed out, the garden is saved in the browser; signed in, gardens are saved to the account in Supabase. See [Persistence](#persistence).
 
 ## Repository Structure
 
@@ -26,8 +27,11 @@ src/
 ├── components/   React interaction and presentation
 ├── data/         Curated plants, relationship rules, and source registry
 ├── domain/       Framework-independent state operations and evaluation rules
-├── App.tsx       Planner orchestration and interaction state
+├── App.tsx       The workspace for one garden: orchestration and interaction state
+├── PlannerShell.tsx  Sign-in state, which garden is open, and where it saves
 ├── gardenPlan.ts The saved plan: shape, validation on load, browser storage
+├── cloudGardens.ts   Account gardens in Supabase (list, load, save, delete)
+├── supabase.ts   The Supabase client, or null when accounts aren't configured
 ├── main.tsx      Planner entry point (plan/index.html)
 ├── Landing.tsx   Landing page (index.html), entry landingMain.tsx
 index.html        Landing page at /
@@ -35,6 +39,7 @@ plan/index.html   Planner at /plan/
 scripts/          Development-time art pipeline (generation, background removal, textures, build)
 art/              Style guide, references, and approved art masters (candidates are git-ignored)
 public/art/       Built app art: sprites, icons, textures, bed frame
+supabase/migrations/  Database schema and row level security, applied to the Supabase project
 ```
 
 The repository keeps gardening knowledge out of React components. Components may choose wording and visual treatment, but they do not define which plants are companions, what spacing rule applies, or which ecological role a plant has.
@@ -263,18 +268,23 @@ Native drag-and-drop, plant and bed dragging, zoom and pan, responsive layout, a
 
 ## Deliberate Limitations
 
-The garden is a simple physical rectangle. Positions are design intent rather than surveyed measurements, and plants are modeled as points: there are no footprints, mature spread, or clearance reasoning yet. Beds are layout only: no rule reasons about them yet. The application also does not currently provide accounts, cloud saving, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations. Accounts are planned; see [Persistence](#persistence).
+The garden is a simple physical rectangle. Positions are design intent rather than surveyed measurements, and plants are modeled as points: there are no footprints, mature spread, or clearance reasoning yet. Beds are layout only: no rule reasons about them yet. The application also does not currently provide sharing or collaboration, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations.
 
 If an LLM is introduced later, deterministic data and domain rules should remain the source of horticultural facts and conclusions. An LLM may assist with explanation, comparison, or interaction, but should not invent the underlying gardening rules.
 
 ## Persistence
 
-The application remains client-side until accounts are introduced (see PRODUCT.md, [Polish, Landing, and Accounts](PRODUCT.md#polish-landing-and-accounts)). Persistence is staged:
+See PRODUCT.md, [Polish, Landing, and Accounts](PRODUCT.md#polish-landing-and-accounts). Persistence is staged:
 
 1. **Local save** (implemented, `src/gardenPlan.ts`) — the current `GardenPlan` (name, garden, inventory, plus a `schemaVersion`) is saved to `localStorage` on every change, and reopened on the next visit instead of the setup screen. Undo history is not saved. New Garden clears the save.
    - **Loading never trusts the save.** Bad JSON, an unknown `schemaVersion`, or an invalid garden size or shape discards the whole plan. Otherwise the garden is rebuilt through the domain's own operations (`createGarden`, `addBed`, `setSunlightAt`, `placePlant`), so an invalid bed, sunlight cell, or placement is skipped rather than loaded. Placements of plants no longer in the catalog are dropped, and the status line says how many. The inventory keeps only known plant ids.
    - Storage may be unavailable (private windows, blocked site data). The planner checks once at startup and says in the top bar whether the garden is saved in this browser; everything else works without it.
-2. **Accounts** — Supabase provides magic-link authentication and PostgreSQL. A `gardens` table stores each plan as `jsonb`, owned by a user and protected by Row Level Security, so the client talks to Supabase directly and there is no custom backend server. A user can have several gardens; a local garden is uploaded on first sign-in. Hosting is static (Vercel).
+2. **Accounts** (implemented, `src/PlannerShell.tsx`, `src/cloudGardens.ts`) — Supabase provides sign-in (Google, or an emailed link) and PostgreSQL. The client talks to Supabase directly with the publishable key; there is no custom backend server. Hosting is static (Vercel).
+   - **Table.** `gardens` (`supabase/migrations/`) has one row per garden: `id`, `user_id` (defaults to the signed-in user), `name`, `plan` (`jsonb`: the browser save's shape minus the name), and `created_at`/`updated_at`. Row Level Security limits every read and write to the owner, and a check bounds each plan's size. Plans loaded from the table go through the same `parsePlanData` validation as browser saves; a plan that can't be read is reported, never overwritten.
+   - **Who owns the garden on screen.** `PlannerShell` decides; `App` is the workspace for one garden, remounted (by key) when another opens, and reports each change through `onPlanChange`. Signed out, that writes `localStorage`. Signed in, it saves to the account a second after editing pauses, one save at a time; the garden's id is made in the browser, so the first save creates the row.
+   - **First sign-in in a browser** uploads the browser garden as a new account garden and clears the browser copy. Nothing is merged. Signing out clears the browser, leaving a fresh browser garden.
+   - **Known limits.** Last write wins across tabs and devices. An edit made within a second of closing the tab can be lost if the user dismisses the leave-page warning. Account deletion needs server code and is done from the Supabase dashboard for now.
+   - **Configuration.** `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (see `.env.example`). Both are public by design. Without them, account features are hidden and the planner saves only in the browser.
 3. **Structured knowledge storage** (possible, later) — plant metadata, relationships, and provenance stay in `src/data` until the dataset is large enough to justify moving them.
 
 The boundary extends rather than changes: persistence stores plans; the domain layer understands and manipulates gardens; the reasoning engine evaluates gardens; the UI presents and edits them. `GardenState` and the deterministic operations stay independent of React, Supabase, or any storage representation, and the reasoning engine never operates on database rows.

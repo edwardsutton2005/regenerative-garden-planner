@@ -46,6 +46,435 @@
     var(--shadow);
 }
 
+/* The menu, on screens without the top bar (setup, loading, errors). */
+.setup-screen {
+  position: relative;
+}
+
+.setup-screen__menu {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-h);
+  background: var(--panel);
+  border: 2px solid var(--wood);
+  border-radius: var(--radius);
+  box-shadow: 0 3px 0 var(--wood-dark);
+  image-rendering: auto;
+  cursor: pointer;
+  transition: transform var(--press), box-shadow var(--press);
+}
+
+.setup-screen__menu:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--wood-dark);
+}
+
+.shell-message {
+  text-align: center;
+}
+
+.shell-message h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+/* Appears only if loading takes a moment, so a quick load doesn't flash. */
+.shell-message--loading {
+  padding: 10px 22px;
+  font-weight: 700;
+  color: var(--text-h);
+  background: var(--panel);
+  border: 3px solid var(--wood);
+  border-radius: var(--radius);
+  image-rendering: auto;
+  animation: shell-fade-in 200ms 400ms var(--ease-out) both;
+}
+
+@keyframes shell-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.shell-message__actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.shell-message__actions button {
+  padding: 10px 20px;
+  font: inherit;
+  font-weight: 800;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--lip);
+  cursor: pointer;
+}
+
+.shell-message__actions .shell-message__primary {
+  color: #fffaf0;
+  background: var(--leaf);
+  border-color: var(--leaf-dark);
+  box-shadow: 0 3px 0 var(--leaf-dark);
+}
+
+/* --- Menu drawer ----------------------------------------------------------- */
+
+/* A native modal dialog pinned to the left edge, full height. */
+.nav-drawer {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(320px, 100vw);
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  background: var(--panel);
+  border: none;
+  border-right: 3px solid var(--wood);
+  box-shadow: 4px 0 0 var(--wood-dark), var(--shadow);
+  transition:
+    transform 260ms var(--ease-out),
+    display 260ms allow-discrete,
+    overlay 260ms allow-discrete;
+  transform: translateX(-104%);
+}
+
+.nav-drawer[open] {
+  transform: none;
+
+  @starting-style {
+    transform: translateX(-104%);
+  }
+}
+
+.nav-drawer::backdrop {
+  background: rgba(40, 24, 10, 0);
+  transition:
+    background 260ms var(--ease-out),
+    display 260ms allow-discrete,
+    overlay 260ms allow-discrete;
+}
+
+.nav-drawer[open]::backdrop {
+  background: rgba(40, 24, 10, 0.4);
+
+  @starting-style {
+    background: rgba(40, 24, 10, 0);
+  }
+}
+
+.nav-drawer__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  font-size: 15px;
+}
+
+.nav-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nav-drawer__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text-h);
+}
+
+.nav-drawer button {
+  font: inherit;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.nav-drawer__close,
+.nav-drawer__delete {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.nav-drawer__close:hover,
+.nav-drawer__delete:hover {
+  background: var(--inset);
+}
+
+.nav-drawer__home {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 6px 12px 6px 8px;
+  font-weight: 700;
+  color: var(--text-h);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.nav-drawer__home:hover {
+  background: var(--inset);
+}
+
+.nav-drawer__section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nav-drawer__section h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.nav-drawer__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-drawer__new {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px 5px 8px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--lip);
+}
+
+.nav-drawer__gardens {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-drawer__garden {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.nav-drawer__garden--current {
+  border-color: var(--leaf);
+  box-shadow: inset 4px 0 0 var(--leaf);
+}
+
+.nav-drawer__open {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 6px 8px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+}
+
+.nav-drawer__open:hover {
+  background: var(--inset);
+}
+
+.nav-drawer__garden-name {
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-drawer__garden-meta {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.nav-drawer__confirm {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  font-weight: 700;
+  color: var(--text-h);
+}
+
+.nav-drawer__confirm span {
+  flex: 1 1 100%;
+}
+
+.nav-drawer__confirm button {
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.nav-drawer__confirm .nav-drawer__danger {
+  color: #fffaf0;
+  background: var(--issue);
+  border-color: var(--issue);
+}
+
+.nav-drawer__hint {
+  margin: 0;
+  font-size: 14px;
+}
+
+.nav-drawer__error {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--issue);
+}
+
+.nav-drawer__account {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 2px solid var(--border);
+}
+
+.nav-drawer__google {
+  padding: 10px 14px;
+  font-weight: 800;
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--lip);
+}
+
+.nav-drawer__google:hover,
+.nav-drawer__new:hover {
+  background: var(--inset);
+}
+
+.nav-drawer__email-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.nav-drawer__email-row {
+  display: flex;
+  gap: 6px;
+}
+
+.nav-drawer__email-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.nav-drawer__email-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.nav-drawer__email-row button {
+  padding: 0 14px;
+  font-weight: 800;
+  color: #fffaf0;
+  background: var(--leaf);
+  border: 2px solid var(--leaf-dark);
+  border-radius: var(--radius-sm);
+}
+
+.nav-drawer__email-row button:disabled {
+  opacity: 0.6;
+}
+
+.nav-drawer__user {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.nav-drawer__avatar {
+  display: grid;
+  place-items: center;
+  grid-row: span 2;
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fffaf0;
+  background: var(--leaf);
+  border-radius: 50%;
+  box-shadow: 0 2px 0 var(--leaf-dark);
+}
+
+.nav-drawer__email {
+  overflow: hidden;
+  font-weight: 700;
+  color: var(--text-h);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-drawer__sign-out {
+  justify-self: start;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 700;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* --- Workspace shell ------------------------------------------------------- */
 
 /* Full-screen: top bar; tools | canvas | inspector; inventory bar. */
@@ -80,20 +509,38 @@
 }
 
 .top-bar__title {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 12px;
 }
 
-.top-bar__app {
-  font-size: 17px;
-  font-weight: 800;
-  color: var(--text-h);
-  text-decoration: none;
+.top-bar .top-bar__menu-button {
+  padding: 6px;
 }
 
-.top-bar__app:hover {
+.top-bar__menu-button:hover {
+  background: var(--inset);
+}
+
+.top-bar__garden--error {
+  font-weight: 700;
+  color: var(--issue);
+}
+
+/* Reads as a link inside the save status. */
+.top-bar .top-bar__sign-in {
+  display: inline;
+  padding: 0;
+  font-size: inherit;
+  font-weight: 800;
+  color: var(--leaf-dark);
+  background: none;
+  border: none;
+  box-shadow: none;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Shown above the planner on small screens (see plan/index.html). */
