@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createGarden, isValidPosition } from '../domain/garden'
 import {
   clientToGarden,
+  scaleBarLength,
   percentCircle,
   percentPoint,
   percentRect,
@@ -75,5 +76,17 @@ describe('percent helpers', () => {
       width: '20%',
       height: '40%',
     })
+  })
+})
+
+describe('scaleBarLength', () => {
+  it('picks the longest round length that fits', () => {
+    expect(scaleBarLength(4.5, 120)).toBe(24) // 24" = 108 px; 36" would be 162 px
+    expect(scaleBarLength(1, 120)).toBe(120) // exactly fits
+    expect(scaleBarLength(0.1, 120)).toBe(1200)
+  })
+
+  it('falls back to the shortest length when even that is too long', () => {
+    expect(scaleBarLength(200, 120)).toBe(1)
   })
 })

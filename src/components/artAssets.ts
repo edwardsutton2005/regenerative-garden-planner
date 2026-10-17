@@ -4,8 +4,4 @@
 
 export const SPRITE_PLANT_IDS: ReadonlySet<string> = new Set(["basil","bell-pepper","bush-bean","cabbage","carrot","cucumber","dill","lettuce","marigold","mint","onion","pea","potato","rosemary","sunflower","tomato"])
 
-export const ICON_PLANT_IDS: ReadonlySet<string> = new Set(["basil","bell-pepper","bush-bean","cabbage","carrot","cucumber","dill","lettuce","marigold","onion","pea","potato","rosemary","sunflower","tomato"])
-
-/** Bed frame 9-slice: source image size and plank width, in pixels. */
-export const BED_FRAME_SLICE = 6
-export const BED_FRAME_SIZE = 24
+export const ICON_PLANT_IDS: ReadonlySet<string> = new Set(["basil","bell-pepper","bush-bean","cabbage","carrot","cucumber","dill","lettuce","marigold","mint","onion","pea","potato","rosemary","sunflower","tomato"])

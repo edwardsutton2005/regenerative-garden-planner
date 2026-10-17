@@ -126,13 +126,20 @@
     "dill": {
       "file": "art/approved/icons/dill.png",
       "source": "art/candidates/dill/dill-icon-transparent.png"
+    },
+    "mint": {
+      "file": "art/approved/icons/mint.png",
+      "source": "added manually by the user"
     }
   },
-  "pending": [
-    {
-      "plantId": "mint",
-      "kind": "icon",
-      "reason": "no usable candidate; the generated icon has a blurred, unfinished bottom"
+  "bed": {
+    "plank": {
+      "file": "art/approved/bed/plank.png",
+      "source": "art/candidates/bed/bed-framework.png (ChatGPT sheet): middle plank, x 190-730"
+    },
+    "corner": {
+      "file": "art/approved/bed/corner.png",
+      "source": "art/candidates/bed/bed-framework.png (ChatGPT sheet): left post, middle row"
     }
-  ]
+  }
 }

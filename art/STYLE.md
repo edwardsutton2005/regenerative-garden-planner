@@ -108,12 +108,12 @@ Requires `GEMINI_API_KEY` in `.env.local` (git-ignored; see `.env.example`).
 `npm run art:build` turns `approved/` into small app files in `public/art/`. Re-run it after approving new art; it rebuilds from scratch.
 
 - **Plant sprites and icons:** trimmed, centered, 128 px PNG. The canvas shows sprites at a fixed 44 px; the inventory and catalog show icons.
-- **Textures** (`scripts/textures.ts`) are generated in code, not by Gemini. Image models are unreliable at seamless tiles, and these assets are tiny. They are 24 px tiles (one tile = 12 inches): soil, bed soil, and grass. Two octaves of seeded, periodic noise are quantized into a 5-color palette, plus wrapped speckles or grass blades. The bed frame is a 24 px image with 6 px planks (darker corner posts, dashed grain), stretched with CSS `border-image`. Change palettes or seeds there, then rebuild.
+- **Textures** (`scripts/textures.ts`) are generated in code, not by Gemini. Image models are unreliable at seamless tiles, and these assets are tiny. They are 24 px tiles (one tile = 12 inches): soil, bed soil, and grass. Two octaves of seeded, periodic noise are quantized into a 5-color palette, plus wrapped speckles or grass blades. Change palettes or seeds there, then rebuild.
+- **Bed frame** is built from `approved/bed/plank.png` and `corner.png`, cut from a ChatGPT sheet (`candidates/bed/bed-framework.png`) because Gemini credits ran out. The plank section avoids the knot and end moss. Its last 60 px are cross-faded into its start so it repeats seamlessly. It is downscaled to a 24 px board, the art's own pixel grid (about 5.6 source px per art pixel), and assembled as a 9-slice: a plank on each side, outer edge outward, and a post in each corner. The CSS `border-image` slice (24) must match `BED_BOARD` in `scripts/build-art.ts`.
 - Plants without approved art fall back to a category-colored disc.
 
 ## Open Issues
 
 - **Output format:** Gemini currently returns JPEG, so pixel edges are slightly soft and carry faint color noise at full size. It is not visible once downscaled to app sizes; a later step could snap images to their pixel grid if needed.
 - **Unfinished icon bottoms:** icons repeatedly come back with the bottom edge half-rendered (blurred, pink-tinted). Plant sprites have not shown this. Step 3 above cleans small cases; large ones (where the subject itself is blurred) must be regenerated. Suspected cause: the mostly transparent icon reference; a version of it on flat magenta is worth trying.
-- **Pending:** the mint icon (see `approved/manifest.json`).
 - **No seeds:** prompts are deterministic, but the model's output is not; expect variation between runs.

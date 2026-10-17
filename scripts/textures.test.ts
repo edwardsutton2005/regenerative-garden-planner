@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { FRAME_BORDER, FRAME_SIZE, PALETTES, TILE_SIZE, bedFrame, groundTile, periodicNoise } from './textures.ts'
+import { PALETTES, TILE_SIZE, groundTile, periodicNoise, seamlessStrip } from './textures.ts'
 
 const pixel = (rgba: Uint8Array, width: number, x: number, y: number) =>
   [...rgba.subarray((y * width + x) * 4, (y * width + x) * 4 + 4)]
@@ -36,21 +36,20 @@ describe('groundTile', () => {
   })
 })
 
-describe('bedFrame', () => {
-  const rgba = bedFrame()
+describe('seamlessStrip', () => {
+  // A 10×1 strip whose red channel is its column index.
+  const width = 10
+  const source = new Uint8Array(width * 4)
+  for (let x = 0; x < width; x++) source.set([x * 20, 0, 0, 255], x * 4)
+  const out = seamlessStrip(source, width, 1, 4)
 
-  it('has opaque planks and a transparent center for the bed soil', () => {
-    expect(pixel(rgba, FRAME_SIZE, 0, 0)[3]).toBe(255)
-    expect(pixel(rgba, FRAME_SIZE, FRAME_BORDER - 1, FRAME_SIZE / 2)[3]).toBe(255)
-    expect(pixel(rgba, FRAME_SIZE, FRAME_BORDER, FRAME_BORDER)[3]).toBe(0)
-    expect(pixel(rgba, FRAME_SIZE, FRAME_SIZE / 2, FRAME_SIZE / 2)[3]).toBe(0)
+  it('is shorter by the blend, and its first column continues from its last', () => {
+    expect(out.length).toBe(6 * 4)
+    expect(pixel(out, 6, 0, 0)).toEqual(pixel(source, width, 6, 0))
+    expect(pixel(out, 6, 5, 0)).toEqual(pixel(source, width, 5, 0))
   })
 
-  it('is symmetric, so all four sides match when stretched', () => {
-    for (let y = 0; y < FRAME_SIZE; y++) {
-      for (let x = 0; x < FRAME_SIZE; x++) {
-        expect(pixel(rgba, FRAME_SIZE, x, y)[3]).toBe(pixel(rgba, FRAME_SIZE, FRAME_SIZE - 1 - x, y)[3])
-      }
-    }
+  it('leaves columns past the blend untouched', () => {
+    expect(pixel(out, 6, 4, 0)).toEqual(pixel(source, width, 4, 0))
   })
 })

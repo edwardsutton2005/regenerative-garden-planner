@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import BedPanel from './components/BedPanel'
+import CanvasViewport from './components/CanvasViewport'
 import GardenCanvas from './components/GardenCanvas'
 import type { CanvasMode } from './components/GardenCanvas'
 import GardenComposition from './components/GardenComposition'
@@ -429,7 +430,11 @@ function App() {
         <p className="workspace__status" aria-live="polite">
           {status}
         </p>
-        <div className="garden-canvas-viewport">
+        <CanvasViewport
+          key={`${garden.width}x${garden.height}`}
+          gardenWidth={garden.width}
+          dragToPan={activeTool.kind === 'select'}
+        >
           <GardenCanvas
             garden={garden}
             plantsById={plantsById}
@@ -458,7 +463,7 @@ function App() {
               onResizeBed: (id, rect) => updateGarden((current) => resizeBed(current, id, rect)),
             }}
           />
-        </div>
+        </CanvasViewport>
       </main>
 
       <aside className="workspace__inspector" aria-label="Inspector">

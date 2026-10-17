@@ -300,7 +300,8 @@ function GardenCanvas({
     (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
   )
   const { cellSize } = garden.environment
-  const canvasWidth = `min(100cqw, ${garden.width / garden.height} * 100cqh)`
+  // Fit-to-screen size times the viewport's zoom (see CanvasViewport).
+  const canvasWidth = `calc(min(100cqw, ${garden.width / garden.height} * 100cqh) * var(--zoom, 1))`
 
   // A plant's look on the canvas: its approved sprite, or the placeholder
   // dot when it has no art yet. Fixed on-screen size; never a footprint.

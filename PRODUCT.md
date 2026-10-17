@@ -606,7 +606,7 @@ The **Beds** tool is for drawing: drag on open ground to draw a bed, with a live
 
 - bed types (raised bed, in-ground, container), rotation, or non-rectangular shapes
 - reasoning about beds (per-bed composition, bed-aware feedback)
-- undo, multi-select, duplicating beds
+- multi-select, duplicating beds
 
 ---
 
@@ -642,9 +642,9 @@ While dragging, plants within the 12-inch interaction distance are outlined gree
 - With a plant selected in the picker, focus the garden and press Enter to place it at the physical center of the garden, then use the arrow keys to position it.
 - A selected bed's name tab is focusable; Arrow keys move the bed by 6 inches.
 
-## Undo
+## Undo and Redo
 
-An **Undo** button, plus Cmd+Z (Mac) or Ctrl+Z (Windows), undoes the last change to the garden: placing, moving or removing a plant, a sunlight stroke, a bed change, or Clear Garden. While typing in a text field, the shortcut undoes the text instead. Starting a New Garden clears the undo history. There is no redo yet.
+An **Undo** button, plus Cmd+Z (Mac) or Ctrl+Z (Windows), undoes the last change to the garden: placing, moving or removing a plant, a sunlight stroke, a bed change, or Clear Garden. While typing in a text field, the shortcut undoes the text instead. Starting a New Garden clears the undo history. **Redo** (button, Shift+Cmd/Ctrl+Z, or Ctrl+Y) reapplies an undone change; any new change clears the redo history.
 
 ## Not in This Slice
 
@@ -657,7 +657,7 @@ An **Undo** button, plus Cmd+Z (Mac) or Ctrl+Z (Windows), undoes the last change
 
 # Canvas-First Workspace
 
-**Status:** approved direction, delivered in slices. **Slice 1 is implemented:** the workspace layout, toolbar with sunlight brush, status line, collapsible inspector (current panels, plus the temporary feedback list), inventory bar, catalog popup, Escape and Delete behavior, and undo/redo. The Strengths / Issues / Opportunities inspector, short-lived canvas feedback, fit/zoom/pan, and the visual pass are still to come. Where earlier sections describe the old picker or "no tool" mode, this section takes precedence.
+**Status:** approved direction, delivered in slices. **Slice 1 is implemented:** the workspace layout, toolbar with sunlight brush, status line, collapsible inspector (current panels, plus the temporary feedback list), inventory bar, catalog popup, Escape and Delete behavior, and undo/redo. The Strengths / Issues / Opportunities inspector, and short-lived canvas feedback are still to come. Garden art, zoom with fit, and a scale bar are implemented (see [Canvas Navigation](#canvas-navigation)). Where earlier sections describe the old picker or "no tool" mode, this section takes precedence.
 
 ## Goal
 
@@ -754,6 +754,16 @@ Actions navigate and filter; they never change the garden on their own. Listing 
 
 A full-screen canvas needs fit-to-screen, zoom, and pan. These change only the view: positions remain physical inches, and the current conversion between screen and garden space already supports it.
 
+Implemented:
+
+- **Zoom** from fit-to-screen (the minimum) up to 8×: the − / + buttons at the bottom right, Cmd/Ctrl + = / − / 0, or trackpad pinch / Ctrl+scroll. Pinch and scroll zoom keep the point under the pointer still; buttons and keys keep the view's center still.
+- **Fit:** the middle button shows the zoom level and returns to fit. A new garden starts at fit.
+- **Pan:** while zoomed in, scroll (trackpad, wheel, or scrollbars) or drag. With the Select tool, drag open ground, a bed's body, or the grass (plants, bed tabs, and handles keep their own drags). With any tool, hold Space and drag, or drag with the middle mouse button. A press that barely moves is still a click, and the click after a drag never selects or deselects.
+- **Scale bar** at the bottom left, like a map: a ruler of a round length (1 in up to 100 ft) that stays under 120 px at the current zoom.
+- Plant sprites stay a fixed screen size at every zoom; beds, soil tiles, and spacing rings scale with the garden.
+
+Not yet: Safari pinch gestures, and Show me (which pans and zooms to plants).
+
 ## Visual Direction
 
 - **App shell:** clean, modern, and quiet. The cozy feel does not come from the chrome.
@@ -774,7 +784,7 @@ The canvas uses the approved plant art (see `art/STYLE.md`) plus ground and bed 
 
 There is no grass inside the garden, so a plant in open ground never looks planted in a lawn. There is one bed type, a raised wooden box; other types stay deferred.
 
-- **Scale:** soil and bed-soil textures repeat once per 12 inches, matching the environmental grid, so the texture itself conveys physical scale. Bed boards are about 2 inches wide, with a minimum on-screen width.
+- **Scale:** soil and bed-soil textures repeat once per 12 inches, matching the environmental grid, so the texture itself conveys physical scale. Bed boards are drawn 2 inches wide, like real lumber, with a minimum on-screen width.
 - **Grid lines** are faint by default and stronger while painting sunlight.
 - **Sunlight** is drawn as a warm glow (full and partial sun) or a cool tint (shade), blended so the ground stays visible. Only the presentation changes.
 - **Plants** are drawn as their approved sprites at a fixed on-screen size (about 44 pixels), with a soft shadow. Selection, drag, and companion/incompatible highlights apply to the sprite. A plant's name appears on hover, keyboard focus, and while dragging.
@@ -790,7 +800,6 @@ There is no grass inside the garden, so a plant in open ground never looks plant
 - the catalog popup (search, category filters, plant tiles) where choosing a plant arms it and adds it to the inventory; the inventory bar with click to arm and drag to place
 - the inspector's Selected and Garden (Strengths, Issues, Opportunities) sections with Find plants / Show me actions
 - short-lived canvas feedback in place of the feedback list
-- fit, zoom, and pan
 - a visual pass on the shell and canvas, including the [Garden Art](#garden-art) above
 
 **Later enhancements (not committed):**

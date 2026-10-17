@@ -1,18 +1,13 @@
-// Code-generated pixel textures for the garden canvas: soil, bed soil,
-// grass, and a wooden bed frame. Deterministic (seeded) and seamless by
-// construction, in the chunky pixel style of the approved plant art.
-// See art/STYLE.md "Textures". Pure functions; scripts/build-art.ts writes
-// the PNGs.
+// Code-generated pixel textures for the garden canvas: soil, bed soil, and
+// grass. Deterministic (seeded) and seamless by construction, in the chunky
+// pixel style of the approved plant art. Also the seam blend for the bed
+// frame's plank art. See art/STYLE.md "In the App". Pure functions;
+// scripts/build-art.ts writes the PNGs.
 
 export type RGB = [number, number, number]
 
 /** Pixels per texture tile. One soil/grass tile represents 12 inches. */
 export const TILE_SIZE = 24
-
-/** Bed frame source image: square, with BORDER-pixel planks on each side.
- * Drawn as a stretchable CSS border-image (corners fixed, edges repeat). */
-export const FRAME_SIZE = 24
-export const FRAME_BORDER = 6
 
 const hex = (h: string): RGB => {
   const n = Number.parseInt(h.slice(1), 16)
@@ -24,15 +19,6 @@ export const PALETTES = {
   soil: ['#6b4423', '#7d4f29', '#8f5c30', '#a06a37', '#b47b42'].map(hex),
   bedSoil: ['#3f2614', '#4d2f19', '#5b381e', '#6a4224', '#7b4e2b'].map(hex),
   grass: ['#3c7a28', '#4a8c2e', '#589f34', '#68b13b', '#7cc445'].map(hex),
-  wood: {
-    outline: hex('#3a2314'),
-    shadow: hex('#6b4426'),
-    plank: hex('#9a6a3c'),
-    grain: hex('#7f5430'),
-    highlight: hex('#c18c54'),
-    post: hex('#7a4e2c'),
-    postLight: hex('#99683d'),
-  },
 }
 
 /** Small seeded PRNG (mulberry32): same seed, same sequence. */
@@ -117,38 +103,26 @@ export function groundTile(palette: RGB[], seed: number, style: TileStyle, size 
 }
 
 /**
- * The wooden bed frame as a 9-slice source: a square with FRAME_BORDER-pixel
- * planks around a transparent center. Corners are darker posts; top/bottom
- * planks have horizontal grain, side planks vertical grain, so edges can
- * repeat along any bed length.
+ * Makes a horizontal strip repeat without a visible joint: its last `blend`
+ * columns are cross-faded into its first, giving a strip `blend` px shorter
+ * whose right edge continues into its left. RGBA in, RGBA out.
  */
-export function bedFrame(): Uint8Array {
-  const { outline, shadow, plank, grain, highlight, post, postLight } = PALETTES.wood
-  const s = FRAME_SIZE
-  const b = FRAME_BORDER
-  const rgba = blankRgba(s, s)
-  const inCorner = (x: number, y: number) => (x < b || x >= s - b) && (y < b || y >= s - b)
-  for (let y = 0; y < s; y++) {
-    for (let x = 0; x < s; x++) {
-      const horizontal = y < b || y >= s - b
-      const vertical = x < b || x >= s - b
-      if (!horizontal && !vertical) continue // transparent center: bed soil shows
-      // Depth across the plank: 0 = outer edge … b-1 = inner edge.
-      const depth = Math.min(x, y, s - 1 - x, s - 1 - y)
-      let color: RGB
-      if (depth === 0) color = outline
-      else if (depth === b - 1) color = shadow // inner lip, casts onto the soil
-      else if (inCorner(x, y)) color = depth === 1 ? postLight : post
-      else if (depth === 1) color = highlight
-      else {
-        // Grain: dashed lines along the plank, repeating every 6 px of edge
-        // length (FRAME_SIZE - 2 * FRAME_BORDER = 12 is a multiple of 6).
-        const along = horizontal ? x : y
-        const dash = depth === 2 ? along % 6 < 3 : depth === 4 ? (along + 3) % 6 < 3 : false
-        color = dash ? grain : plank
+export function seamlessStrip(rgba: Uint8Array, width: number, height: number, blend: number): Uint8Array {
+  const length = width - blend
+  const out = new Uint8Array(length * height * 4)
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < length; x++) {
+      for (let c = 0; c < 4; c++) {
+        const own = rgba[(y * width + x) * 4 + c]
+        if (x >= blend) {
+          out[(y * length + x) * 4 + c] = own
+          continue
+        }
+        const wrapped = rgba[(y * width + x + length) * 4 + c]
+        const t = x / blend
+        out[(y * length + x) * 4 + c] = Math.round(wrapped * (1 - t) + own * t)
       }
-      setPixel(rgba, s, x, y, color)
     }
   }
-  return rgba
+  return out
 }

@@ -6,13 +6,14 @@
 // Writes:
 //   public/art/plants/<plant-id>.png    canvas sprites (trimmed, 128 px)
 //   public/art/icons/<plant-id>.png     inventory/catalog icons (trimmed, 128 px)
-//   public/art/textures/*.png           soil, bed soil, grass, bed frame
+//   public/art/textures/*.png           soil, bed soil, grass (code-generated),
+//                                       bed frame (from the approved plank art)
 //   src/components/artAssets.ts         which plants have art (generated)
 
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import sharp from 'sharp'
-import { FRAME_BORDER, FRAME_SIZE, PALETTES, TILE_SIZE, bedFrame, groundTile } from './textures.ts'
+import { PALETTES, TILE_SIZE, groundTile, seamlessStrip } from './textures.ts'
 
 const MANIFEST = 'art/approved/manifest.json'
 const OUT = 'public/art'
@@ -20,10 +21,17 @@ const GENERATED_MODULE = 'src/components/artAssets.ts'
 /** App sprite/icon size: about 3× the 44 px display size, for sharp
  * rendering on high-density screens. */
 const ASSET_SIZE = 128
+/** Bed board thickness in the frame image: the plank art's own pixel grid
+ * (about 5.6 source pixels per art pixel), so it renders crisp. The CSS
+ * border-image slice must match. */
+const BED_BOARD = 24
+/** Source columns cross-faded to hide the plank's repeat joint. */
+const PLANK_BLEND = 60
 
 type Manifest = {
   plants: Record<string, { file: string }>
   icons: Record<string, { file: string }>
+  bed: { plank: { file: string }; corner: { file: string } }
 }
 
 /** Trim transparent margins, then fit into a centered square. */
@@ -43,6 +51,35 @@ async function writeRgba(rgba: Uint8Array, size: number, target: string) {
   await sharp(rgba, { raw: { width: size, height: size, channels: 4 } }).png({ compressionLevel: 9 }).toFile(target)
 }
 
+/**
+ * The bed frame as a 9-slice image for CSS border-image: a seamless plank
+ * section on each side (outer edge outward, so all sides match) and a post
+ * in each corner, around a transparent center.
+ */
+async function buildBedFrame(plankFile: string, cornerFile: string, target: string) {
+  const { data, info } = await sharp(plankFile).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  const stripWidth = info.width - PLANK_BLEND
+  const strip = seamlessStrip(new Uint8Array(data), info.width, info.height, PLANK_BLEND)
+  const length = Math.round((stripWidth * BED_BOARD) / info.height)
+  const top = await sharp(strip, { raw: { width: stripWidth, height: info.height, channels: 4 } })
+    .resize(length, BED_BOARD, { fit: 'fill', kernel: 'lanczos3' })
+    .png()
+    .toBuffer()
+  const corner = await sharp(cornerFile).resize(BED_BOARD, BED_BOARD, { fit: 'fill', kernel: 'lanczos3' }).png().toBuffer()
+  const far = BED_BOARD + length
+  const size = far + BED_BOARD
+  await sharp({ create: { width: size, height: size, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([
+      { input: top, left: BED_BOARD, top: 0 },
+      { input: await sharp(top).flip().toBuffer(), left: BED_BOARD, top: far },
+      { input: await sharp(top).rotate(270).toBuffer(), left: 0, top: BED_BOARD },
+      { input: await sharp(top).rotate(90).toBuffer(), left: far, top: BED_BOARD },
+      ...[[0, 0], [far, 0], [0, far], [far, far]].map(([left, y]) => ({ input: corner, left, top: y })),
+    ])
+    .png({ compressionLevel: 9 })
+    .toFile(target)
+}
+
 async function main() {
   const manifest = JSON.parse(readFileSync(MANIFEST, 'utf8')) as Manifest
 
@@ -60,7 +97,7 @@ async function main() {
   await writeRgba(groundTile(PALETTES.soil, 11, 'speckles'), TILE_SIZE, join(OUT, 'textures', 'soil.png'))
   await writeRgba(groundTile(PALETTES.bedSoil, 23, 'speckles'), TILE_SIZE, join(OUT, 'textures', 'bed-soil.png'))
   await writeRgba(groundTile(PALETTES.grass, 37, 'blades'), TILE_SIZE, join(OUT, 'textures', 'grass.png'))
-  await writeRgba(bedFrame(), FRAME_SIZE, join(OUT, 'textures', 'bed-frame.png'))
+  await buildBedFrame(manifest.bed.plank.file, manifest.bed.corner.file, join(OUT, 'textures', 'bed-frame.png'))
   console.log('• 4 textures')
 
   const ids = (entries: Record<string, unknown>) => JSON.stringify(Object.keys(entries).sort())
@@ -70,10 +107,7 @@ async function main() {
       `// Which plants have approved art in public/art/; others fall back to the\n` +
       `// placeholder disc.\n\n` +
       `export const SPRITE_PLANT_IDS: ReadonlySet<string> = new Set(${ids(manifest.plants)})\n\n` +
-      `export const ICON_PLANT_IDS: ReadonlySet<string> = new Set(${ids(manifest.icons)})\n\n` +
-      `/** Bed frame 9-slice: source image size and plank width, in pixels. */\n` +
-      `export const BED_FRAME_SLICE = ${FRAME_BORDER}\n` +
-      `export const BED_FRAME_SIZE = ${FRAME_SIZE}\n`,
+      `export const ICON_PLANT_IDS: ReadonlySet<string> = new Set(${ids(manifest.icons)})\n`,
   )
   console.log(`• ${GENERATED_MODULE}`)
 }

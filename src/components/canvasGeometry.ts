@@ -76,3 +76,14 @@ export function percentCircle(garden: GardenState, center: Position, radius: num
     height: radius * 2,
   })
 }
+
+/** Round lengths a scale bar can show, in inches. */
+const SCALE_BAR_LENGTHS = [1, 3, 6, 12, 24, 36, 60, 120, 240, 600, 1200]
+
+/**
+ * The longest round length whose bar fits within `maxPx` at this on-screen
+ * scale (or the shortest, if none fits), in inches.
+ */
+export function scaleBarLength(pxPerInch: number, maxPx: number): number {
+  return SCALE_BAR_LENGTHS.findLast((inches) => inches * pxPerInch <= maxPx) ?? SCALE_BAR_LENGTHS[0]
+}
