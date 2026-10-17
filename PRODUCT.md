@@ -704,7 +704,7 @@ It replaces today's plant picker column, sunlight picker, and the feedback list 
 - Removing a type from the inventory never removes plants already placed.
 - Clear Garden keeps the inventory: it removes plants, not the plan. New Garden starts with an empty inventory.
 
-**Boundaries.** The inventory is part of the garden plan and belongs with it once persistence exists. It is **not** a garden fact and does not feed the reasoning engine. Rules and opportunities use the full plant data and the placed plants, never the inventory. The UI may mark which suggested plants are already in the inventory, as a presentation aid only. Inventory changes are not undoable in the first implementation; undo and redo cover garden changes.
+**Boundaries.** The inventory is part of the garden plan and is saved with it. It is **not** a garden fact and does not feed the reasoning engine. Rules and opportunities use the full plant data and the placed plants, never the inventory. The UI may mark which suggested plants are already in the inventory, as a presentation aid only. Inventory changes are not undoable in the first implementation; undo and redo cover garden changes.
 
 ## Interaction Principles
 
@@ -826,7 +826,7 @@ Turn the planner into a polished public product without changing the domain mode
 
 - **A. Visual foundation:** restyle the shell with shared design tokens (palette, type, radii, shadows) and drawn UI icons in place of text glyphs. No behavior changes.
 - **B. Landing page:** a responsive landing page at `/` and the planner at `/plan/`. The planner stays desktop-first, with a "best on desktop" note on small screens. *Implemented, along with A.* The landing page describes only what the planner does today, and its hero notes reuse the planner's own wording for real pairs in the data.
-- **C. Local save:** the current garden plan (name, garden, inventory) saves to the browser automatically and is validated when loaded.
+- **C. Local save:** the current garden plan (name, garden, inventory) saves to the browser automatically and is validated when loaded. *Implemented.* The garden name is edited in place in the top bar, which also says whether the garden is saved in this browser. Returning visitors reopen their garden; New Garden starts over and clears the save. Undo history is not saved.
 - **D. Accounts:** magic-link sign-in, several saved gardens per user, and the local garden uploaded on first sign-in.
 
 ## Not in This Phase

@@ -1,8 +1,13 @@
 import { useRef } from 'react'
+import { DEFAULT_GARDEN_NAME } from '../gardenPlan'
 import Icon from './Icon'
 import { formatSize } from './units'
 
 type TopBarProps = {
+  gardenName: string
+  /** Whether the plan is saved in this browser. */
+  saved: boolean
+  onRenameGarden: (name: string) => void
   gardenWidth: number
   gardenHeight: number
   canUndo: boolean
@@ -13,9 +18,12 @@ type TopBarProps = {
   onClearGarden: () => void
 }
 
-/** Garden identity, undo/redo, and a menu for the less frequent, more
- * destructive actions (New Garden, Clear Garden). */
+/** Garden identity (an editable name), undo/redo, and a menu for the less
+ * frequent, more destructive actions (New Garden, Clear Garden). */
 function TopBar({
+  gardenName,
+  saved,
+  onRenameGarden,
   gardenWidth,
   gardenHeight,
   canUndo,
@@ -38,7 +46,22 @@ function TopBar({
         <a className="top-bar__app" href="/">
           Regenerative Garden Planner
         </a>
-        <span className="top-bar__garden">Garden · {formatSize(gardenWidth, gardenHeight)}</span>
+        <input
+          className="top-bar__name"
+          aria-label="Garden name"
+          value={gardenName}
+          size={Math.max(gardenName.length, 8)}
+          maxLength={60}
+          onChange={(e) => onRenameGarden(e.target.value)}
+          onBlur={(e) => onRenameGarden(e.target.value.trim() || DEFAULT_GARDEN_NAME)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') e.currentTarget.blur()
+          }}
+        />
+        <span className="top-bar__garden">
+          {formatSize(gardenWidth, gardenHeight)} ·{' '}
+          {saved ? 'Saved in this browser' : 'Not saved: browser storage is unavailable'}
+        </span>
       </div>
       <div className="top-bar__actions">
         <button

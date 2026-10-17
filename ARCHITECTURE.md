@@ -14,10 +14,10 @@ The main constraint is explainability. A conclusion shown to a user should be tr
 - Nunito (Google Fonts) as the interface typeface
 - Vitest for domain and data tests
 - Oxlint for static analysis
-- Client-side state only
+- Client-side state, saved to the browser's `localStorage`
 - Development-time art tooling only (not shipped): `@google/genai` for image generation and `sharp` for image processing, run by Node scripts in `scripts/`
 
-There is currently no backend, database, authentication system, global state library, persistence layer, or AI API. See [Planned Persistence Direction](#planned-persistence-direction) for the planned local save and Supabase accounts.
+There is currently no backend, database, authentication system, global state library, or AI API. The current garden plan is saved in the browser; see [Persistence](#persistence) for that and the planned Supabase accounts.
 
 ## Repository Structure
 
@@ -27,6 +27,7 @@ src/
 ├── data/         Curated plants, relationship rules, and source registry
 ├── domain/       Framework-independent state operations and evaluation rules
 ├── App.tsx       Planner orchestration and interaction state
+├── gardenPlan.ts The saved plan: shape, validation on load, browser storage
 ├── main.tsx      Planner entry point (plan/index.html)
 ├── Landing.tsx   Landing page (index.html), entry landingMain.tsx
 index.html        Landing page at /
@@ -116,7 +117,8 @@ UI concerns are not stored in `GardenState`. `App.tsx` separately tracks:
 
 - **the active tool**, one tagged value: `select`, `plant` (with its plant id), `beds`, `sunlight` (with its Full / Partial / Shade / Clear brush), or `eraser`. Tools are persistent brushes. The toolbar highlight, active inventory slot, cursor, and status line are all derived from this one value, so they can't disagree. The last sunlight brush is remembered separately.
 - **the selection**, one tagged value: a plant, a bed, or nothing. Never both. Bed selection is shown and editable only in Select and Beds.
-- **the inventory**: an ordered list of plant ids in use in this garden. A palette, never an input to reasoning, and not part of undo history. It belongs with the garden plan once persistence exists.
+- **the inventory**: an ordered list of plant ids in use in this garden. A palette, never an input to reasoning, and not part of undo history. It is saved with the garden plan.
+- **the garden name**: part of the saved plan, not of `GardenState`. Edited in place in the top bar; a blank name becomes "My garden".
 - **the history** (`src/gardenHistory.ts`): the garden plus `past` and `future` stacks, as pure transitions (`applyChange`, `undo`, `redo`, and a checkpoint so a sunlight stroke is one step). Up to 100 steps. No-op domain operations return the same object and record nothing. A new change clears redo. New Garden starts fresh.
 - whether the catalog popup and the inspector are open
 - transient feedback focus placement ids
@@ -261,15 +263,17 @@ Native drag-and-drop, plant and bed dragging, zoom and pan, responsive layout, a
 
 ## Deliberate Limitations
 
-The garden is a simple physical rectangle. Positions are design intent rather than surveyed measurements, and plants are modeled as points: there are no footprints, mature spread, or clearance reasoning yet. Beds are layout only: no rule reasons about them yet. The application also does not currently provide persistence, accounts, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations. Persistence is planned; see [Planned Persistence Direction](#planned-persistence-direction).
+The garden is a simple physical rectangle. Positions are design intent rather than surveyed measurements, and plants are modeled as points: there are no footprints, mature spread, or clearance reasoning yet. Beds are layout only: no rule reasons about them yet. The application also does not currently provide accounts, cloud saving, climate/location reasoning, soil or water simulation, canopy/shade simulation, arbitrary garden boundaries, 3D rendering, or AI-generated recommendations. Accounts are planned; see [Persistence](#persistence).
 
 If an LLM is introduced later, deterministic data and domain rules should remain the source of horticultural facts and conclusions. An LLM may assist with explanation, comparison, or interaction, but should not invent the underlying gardening rules.
 
-## Planned Persistence Direction
+## Persistence
 
 The application remains client-side until accounts are introduced (see PRODUCT.md, [Polish, Landing, and Accounts](PRODUCT.md#polish-landing-and-accounts)). Persistence is staged:
 
-1. **Local save** — the current `GardenPlan` (name, garden, inventory, `schemaVersion`) is saved to `localStorage` and validated on load; an invalid or unknown version is discarded rather than trusted.
+1. **Local save** (implemented, `src/gardenPlan.ts`) — the current `GardenPlan` (name, garden, inventory, plus a `schemaVersion`) is saved to `localStorage` on every change, and reopened on the next visit instead of the setup screen. Undo history is not saved. New Garden clears the save.
+   - **Loading never trusts the save.** Bad JSON, an unknown `schemaVersion`, or an invalid garden size or shape discards the whole plan. Otherwise the garden is rebuilt through the domain's own operations (`createGarden`, `addBed`, `setSunlightAt`, `placePlant`), so an invalid bed, sunlight cell, or placement is skipped rather than loaded. Placements of plants no longer in the catalog are dropped, and the status line says how many. The inventory keeps only known plant ids.
+   - Storage may be unavailable (private windows, blocked site data). The planner checks once at startup and says in the top bar whether the garden is saved in this browser; everything else works without it.
 2. **Accounts** — Supabase provides magic-link authentication and PostgreSQL. A `gardens` table stores each plan as `jsonb`, owned by a user and protected by Row Level Security, so the client talks to Supabase directly and there is no custom backend server. A user can have several gardens; a local garden is uploaded on first sign-in. Hosting is static (Vercel).
 3. **Structured knowledge storage** (possible, later) — plant metadata, relationships, and provenance stay in `src/data` until the dataset is large enough to justify moving them.
 

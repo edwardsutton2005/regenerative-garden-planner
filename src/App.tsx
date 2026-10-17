@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import BedPanel from './components/BedPanel'
 import CanvasViewport from './components/CanvasViewport'
 import GardenCanvas from './components/GardenCanvas'
@@ -61,6 +61,13 @@ import {
   undo,
 } from './gardenHistory'
 import type { GardenHistory } from './gardenHistory'
+import {
+  DEFAULT_GARDEN_NAME,
+  canSavePlans,
+  clearSavedPlan,
+  loadSavedPlan,
+  savePlan,
+} from './gardenPlan'
 import './App.css'
 
 const plantsById: Record<string, Plant> = Object.fromEntries(
@@ -89,10 +96,15 @@ type Selection = { kind: 'plant'; id: string } | { kind: 'bed'; id: string } | n
 const SELECT: ActiveTool = { kind: 'select' }
 
 function App() {
+  // The plan saved in this browser, if any, read once on startup.
+  const [initialLoad] = useState(loadSavedPlan)
   // The garden and its undo/redo history (see gardenHistory.ts). No garden
   // yet means the app is on the setup screen.
-  const [history, setHistory] = useState<GardenHistory>(EMPTY_HISTORY)
+  const [history, setHistory] = useState<GardenHistory>(() =>
+    initialLoad ? startHistory(initialLoad.plan.garden) : EMPTY_HISTORY,
+  )
   const { garden } = history
+  const [gardenName, setGardenName] = useState(initialLoad?.plan.name ?? DEFAULT_GARDEN_NAME)
   const [setupDimensions, setSetupDimensions] = useState<SetupDimensions>({
     width: GARDEN_DEFAULT_SIZE,
     height: GARDEN_DEFAULT_SIZE,
@@ -103,7 +115,17 @@ function App() {
   const [selection, setSelection] = useState<Selection>(null)
   // Plant types in use in this garden, in order: a palette, not a gate, and
   // never an input to reasoning. Not part of undo history.
-  const [inventory, setInventory] = useState<string[]>([])
+  const [inventory, setInventory] = useState<string[]>(initialLoad?.plan.inventory ?? [])
+  const [saved] = useState(canSavePlans)
+  // Said once after loading if some saved plants couldn't be restored;
+  // cleared by the next garden change.
+  const [loadNotice, setLoadNotice] = useState(() => {
+    const dropped = initialLoad?.droppedPlacements ?? 0
+    if (dropped === 0) return null
+    return dropped === 1
+      ? "1 saved plant couldn't be restored and was left out."
+      : `${dropped} saved plants couldn't be restored and were left out.`
+  })
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [inspectorOpen, setInspectorOpen] = useState(true)
   // Placement ids to show transient feedback for: the plant just placed or
@@ -118,10 +140,18 @@ function App() {
   const selectedPlacementId = selection?.kind === 'plant' ? selection.id : null
   const selectedBedId = selection?.kind === 'bed' && bedSelectionVisible ? selection.id : null
 
+  // Autosave: the current plan goes to browser storage on every change.
+  // Leaving the garden (New Garden) clears it.
+  useEffect(() => {
+    if (garden) savePlan({ name: gardenName, garden, inventory })
+    else clearSavedPlan()
+  }, [garden, gardenName, inventory])
+
   // --- garden changes (all undoable) ----------------------------------------
 
   function updateGarden(change: (current: GardenState) => GardenState) {
     setHistory((h) => applyChange(h, change))
+    setLoadNotice(null)
   }
 
   function handleUndo() {
@@ -295,7 +325,9 @@ function App() {
     // A new garden starts with an empty inventory and no history.
     setSetupDimensions({ width: garden.width, height: garden.height })
     setHistory(EMPTY_HISTORY)
+    setGardenName(DEFAULT_GARDEN_NAME)
     setInventory([])
+    setLoadNotice(null)
     setActiveTool(SELECT)
     setLastPlacementIds([])
     setSelection(null)
@@ -412,6 +444,9 @@ function App() {
   return (
     <div className={`workspace${inspectorOpen ? '' : ' workspace--inspector-closed'}`}>
       <TopBar
+        gardenName={gardenName}
+        saved={saved}
+        onRenameGarden={setGardenName}
         gardenWidth={garden.width}
         gardenHeight={garden.height}
         canUndo={history.past.length > 0}
@@ -432,6 +467,7 @@ function App() {
       <main className="workspace__canvas">
         <p className="workspace__status" aria-live="polite">
           {status}
+          {loadNotice && <span className="workspace__notice">{loadNotice}</span>}
         </p>
         <CanvasViewport
           key={`${garden.width}x${garden.height}`}

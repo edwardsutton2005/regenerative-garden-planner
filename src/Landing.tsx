@@ -111,7 +111,7 @@ function Landing() {
               each other, which clash, and which are too close, as you place them.
             </p>
             <PlannerLink className="button button--primary" />
-            <p className="hero__small">Free · No account needed · Best in a desktop browser</p>
+            <p className="hero__small">Free · No account needed · Saves in your browser · Best on desktop</p>
           </div>
           <GardenScene />
         </section>
