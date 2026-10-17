@@ -1,6 +1,7 @@
 import type { Plant } from '../domain/plant'
 import { PLANT_DRAG_MIME_TYPE } from './dragPayload'
 import type { PlantDragPayload } from './dragPayload'
+import Icon from './Icon'
 import PlantSwatch from './PlantSwatch'
 
 type InventoryBarProps = {
@@ -66,7 +67,7 @@ function InventoryBar({
                   title="Remove from your plants (placed plants stay)"
                   onClick={() => onRemove(plant.id)}
                 >
-                  ×
+                  <Icon name="close" size={12} />
                 </button>
               </li>
             )
@@ -74,7 +75,7 @@ function InventoryBar({
         </ul>
       )}
       <button type="button" className="inventory__add" onClick={onOpenCatalog}>
-        + Add plants
+        <Icon name="plus" /> Add plants
       </button>
     </div>
   )

@@ -69,6 +69,7 @@ function GardenSetup({ initialWidth, initialHeight, onCreateGarden }: GardenSetu
         </label>
         <button
           type="button"
+          className="garden-controls__create"
           disabled={!canCreate}
           title={canCreate ? undefined : `Enter a valid width and length (${MIN_FEET}-${MAX_FEET} ft) to create a garden`}
           onClick={() => {

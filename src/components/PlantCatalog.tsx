@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Plant } from '../domain/plant'
+import Icon from './Icon'
 import PlantSwatch from './PlantSwatch'
 import { catalogCategories, filterCatalog } from './plantChoice'
 import type { CatalogCategory } from './plantChoice'
@@ -62,7 +63,7 @@ function PlantCatalog({ plants, inventory, onChoose, onClose }: PlantCatalogProp
             }}
           />
           <button type="button" className="catalog__close" onClick={onClose} aria-label="Close catalog">
-            ×
+            <Icon name="close" />
           </button>
         </div>
 

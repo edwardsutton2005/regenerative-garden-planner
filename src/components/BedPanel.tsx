@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { GardenBed } from '../domain/garden'
+import Icon from './Icon'
 import { formatSize } from './units'
 
 type BedPanelProps = {
@@ -52,7 +53,7 @@ function BedPanel({ bed, plantNames, onRename, onDelete, onClose }: BedPanelProp
           onClick={onClose}
           aria-label="Deselect bed"
         >
-          ×
+          <Icon name="close" size={16} />
         </button>
       </div>
 

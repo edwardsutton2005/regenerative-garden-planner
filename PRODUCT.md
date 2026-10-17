@@ -766,7 +766,7 @@ Not yet: Safari pinch gestures, and Show me (which pans and zooms to plants).
 
 ## Visual Direction
 
-- **App shell:** clean, modern, and quiet. The cozy feel does not come from the chrome.
+- **App shell:** warm and game-like, "Stardew Valley but a little more realistic and polished": crafted parchment-and-wood panels, a rounded friendly typeface, and drawn icons. It feels finished, not low-res: pixel art is an accent, never the whole interface. The chrome stays quieter than the garden.
 - **Canvas:** tactile: ground texture, bed frames with soft depth, sunlight drawn as warm light and cool shade rather than flat tints.
 - **Plants:** warm, whimsical, consistent top-down illustrations replace the dot markers. Until mature size is modeled, plant art stays a fixed display size and never suggests a footprint.
 - **Motion:** small, satisfying responses (placement, hover, drop) that never imply facts the product doesn't model, such as growth or seasons.
@@ -808,13 +808,30 @@ There is no grass inside the garden, so a plant in open ground never looks plant
 - the interaction directions listed under [Interaction Principles](#interaction-principles)
 - optional, off-by-default sound
 
-**Out of scope:** backend, accounts, persistence of gardens or inventories, plant art scaled by mature size, new reasoning rules or opportunity policies, scores or other game mechanics, mobile/touch-first design.
+**Out of scope for this redesign** (persistence and accounts are planned separately; see [Polish, Landing, and Accounts](#polish-landing-and-accounts)): plant art scaled by mature size, new reasoning rules or opportunity policies, scores or other game mechanics, mobile/touch-first design.
 
 ## Open Questions
 
 - Should the inspector show sources for curated plant facts? Part 2E currently keeps provenance out of the UI.
 - Should the inventory show plants that are placed in the garden but no longer in the inventory?
 - How should short-lived canvas messages behave when several findings happen at once, for example one move creating a pairing and a spacing issue?
+
+---
+
+# Polish, Landing, and Accounts
+
+## Goal
+
+Turn the planner into a polished public product without changing the domain model or the reasoning engine. Delivered in order:
+
+- **A. Visual foundation:** restyle the shell with shared design tokens (palette, type, radii, shadows) and drawn UI icons in place of text glyphs. No behavior changes.
+- **B. Landing page:** a responsive landing page at `/` and the planner at `/plan/`. The planner stays desktop-first, with a "best on desktop" note on small screens.
+- **C. Local save:** the current garden plan (name, garden, inventory) saves to the browser automatically and is validated when loaded.
+- **D. Accounts:** magic-link sign-in, several saved gardens per user, and the local garden uploaded on first sign-in.
+
+## Not in This Phase
+
+Sharing, collaboration, public galleries, payments, and new reasoning rules.
 
 ---
 
@@ -869,7 +886,7 @@ Games such as Stardew Valley are useful inspiration for the feeling of interacti
 - the garden should feel alive
 - placing or rearranging something should feel satisfying
 
-The product borrows *interaction metaphors* from such games, such as a hotbar of chosen plants and tactile placement, but not their pixel-art style, overall interface, or game mechanics. Game inspiration shapes interaction and art, never reasoning: there are no scores, XP, levels, or health meters (see [No Garden Score](#no-garden-score)). The "strategy game" in the product vision means experimenting with a layout and seeing consequences, not winning.
+The product borrows *interaction metaphors* from such games, such as a hotbar of chosen plants and tactile placement, and some of their warmth (the shell and art may use pixel art as an accent), but not their low-resolution look, overall interface, or game mechanics. Game inspiration shapes interaction and art, never reasoning: there are no scores, XP, levels, or health meters (see [No Garden Score](#no-garden-score)). The "strategy game" in the product vision means experimenting with a layout and seeing consequences, not winning.
 
 Over time, plants and garden elements should be represented through cohesive illustrations rather than relying on generic icons, emoji, or text labels as the primary visual representation.
 

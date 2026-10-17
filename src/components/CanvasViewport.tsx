@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactNode } from 'react'
+import Icon from './Icon'
 import { scaleBarLength } from './canvasGeometry'
 import { isTyping } from './useWorkspaceShortcuts'
 import { formatLength } from './units'
@@ -217,7 +218,7 @@ function CanvasViewport({ gardenWidth, dragToPan, children }: CanvasViewportProp
           aria-label="Zoom out"
           title="Zoom out (⌘/Ctrl −)"
         >
-          −
+          <Icon name="minus" size={16} />
         </button>
         <button
           type="button"
@@ -235,7 +236,7 @@ function CanvasViewport({ gardenWidth, dragToPan, children }: CanvasViewportProp
           aria-label="Zoom in"
           title="Zoom in (⌘/Ctrl +)"
         >
-          +
+          <Icon name="plus" size={16} />
         </button>
       </div>
     </div>

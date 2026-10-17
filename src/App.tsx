@@ -7,6 +7,7 @@ import GardenComposition from './components/GardenComposition'
 import GardenInspector from './components/GardenInspector'
 import GardenOpportunities from './components/GardenOpportunities'
 import GardenSetup from './components/GardenSetup'
+import Icon from './components/Icon'
 import InventoryBar from './components/InventoryBar'
 import PlacementFeedback from './components/PlacementFeedback'
 import PlantCatalog from './components/PlantCatalog'
@@ -303,15 +304,17 @@ function App() {
   if (!garden) {
     return (
       <div className="setup-screen">
-        <header className="app-header">
-          <h1>Regenerative Garden Planner</h1>
-          <p>Choose your garden size to get started.</p>
-        </header>
-        <GardenSetup
-          initialWidth={setupDimensions.width}
-          initialHeight={setupDimensions.height}
-          onCreateGarden={handleCreateGarden}
-        />
+        <div className="setup-screen__card">
+          <header className="app-header">
+            <h1>Regenerative Garden Planner</h1>
+            <p>Choose your garden size to get started.</p>
+          </header>
+          <GardenSetup
+            initialWidth={setupDimensions.width}
+            initialHeight={setupDimensions.height}
+            onCreateGarden={handleCreateGarden}
+          />
+        </div>
       </div>
     )
   }
@@ -474,7 +477,7 @@ function App() {
           aria-expanded={inspectorOpen}
           aria-label={inspectorOpen ? 'Collapse inspector' : 'Expand inspector'}
         >
-          {inspectorOpen ? '›' : '‹'}
+          <Icon name={inspectorOpen ? 'chevronRight' : 'chevronLeft'} size={16} />
         </button>
         {inspectorOpen && (
           <div className="workspace__inspector-body">

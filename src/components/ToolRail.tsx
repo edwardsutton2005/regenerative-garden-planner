@@ -1,4 +1,6 @@
 import type { SunlightLevel } from '../domain/garden'
+import Icon from './Icon'
+import type { IconName } from './Icon'
 
 export type SunlightBrush = SunlightLevel | 'clear'
 
@@ -14,11 +16,11 @@ type ToolRailProps = {
   onSelectSunlightBrush: (brush: SunlightBrush) => void
 }
 
-const TOOLS: { id: RailTool; icon: string; label: string }[] = [
-  { id: 'select', icon: '↖', label: 'Select' },
-  { id: 'beds', icon: '▭', label: 'Beds' },
-  { id: 'sunlight', icon: '☀', label: 'Sunlight' },
-  { id: 'eraser', icon: '⌫', label: 'Eraser' },
+const TOOLS: { id: RailTool; icon: IconName; label: string }[] = [
+  { id: 'select', icon: 'select', label: 'Select' },
+  { id: 'beds', icon: 'beds', label: 'Beds' },
+  { id: 'sunlight', icon: 'sun', label: 'Sunlight' },
+  { id: 'eraser', icon: 'eraser', label: 'Eraser' },
 ]
 
 // Short labels fit the narrow rail; the full name is the accessible label.
@@ -45,9 +47,7 @@ function ToolRail({ activeTool, sunlightBrush, onSelectTool, onSelectSunlightBru
           aria-pressed={activeTool === tool.id}
           onClick={() => onSelectTool(tool.id)}
         >
-          <span className="tool-rail__icon" aria-hidden="true">
-            {tool.icon}
-          </span>
+          <Icon name={tool.icon} size={22} />
           <span className="tool-rail__label">{tool.label}</span>
         </button>
       ))}

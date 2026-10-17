@@ -1,18 +1,32 @@
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  /* Design tokens: warm parchment and wood, honey for selection, leaf for
+   * primary actions. Component styles read these rather than raw colors. */
+  --text: #6e5a44;
+  --text-h: #3a2817;
+  --bg: #fffaf0;
+  --panel: #f6ead0;
+  --inset: #f0e2c2;
+  --border: #dcc8a3;
+  --border-strong: #b9986a;
+  --wood: #8a5a32;
+  --wood-dark: #5e3a1e;
+  --accent: #d9891c;
+  --accent-bg: rgba(217, 137, 28, 0.16);
+  --accent-border: rgba(217, 137, 28, 0.55);
+  /* Brighter than --accent, so a selected sprite stands out on soil. */
+  --select: #ffd34d;
+  --leaf: #4f8a35;
+  --leaf-dark: #36622a;
+  --code-bg: var(--inset);
+  --radius: 10px;
+  --radius-sm: 6px;
+  /* A raised, tactile control: a darker lip under the face. */
+  --lip: 0 2px 0 var(--border-strong);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(58, 35, 15, 0.22) 0 10px 24px -6px, rgba(58, 35, 15, 0.12) 0 4px 8px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --sans: 'Nunito', system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: var(--sans);
   --mono: ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
@@ -44,14 +58,14 @@ body {
 h1,
 h2 {
   font-family: var(--heading);
-  font-weight: 500;
+  font-weight: 800;
   color: var(--text-h);
 }
 
 h1 {
-  font-size: 56px;
+  font-size: 44px;
   line-height: 118%;
-  letter-spacing: -1.68px;
+  letter-spacing: -0.5px;
   margin: 32px 0;
   @media (max-width: 1024px) {
     font-size: 36px;
@@ -83,4 +97,13 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+button {
+  font-family: inherit;
+}
+
+.icon {
+  flex: none;
+  display: block;
 }

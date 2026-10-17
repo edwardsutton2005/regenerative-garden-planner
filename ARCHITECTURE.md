@@ -10,13 +10,14 @@ The main constraint is explainability. A conclusion shown to a user should be tr
 
 - React and TypeScript
 - Vite for development and production builds
-- CSS for layout and presentation
+- CSS for layout and presentation; shared design tokens (color, type, radius, shadow) are custom properties in `src/index.css`, and UI icons are inline SVG in `components/Icon.tsx`
+- Nunito (Google Fonts) as the interface typeface
 - Vitest for domain and data tests
 - Oxlint for static analysis
 - Client-side state only
 - Development-time art tooling only (not shipped): `@google/genai` for image generation and `sharp` for image processing, run by Node scripts in `scripts/`
 
-There is currently no backend, database, authentication system, global state library, persistence layer, or AI API. See [Planned Persistence Direction](#planned-persistence-direction) for the intended future backend milestone.
+There is currently no backend, database, authentication system, global state library, persistence layer, or AI API. See [Planned Persistence Direction](#planned-persistence-direction) for the planned local save and Supabase accounts.
 
 ## Repository Structure
 
@@ -263,19 +264,12 @@ If an LLM is introduced later, deterministic data and domain rules should remain
 
 ## Planned Persistence Direction
 
-The application remains client-side while the domain model and reasoning engine continue to develop. Persistence is a planned future milestone, not current scope, and backend work is staged infrastructure rather than one large migration.
+The application remains client-side until accounts are introduced (see PRODUCT.md, [Polish, Landing, and Accounts](PRODUCT.md#polish-landing-and-accounts)). Persistence is staged:
 
-- The frontend remains React, TypeScript, and Vite.
-- A future backend will use Node.js, Express, and TypeScript.
-- PostgreSQL is the intended persistent database.
-- Authentication, microservices, caching infrastructure, and other backend complexity are deferred until a concrete product requirement exists.
+1. **Local save** — the current `GardenPlan` (name, garden, inventory, `schemaVersion`) is saved to `localStorage` and validated on load; an invalid or unknown version is discarded rather than trusted.
+2. **Accounts** — Supabase provides magic-link authentication and PostgreSQL. A `gardens` table stores each plan as `jsonb`, owned by a user and protected by Row Level Security, so the client talks to Supabase directly and there is no custom backend server. A user can have several gardens; a local garden is uploaded on first sign-in. Hosting is static (Vercel).
+3. **Structured knowledge storage** (possible, later) — plant metadata, relationships, and provenance stay in `src/data` until the dataset is large enough to justify moving them.
 
-The existing boundary extends rather than changes: persistence stores gardens; the domain layer understands and manipulates gardens; the reasoning engine evaluates gardens; the UI presents and edits them. `GardenState` and the deterministic garden operations remain independent of React, Express, PostgreSQL, or any particular storage representation, and the reasoning engine continues to operate on the domain model rather than on database structures.
+The boundary extends rather than changes: persistence stores plans; the domain layer understands and manipulates gardens; the reasoning engine evaluates gardens; the UI presents and edits them. `GardenState` and the deterministic operations stay independent of React, Supabase, or any storage representation, and the reasoning engine never operates on database rows.
 
-### Staged Milestones
-
-1. **Garden persistence** (first) — create, save, load, update, and delete garden layouts through a small REST API.
-2. **Structured knowledge storage** (possible) — moving gardening knowledge such as plant metadata, environmental requirements, companion/incompatible relationships, and evidence/provenance into persistent storage, once the dataset is large or complex enough to justify it. Until then, keeping this knowledge in the existing application/domain data is acceptable.
-3. **Accounts and sharing** (later) — accounts, garden ownership, multiple saved gardens per user, and sharing, introduced only if they become actual product requirements.
-
-The backend should not be introduced immediately. The domain model and reasoning-engine foundation should be sufficiently stable first, so persistence is built around that representation rather than forcing it to conform prematurely to a database schema. Implementation choices that are not yet necessary — ORM selection, detailed database schemas, exact endpoint contracts, deployment architecture, and authentication strategy — stay open until the relevant milestone is actually being implemented.
+The landing page and the planner are separate pages of one Vite multi-page build (`/` and `/plan/`), so no client-side router is needed.

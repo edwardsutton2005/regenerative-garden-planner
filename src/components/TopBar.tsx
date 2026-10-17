@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import Icon from './Icon'
 import { formatSize } from './units'
 
 type TopBarProps = {
@@ -45,7 +46,7 @@ function TopBar({
           title="Undo (⌘Z / Ctrl+Z)"
           aria-keyshortcuts="Meta+Z Control+Z"
         >
-          ↶ Undo
+          <Icon name="undo" /> Undo
         </button>
         <button
           type="button"
@@ -54,10 +55,12 @@ function TopBar({
           title="Redo (⇧⌘Z / Ctrl+Shift+Z / Ctrl+Y)"
           aria-keyshortcuts="Meta+Shift+Z Control+Shift+Z Control+Y"
         >
-          ↷ Redo
+          <Icon name="redo" /> Redo
         </button>
         <details className="top-bar__menu" ref={menuRef}>
-          <summary aria-label="Garden menu">⋯</summary>
+          <summary aria-label="Garden menu">
+            <Icon name="more" />
+          </summary>
           <div className="top-bar__menu-items">
             <button type="button" onClick={() => fromMenu(onNewGarden)}>
               New garden…

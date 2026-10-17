@@ -2,6 +2,7 @@ import type { FocusedNeighborRelationship } from '../domain/relationships'
 import type { FocusedSpacingViolation } from '../domain/spacing'
 import type { SunlightFitResult } from '../domain/sunlightFit'
 import type { Plant } from '../domain/plant'
+import Icon from './Icon'
 import PlantSwatch from './PlantSwatch'
 
 type GardenInspectorProps = {
@@ -59,7 +60,7 @@ function GardenInspector({
           onClick={onClose}
           aria-label="Close inspector"
         >
-          ×
+          <Icon name="close" size={16} />
         </button>
       </div>
 
