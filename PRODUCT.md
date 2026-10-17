@@ -937,6 +937,18 @@ A useful long-term principle is:
 
 > **Data and rules provide the facts. AI helps reason about and explain the system.**
 
+### Deferred: Garden Assistant (discussed 2026-10-17)
+
+A chat assistant that understands the current garden is wanted but deferred. When it's picked up:
+
+- **Grounded, not general.** The model receives the garden state, the reasoning engine's findings, and the relevant plant records with their sources, and answers only from them. When the data doesn't cover a question, it says so. It never states horticultural facts of its own.
+- **Suggestions are checked by the rules.** The model may propose a change ("place Basil here"), but the domain functions evaluate it before it is shown, and a suggestion the rules reject is never displayed.
+- **First version is read-only:** explain the garden ("why is this flagged?", "what would add pollinator support?"). Applying a suggestion with one click comes later.
+- **Infrastructure:** the API key requires the project's first server code (a Vercel or Supabase function). Signed-in users only, with a per-user daily limit. API spend needs the user's approval and a budget.
+- **Prerequisite:** expand the plant data first; with 16 plants the assistant would mostly answer "the planner doesn't have data on that."
+- **Possible face:** the walking gardener character could deliver the answers, walking to the plants it's talking about.
+- **Tension to resolve:** the landing page promises "No scores. No guesswork." The assistant must be presented as explaining the planner's rules, not adding new advice.
+
 ---
 
 ## Product Development Principles
