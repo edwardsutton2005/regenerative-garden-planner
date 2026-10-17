@@ -35,7 +35,8 @@ The project is designed as a compact test bed for spatial interaction and transp
 - Claim-level provenance metadata with validation against a source registry
 - User-declared sunlight mapping on 12-inch environmental cells for full sun, partial sun, and shade
 - Sunlight-fit evaluation against each plant's sourced sunlight requirement
-- Local scrolling for large gardens
+- Illustrated canvas: plant sprites and icons, grass around the plot, soil and bed-soil textures, wooden raised-bed frames
+- Zoom (buttons, Cmd/Ctrl + = / − / 0, pinch), fit to screen, drag-to-pan, and a map-style scale bar
 
 Sunlight mapping records the user's description of the site.
 
@@ -111,18 +112,18 @@ npm run lint
 npm run build
 ```
 
-The test suite covers garden-state invariants, coordinate boundaries, relationship symmetry and conflicts, spacing boundaries, composition, opportunity policies, and data/provenance integrity. Native drag-and-drop and visual layout are currently verified manually.
+The test suite covers garden-state invariants, coordinate boundaries, relationship symmetry and conflicts, spacing boundaries, composition, opportunity policies, and data/provenance integrity. Pure helpers behind the canvas and art build (screen↔inch conversion, spacing previews, scale-bar lengths, textures, background removal) are tested too. Drag interactions, zoom/pan, and visual layout are verified manually in the browser.
 
 ## Plant Art Pipeline
 
-Plant sprites and icons are generated with Google's Gemini image API from locked Tomato style references. This is a development-time tool only; the API key is never used by the app. See [art/STYLE.md](./art/STYLE.md) for the art direction, folder layout, and approval workflow.
+Plant sprites and icons are generated with Google's Gemini image API from locked Tomato style references. The bed frame comes from a ChatGPT-made plank sheet; ground textures are generated in code. This is a development-time tool only; the API key is never used by the app. See [art/STYLE.md](./art/STYLE.md) for the art direction, folder layout, and approval workflow.
 
 ```bash
 cp .env.example .env.local          # then set GEMINI_API_KEY in .env.local
 npm run art:generate -- basil sunflower
-npm run art:build                   # approved art + code-made textures → public/art/
+npm run art:build                   # approved art + textures + bed frame → public/art/
 ```
 
 ## Roadmap
 
-Near-term work described in [PRODUCT.md](./PRODUCT.md) includes sourced plant sunlight requirements and deterministic sunlight-fit feedback. Longer-term directions include additional environmental context and richer ecological systems, but those remain planned rather than implemented.
+Near-term work described in [PRODUCT.md](./PRODUCT.md) is the rest of the canvas-first workspace: the Strengths / Issues / Opportunities inspector with Find plants / Show me, and short-lived canvas feedback. Longer-term directions include additional environmental context and richer ecological systems, but those remain planned rather than implemented.

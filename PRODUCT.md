@@ -657,7 +657,7 @@ An **Undo** button, plus Cmd+Z (Mac) or Ctrl+Z (Windows), undoes the last change
 
 # Canvas-First Workspace
 
-**Status:** approved direction, delivered in slices. **Slice 1 is implemented:** the workspace layout, toolbar with sunlight brush, status line, collapsible inspector (current panels, plus the temporary feedback list), inventory bar, catalog popup, Escape and Delete behavior, and undo/redo. The Strengths / Issues / Opportunities inspector, and short-lived canvas feedback are still to come. Garden art, zoom with fit, and a scale bar are implemented (see [Canvas Navigation](#canvas-navigation)). Where earlier sections describe the old picker or "no tool" mode, this section takes precedence.
+**Status:** approved direction, delivered in slices. **Slice 1 is implemented:** the workspace layout, toolbar with sunlight brush, status line, collapsible inspector (current panels, plus the temporary feedback list), inventory bar, catalog popup, Escape and Delete behavior, and undo/redo. Since then, [Garden Art](#garden-art) (sprites, icons, ground textures, wooden bed frames) and [Canvas Navigation](#canvas-navigation) (zoom, fit, drag-to-pan, scale bar) are also implemented. The Strengths / Issues / Opportunities inspector, Find plants / Show me, and short-lived canvas feedback are still to come. Where earlier sections describe the old picker or "no tool" mode, this section takes precedence.
 
 ## Goal
 
@@ -790,7 +790,7 @@ There is no grass inside the garden, so a plant in open ground never looks plant
 - **Plants** are drawn as their approved sprites at a fixed on-screen size (about 44 pixels), with a soft shadow. Selection, drag, and companion/incompatible highlights apply to the sprite. A plant's name appears on hover, keyboard focus, and while dragging.
 - **Icons** replace the placeholder discs in the inventory bar and catalog, and appear beside the plant name in the inspector.
 - A plant without approved art falls back to the placeholder disc.
-- **Textures are generated in code** (deterministic, seamless by construction), not by an image model.
+- **Ground textures are generated in code** (deterministic, seamless by construction), not by an image model. The bed frame is cut from approved plank and corner-post art, made seamless in code.
 
 ## Scope
 

@@ -14,6 +14,7 @@ The main constraint is explainability. A conclusion shown to a user should be tr
 - Vitest for domain and data tests
 - Oxlint for static analysis
 - Client-side state only
+- Development-time art tooling only (not shipped): `@google/genai` for image generation and `sharp` for image processing, run by Node scripts in `scripts/`
 
 There is currently no backend, database, authentication system, global state library, persistence layer, or AI API. See [Planned Persistence Direction](#planned-persistence-direction) for the intended future backend milestone.
 
@@ -26,6 +27,9 @@ src/
 ├── domain/       Framework-independent state operations and evaluation rules
 ├── App.tsx       Application orchestration and interaction state
 └── main.tsx      Browser entry point
+scripts/          Development-time art pipeline (generation, background removal, textures, build)
+art/              Style guide, references, and approved art masters (candidates are git-ignored)
+public/art/       Built app art: sprites, icons, textures, bed frame
 ```
 
 The repository keeps gardening knowledge out of React components. Components may choose wording and visual treatment, but they do not define which plants are companions, what spacing rule applies, or which ecological role a plant has.
@@ -115,7 +119,9 @@ UI concerns are not stored in `GardenState`. `App.tsx` separately tracks:
 - the plant type being dragged from the inventory, and any in-progress canvas drag (preview positions only, committed on release)
 - setup-screen dimensions
 
-Global keyboard shortcuts live in one hook (`components/useWorkspaceShortcuts.ts`): undo, redo, Escape (leave the tool, then clear the selection), and Delete/Backspace (remove the selection). They're ignored while typing in a field. Elements that handle a key themselves, such as a focused plant marker or bed tab, stop it from reaching the hook.
+The view (zoom level, scroll position, and any in-progress pan) lives in `components/CanvasViewport.tsx`, not in `App.tsx`. It is view-only and resets with each new garden.
+
+Global keyboard shortcuts live in one hook (`components/useWorkspaceShortcuts.ts`): undo, redo, Escape (leave the tool, then clear the selection), and Delete/Backspace (remove the selection). They're ignored while typing in a field. Elements that handle a key themselves, such as a focused plant marker or bed tab, stop it from reaching the hook. View shortcuts (Cmd/Ctrl + = / − / 0 for zoom, Space held for panning) live in `CanvasViewport` with the view state they change.
 
 Tracking ids rather than positions means inspection follows a plant when it moves.
 
@@ -240,12 +246,14 @@ Pure domain behavior and data invariants are tested with Vitest. Coverage focuse
 - relationship symmetry, the inclusive 12-inch interaction boundary, diagonal exclusion on the 12-inch grid, and conflict handling
 - screen↔inch conversion, input rounding, and the half-open boundary (`canvasGeometry`)
 - spacing-envelope and drag-highlight derivation (`spacingPreview`)
+- scale-bar length selection (`canvasGeometry`)
+- art tooling: background keying (`scripts/remove-background`), and texture periodicity, determinism, and the plank seam blend (`scripts/textures`)
 - spacing boundaries (exactly at the minimum vs just under it) and deduplication
 - composition and opportunity policy behavior
 - sunlight-fit status derivation, including both "unmodeled" cases staying distinct from a mismatch
 - unique data identifiers and valid provenance references
 
-Native drag-and-drop, responsive layout, local grid scrolling, and other primarily visual interactions are verified manually. A browser-testing dependency has not been added because the current domain behavior can be tested without one.
+Native drag-and-drop, plant and bed dragging, zoom and pan, responsive layout, and other primarily visual interactions are verified manually in the browser. A browser-testing dependency has not been added because the current domain behavior can be tested without one.
 
 ## Deliberate Limitations
 
