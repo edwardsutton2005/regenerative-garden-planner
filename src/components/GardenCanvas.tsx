@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type {
+  CSSProperties,
   ComponentProps,
   DragEvent as ReactDragEvent,
   KeyboardEvent as ReactKeyboardEvent,
@@ -15,6 +16,7 @@ import { PLANT_DRAG_MIME_TYPE, isPlantDragPayload } from './dragPayload'
 import GardenBeds from './GardenBeds'
 import { candidateFeedback, inspectedEnvelope } from './spacingPreview'
 import type { DragCandidate } from './spacingPreview'
+import { plantSpriteUrl } from './plantArt'
 import { formatLength } from './units'
 
 /** Pointer travel, in pixels, before a press on a plant becomes a drag. */
@@ -298,6 +300,18 @@ function GardenCanvas({
     (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
   )
   const { cellSize } = garden.environment
+  const canvasWidth = `min(100cqw, ${garden.width / garden.height} * 100cqh)`
+
+  // A plant's look on the canvas: its approved sprite, or the placeholder
+  // dot when it has no art yet. Fixed on-screen size; never a footprint.
+  const plantVisual = (plant: Plant) => {
+    const sprite = plantSpriteUrl(plant.id)
+    return sprite ? (
+      <img className="plant-marker__sprite" src={sprite} alt="" draggable={false} />
+    ) : (
+      <span className="plant-marker__dot" />
+    )
+  }
 
   return (
     <div
@@ -307,9 +321,13 @@ function GardenCanvas({
         aspectRatio: `${garden.width} / ${garden.height}`,
         // Fit the available space in both directions (the viewport is a
         // size container): as wide as possible without exceeding its height.
-        width: `min(100cqw, ${garden.width / garden.height} * 100cqh)`,
+        width: canvasWidth,
+        // One physical inch on screen, for CSS sized in real units (bed
+        // boards, bed-soil tiles). Recomputed by CSS as the canvas resizes.
+        '--in': `calc(${canvasWidth} / ${garden.width})`,
+        // Soil tiles and grid lines both repeat once per environmental cell (12").
         backgroundSize: `${(cellSize / garden.width) * 100}% ${(cellSize / garden.height) * 100}%`,
-      }}
+      } as CSSProperties}
       tabIndex={0}
       aria-label={`Garden, ${formatLength(garden.width)} by ${formatLength(garden.height)}.${
         mode === 'plant' ? ' Press Enter to place the selected plant at the center.' : ''
@@ -389,6 +407,8 @@ function GardenCanvas({
                 position.y,
               )} from top, ${bed ? `in ${bed.name}` : 'in open ground'}`}
               className={`plant-marker plant-marker--${plant.category}${
+                plantSpriteUrl(plant.id) ? ' plant-marker--art' : ''
+              }${
                 placement.id === selectedPlacementId ? ' plant-marker--inspected' : ''
               }${isDragged ? ' plant-marker--dragging' : ''}${
                 relationship ? ` plant-marker--${relationship}` : ''
@@ -401,18 +421,20 @@ function GardenCanvas({
               onClick={(e) => handleMarkerClick(e, placement.id)}
               onKeyDown={(e) => handleMarkerKeyDown(e, placement)}
             >
-              <span className="plant-marker__dot" />
+              {plantVisual(plant)}
               <span className="plant-marker__label">{plant.name}</span>
             </button>
           )
         })}
         {candidate?.placementId === null && candidatePlant && (
           <div
-            className={`plant-marker plant-marker--${candidatePlant.category} plant-marker--ghost`}
+            className={`plant-marker plant-marker--${candidatePlant.category} plant-marker--ghost${
+              plantSpriteUrl(candidatePlant.id) ? ' plant-marker--art' : ''
+            }`}
             style={percentPoint(garden, candidate.position)}
             aria-hidden="true"
           >
-            <span className="plant-marker__dot" />
+            {plantVisual(candidatePlant)}
             <span className="plant-marker__label">{candidatePlant.name}</span>
           </div>
         )}

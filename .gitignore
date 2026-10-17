@@ -32,3 +32,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Raw plant-art generations (large; approved picks live in art/approved)
+art/candidates/

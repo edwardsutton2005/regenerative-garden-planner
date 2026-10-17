@@ -758,9 +758,29 @@ A full-screen canvas needs fit-to-screen, zoom, and pan. These change only the v
 
 - **App shell:** clean, modern, and quiet. The cozy feel does not come from the chrome.
 - **Canvas:** tactile: ground texture, bed frames with soft depth, sunlight drawn as warm light and cool shade rather than flat tints.
-- **Plants:** warm, whimsical, consistent top-down illustrations eventually replace today's markers. Until mature size is modeled, plant art stays a fixed display size and never suggests a footprint.
+- **Plants:** warm, whimsical, consistent top-down illustrations replace the dot markers. Until mature size is modeled, plant art stays a fixed display size and never suggests a footprint.
 - **Motion:** small, satisfying responses (placement, hover, drop) that never imply facts the product doesn't model, such as growth or seasons.
 - **No game mechanics:** see [No Garden Score](#no-garden-score).
+
+### Garden Art
+
+The canvas uses the approved plant art (see `art/STYLE.md`) plus ground and bed textures in the same chunky pixel style. What each surface means:
+
+| Surface | Where | Represents |
+|---|---|---|
+| Grass | around the garden, outside its rectangle | the yard the plot sits in; frames the garden's boundary |
+| Garden soil | the garden rectangle | the cultivated plot; plants outside beds are in open ground |
+| Bed | each bed rectangle | a raised wooden planting box with richer soil |
+
+There is no grass inside the garden, so a plant in open ground never looks planted in a lawn. There is one bed type, a raised wooden box; other types stay deferred.
+
+- **Scale:** soil and bed-soil textures repeat once per 12 inches, matching the environmental grid, so the texture itself conveys physical scale. Bed boards are about 2 inches wide, with a minimum on-screen width.
+- **Grid lines** are faint by default and stronger while painting sunlight.
+- **Sunlight** is drawn as a warm glow (full and partial sun) or a cool tint (shade), blended so the ground stays visible. Only the presentation changes.
+- **Plants** are drawn as their approved sprites at a fixed on-screen size (about 44 pixels), with a soft shadow. Selection, drag, and companion/incompatible highlights apply to the sprite. A plant's name appears on hover, keyboard focus, and while dragging.
+- **Icons** replace the placeholder discs in the inventory bar and catalog, and appear beside the plant name in the inspector.
+- A plant without approved art falls back to the placeholder disc.
+- **Textures are generated in code** (deterministic, seamless by construction), not by an image model.
 
 ## Scope
 
@@ -771,16 +791,15 @@ A full-screen canvas needs fit-to-screen, zoom, and pan. These change only the v
 - the inspector's Selected and Garden (Strengths, Issues, Opportunities) sections with Find plants / Show me actions
 - short-lived canvas feedback in place of the feedback list
 - fit, zoom, and pan
-- a visual pass on the shell and canvas using placeholder plant visuals
+- a visual pass on the shell and canvas, including the [Garden Art](#garden-art) above
 
 **Later enhancements (not committed):**
 
 - number-key (1–9) shortcuts for inventory plants
 - the interaction directions listed under [Interaction Principles](#interaction-principles)
-- final illustrated plant art and an asset pipeline
 - optional, off-by-default sound
 
-**Out of scope:** backend, accounts, persistence of gardens or inventories, final plant art, new reasoning rules or opportunity policies, scores or other game mechanics, mobile/touch-first design.
+**Out of scope:** backend, accounts, persistence of gardens or inventories, plant art scaled by mature size, new reasoning rules or opportunity policies, scores or other game mechanics, mobile/touch-first design.
 
 ## Open Questions
 

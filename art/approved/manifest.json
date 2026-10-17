@@ -1,0 +1,138 @@
+{
+  "approvedAt": "2026-10-16",
+  "plants": {
+    "tomato": {
+      "file": "art/approved/plants/tomato.png",
+      "source": "art/references/tomato-plant-reference.png"
+    },
+    "carrot": {
+      "file": "art/approved/plants/carrot.png",
+      "source": "art/candidates/carrot/carrot-plant-2-transparent.png"
+    },
+    "lettuce": {
+      "file": "art/approved/plants/lettuce.png",
+      "source": "art/candidates/lettuce/lettuce-plant-transparent.png"
+    },
+    "basil": {
+      "file": "art/approved/plants/basil.png",
+      "source": "art/candidates/basil/basil-plant-transparent.png"
+    },
+    "mint": {
+      "file": "art/approved/plants/mint.png",
+      "source": "art/candidates/mint/mint-plant-transparent.png"
+    },
+    "rosemary": {
+      "file": "art/approved/plants/rosemary.png",
+      "source": "art/candidates/rosemary/rosemary-plant-transparent.png"
+    },
+    "marigold": {
+      "file": "art/approved/plants/marigold.png",
+      "source": "art/candidates/marigold/marigold-plant-transparent.png"
+    },
+    "sunflower": {
+      "file": "art/approved/plants/sunflower.png",
+      "source": "art/candidates/sunflower/sunflower-plant-transparent.png"
+    },
+    "onion": {
+      "file": "art/approved/plants/onion.png",
+      "source": "art/candidates/onion/onion-plant-transparent.png"
+    },
+    "bush-bean": {
+      "file": "art/approved/plants/bush-bean.png",
+      "source": "art/candidates/bush-bean/bush-bean-plant-transparent.png"
+    },
+    "pea": {
+      "file": "art/approved/plants/pea.png",
+      "source": "art/candidates/pea/pea-plant-transparent.png"
+    },
+    "bell-pepper": {
+      "file": "art/approved/plants/bell-pepper.png",
+      "source": "art/candidates/bell-pepper/bell-pepper-plant-transparent.png"
+    },
+    "cucumber": {
+      "file": "art/approved/plants/cucumber.png",
+      "source": "art/candidates/cucumber/cucumber-plant-transparent.png"
+    },
+    "cabbage": {
+      "file": "art/approved/plants/cabbage.png",
+      "source": "art/candidates/cabbage/cabbage-plant-transparent.png"
+    },
+    "potato": {
+      "file": "art/approved/plants/potato.png",
+      "source": "art/candidates/potato/potato-plant-transparent.png"
+    },
+    "dill": {
+      "file": "art/approved/plants/dill.png",
+      "source": "art/candidates/dill/dill-plant-transparent.png"
+    }
+  },
+  "icons": {
+    "tomato": {
+      "file": "art/approved/icons/tomato.png",
+      "source": "art/references/tomato-icon-reference.png"
+    },
+    "carrot": {
+      "file": "art/approved/icons/carrot.png",
+      "source": "art/candidates/carrot/carrot-icon-2-transparent.png"
+    },
+    "lettuce": {
+      "file": "art/approved/icons/lettuce.png",
+      "source": "art/candidates/lettuce/lettuce-icon-transparent.png"
+    },
+    "basil": {
+      "file": "art/approved/icons/basil.png",
+      "source": "art/candidates/basil/basil-icon-transparent.png"
+    },
+    "rosemary": {
+      "file": "art/approved/icons/rosemary.png",
+      "source": "art/candidates/rosemary/rosemary-icon-transparent.png"
+    },
+    "marigold": {
+      "file": "art/approved/icons/marigold.png",
+      "source": "art/candidates/marigold/marigold-icon-2-transparent.png"
+    },
+    "sunflower": {
+      "file": "art/approved/icons/sunflower.png",
+      "source": "art/candidates/sunflower/sunflower-icon-2-transparent.png"
+    },
+    "onion": {
+      "file": "art/approved/icons/onion.png",
+      "source": "art/candidates/onion/onion-icon-transparent.png"
+    },
+    "bush-bean": {
+      "file": "art/approved/icons/bush-bean.png",
+      "source": "art/candidates/bush-bean/bush-bean-icon-transparent.png"
+    },
+    "pea": {
+      "file": "art/approved/icons/pea.png",
+      "source": "art/candidates/pea/pea-icon-transparent.png"
+    },
+    "bell-pepper": {
+      "file": "art/approved/icons/bell-pepper.png",
+      "source": "art/candidates/bell-pepper/bell-pepper-icon-transparent.png"
+    },
+    "cucumber": {
+      "file": "art/approved/icons/cucumber.png",
+      "source": "art/candidates/cucumber/cucumber-icon-transparent.png"
+    },
+    "cabbage": {
+      "file": "art/approved/icons/cabbage.png",
+      "source": "art/candidates/cabbage/cabbage-icon-transparent.png"
+    },
+    "potato": {
+      "file": "art/approved/icons/potato.png",
+      "source": "art/candidates/potato/potato-icon-transparent.png"
+    },
+    "dill": {
+      "file": "art/approved/icons/dill.png",
+      "source": "art/candidates/dill/dill-icon-transparent.png"
+    }
+  },
+  "pending": [
+    {
+      "plantId": "mint",
+      "kind": "icon",
+      "reason": "no usable candidate; the generated icon has a blurred, unfinished bottom"
+    }
+  ]
+}

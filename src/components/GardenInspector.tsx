@@ -2,6 +2,7 @@ import type { FocusedNeighborRelationship } from '../domain/relationships'
 import type { FocusedSpacingViolation } from '../domain/spacing'
 import type { SunlightFitResult } from '../domain/sunlightFit'
 import type { Plant } from '../domain/plant'
+import PlantSwatch from './PlantSwatch'
 
 type GardenInspectorProps = {
   plant: Plant
@@ -48,7 +49,10 @@ function GardenInspector({
   return (
     <div className="garden-inspector">
       <div className="garden-inspector__header">
-        <h2>{plant.name}</h2>
+        <h2 className="garden-inspector__title">
+          <PlantSwatch plant={plant} />
+          {plant.name}
+        </h2>
         <button
           type="button"
           className="garden-inspector__close"

@@ -9,7 +9,9 @@
   --sun-partial-sun: #c98a3e;
   --sun-shade: #5b7a9c;
   --ground: #f1efe4;
-  --grid-line: rgba(90, 80, 60, 0.12);
+  /* Faint by default over the soil texture; stronger while painting sunlight. */
+  --grid-line: rgba(40, 24, 10, 0.1);
+  --grid-line-strong: rgba(40, 24, 10, 0.35);
   --bed-soil: #b48a5c;
   --bed-frame: #8a6440;
   --invalid: #d64545;
@@ -383,7 +385,26 @@
   background: var(--accent-bg);
 }
 
-/* Placeholder plant visual until illustrated art exists. */
+/* A plant's icon (approved art), or a placeholder disc when it has none.
+ * Doubled class so it wins over the base .plant-swatch disc below. */
+.plant-swatch.plant-swatch--art {
+  object-fit: contain;
+  background: none;
+  border-radius: 0;
+}
+
+.garden-inspector__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.garden-inspector__title .plant-swatch {
+  width: 28px;
+  height: 28px;
+  font-size: 10px;
+}
+
 .plant-swatch {
   display: grid;
   place-items: center;
@@ -623,6 +644,10 @@
   overflow: auto;
   /* Room for markers and labels that sit on the garden's edges. */
   padding: 26px 44px 26px 20px;
+  /* The yard around the garden plot. */
+  background: url('/art/textures/grass.png') repeat;
+  background-size: 54px 54px;
+  image-rendering: pixelated;
 }
 
 /* Layers (z-index): beds 1 → sunlight 2 → envelopes 3 → plants 4 → bed
@@ -631,13 +656,18 @@
 .garden-canvas {
   position: relative;
   box-sizing: border-box;
-  border: 1px solid var(--border);
-  background-color: var(--ground);
-  /* Grid lines at every environmental cell; background-size is set inline
-   * from the cell size. */
+  /* The garden plot: soil tiles and grid lines, both repeating once per
+   * environmental cell (background-size is set inline from the cell size). */
+  background-color: #8f5c30;
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px),
+    url('/art/textures/soil.png');
+  image-rendering: pixelated;
+  /* A dug edge where the plot meets the grass. */
+  box-shadow:
+    0 0 0 2px rgba(58, 35, 20, 0.55),
+    0 3px 10px rgba(30, 20, 10, 0.35);
   cursor: default;
   outline-offset: 3px;
 }
@@ -649,6 +679,7 @@
 .garden-canvas--sunlight {
   cursor: cell;
   touch-action: none;
+  --grid-line: var(--grid-line-strong);
 }
 
 .garden-sunlight,
@@ -663,11 +694,12 @@
   z-index: 2;
 }
 
-/* Sunlight belongs to the ground, so it's a translucent wash drawn over
- * beds — stronger while a sunlight tool is active. */
+/* Sunlight belongs to the ground, so it's drawn over beds as light rather
+ * than paint: a warm glow for sun, a cool shadow for shade, blended so the
+ * soil stays visible. Stronger while a sunlight tool is active. */
 .garden-sunlight__cell {
   position: absolute;
-  --sun-strength: 22%;
+  --sun-strength: 24%;
 }
 
 .garden-canvas--sunlight .garden-sunlight__cell {
@@ -675,15 +707,18 @@
 }
 
 .garden-sunlight__cell--full-sun {
-  background: color-mix(in srgb, var(--sun-full-sun) var(--sun-strength), transparent);
+  background: color-mix(in srgb, #ffd257 var(--sun-strength), transparent);
+  mix-blend-mode: soft-light;
 }
 
 .garden-sunlight__cell--partial-sun {
-  background: color-mix(in srgb, var(--sun-partial-sun) var(--sun-strength), transparent);
+  background: color-mix(in srgb, #ffb347 calc(var(--sun-strength) * 0.6), transparent);
+  mix-blend-mode: soft-light;
 }
 
 .garden-sunlight__cell--shade {
-  background: color-mix(in srgb, var(--sun-shade) var(--sun-strength), transparent);
+  background: color-mix(in srgb, #3c5a8c calc(var(--sun-strength) * 0.8), transparent);
+  mix-blend-mode: multiply;
 }
 
 .garden-canvas--sunlight .garden-bed,
@@ -737,18 +772,19 @@
 }
 
 /* A fixed-size marker (never scaled by inches, so it never suggests a
- * footprint): the dot's center is the plant's position. */
+ * footprint), centered on the plant's position. */
 .plant-marker {
+  --marker-size: 14px;
   position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
+  display: grid;
+  place-items: center;
+  width: var(--marker-size);
+  height: var(--marker-size);
   padding: 0;
   font: inherit;
   background: none;
   border: none;
-  transform: translate(-50%, -7px);
+  transform: translate(-50%, -50%);
   pointer-events: none;
   cursor: grab;
   touch-action: none;
@@ -792,14 +828,62 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--plant-color) 70%, black);
 }
 
+.plant-marker--art {
+  --marker-size: 44px;
+}
+
+/* The approved sprite: smooth downscale from the 128 px asset (the canvas
+ * itself renders textures pixelated). */
+.plant-marker__sprite {
+  width: 100%;
+  height: 100%;
+  image-rendering: auto;
+  pointer-events: none;
+  transition: transform 0.12s ease-out, filter 0.12s ease-out;
+}
+
+/* A soft contact shadow so the sprite sits on the ground. */
+.plant-marker--art::before {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 18%;
+  width: 64%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(rgba(30, 18, 8, 0.45), transparent 70%);
+  z-index: -1;
+}
+
+/* Name on hover, keyboard focus, and while dragging, so the garden reads as
+ * a garden rather than a list of labels. */
 .plant-marker__label {
-  padding: 0 4px;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 6px;
   font-size: 11px;
   line-height: 1.3;
   white-space: nowrap;
   color: var(--text-h);
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  border-radius: 3px;
+  background: color-mix(in srgb, var(--bg) 90%, transparent);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+}
+
+.plant-marker:hover .plant-marker__label,
+.plant-marker:focus-visible .plant-marker__label,
+.plant-marker--dragging .plant-marker__label {
+  opacity: 1;
+}
+
+.plant-marker:hover,
+.plant-marker:focus-visible {
+  z-index: 2;
 }
 
 .plant-marker:focus-visible {
@@ -813,13 +897,21 @@
     0 0 0 4px var(--accent);
 }
 
+/* Highlights on sprites follow their silhouette (drop-shadow, not a box). */
+.plant-marker:focus-visible .plant-marker__sprite,
+.plant-marker--inspected .plant-marker__sprite {
+  filter: drop-shadow(0 0 1.5px var(--accent)) drop-shadow(0 0 1.5px var(--accent))
+    drop-shadow(0 0 1px var(--accent));
+}
+
 .plant-marker--dragging {
   z-index: 1;
   cursor: grabbing;
 }
 
-.plant-marker--dragging .plant-marker__dot {
-  transform: scale(1.25);
+.plant-marker--dragging .plant-marker__dot,
+.plant-marker--dragging .plant-marker__sprite {
+  transform: scale(1.15);
 }
 
 .plant-marker--ghost {
@@ -836,6 +928,15 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--invalid) 80%, transparent);
 }
 
+.plant-marker--companion .plant-marker__sprite {
+  filter: drop-shadow(0 0 2px #3fd05a) drop-shadow(0 0 2px #3fd05a);
+}
+
+.plant-marker--incompatible .plant-marker__sprite,
+.plant-marker--spacing .plant-marker__sprite {
+  filter: drop-shadow(0 0 2px var(--invalid)) drop-shadow(0 0 2px var(--invalid));
+}
+
 .garden-beds {
   position: absolute;
   inset: 0;
@@ -850,18 +951,26 @@
   touch-action: none;
 }
 
+/* A raised wooden bed: the frame image stretches to any size (corners fixed,
+ * planks repeating), boards about 2" wide but never thinner than 5 px, and
+ * bed soil tiled once per 12". --in (one inch on screen) is set on the
+ * canvas. */
 .garden-bed {
+  --board: max(5px, calc(2 * var(--in)));
   position: absolute;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--bed-soil) 45%, transparent);
-  border: 3px solid var(--bed-frame);
-  border-radius: 4px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+  border: var(--board) solid transparent;
+  border-image: url('/art/textures/bed-frame.png') 6 round;
+  background: url('/art/textures/bed-soil.png') repeat;
+  background-size: calc(12 * var(--in)) calc(12 * var(--in));
+  background-origin: border-box;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 2px rgba(30, 18, 8, 0.45));
 }
 
 .garden-beds--editing .garden-bed {
   cursor: move;
-  background: color-mix(in srgb, var(--bed-soil) 30%, transparent);
+  opacity: 0.9;
 }
 
 /* Above the plants; only the tab and handles take pointer input, so plants
@@ -901,16 +1010,23 @@
 }
 
 .garden-bed--highlighted {
-  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
+/* A bed being drawn: an outline only, until it exists. */
 .garden-bed--draft {
-  border-style: dashed;
+  border: 2px dashed #f4ead8;
+  border-image: none;
+  background: rgba(63, 38, 20, 0.35);
+  filter: none;
 }
 
 .garden-bed--invalid {
-  border-color: var(--invalid);
-  background: color-mix(in srgb, var(--invalid) 20%, transparent);
+  border: 2px dashed var(--invalid);
+  border-image: none;
+  background: color-mix(in srgb, var(--invalid) 25%, transparent);
+  filter: none;
 }
 
 .garden-bed__label {
@@ -919,7 +1035,8 @@
   left: 4px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--bed-frame);
+  color: #fff7e8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   white-space: nowrap;
   pointer-events: none;
 }

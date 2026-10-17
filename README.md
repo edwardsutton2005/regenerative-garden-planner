@@ -113,6 +113,16 @@ npm run build
 
 The test suite covers garden-state invariants, coordinate boundaries, relationship symmetry and conflicts, spacing boundaries, composition, opportunity policies, and data/provenance integrity. Native drag-and-drop and visual layout are currently verified manually.
 
+## Plant Art Pipeline
+
+Plant sprites and icons are generated with Google's Gemini image API from locked Tomato style references. This is a development-time tool only; the API key is never used by the app. See [art/STYLE.md](./art/STYLE.md) for the art direction, folder layout, and approval workflow.
+
+```bash
+cp .env.example .env.local          # then set GEMINI_API_KEY in .env.local
+npm run art:generate -- basil sunflower
+npm run art:build                   # approved art + code-made textures → public/art/
+```
+
 ## Roadmap
 
 Near-term work described in [PRODUCT.md](./PRODUCT.md) includes sourced plant sunlight requirements and deterministic sunlight-fit feedback. Longer-term directions include additional environmental context and richer ecological systems, but those remain planned rather than implemented.
