@@ -1,22 +1,56 @@
 # Regenerative Garden Planner
 
-An interactive garden-design application that evaluates a spatial layout using curated plant facts and deterministic rules. It helps users explore companion relationships, spacing, ecological roles, and environmental conditions without treating an LLM as the source of gardening knowledge.
+[![CI](https://github.com/edwardsutton2005/regenerative-garden-planner/actions/workflows/ci.yml/badge.svg)](https://github.com/edwardsutton2005/regenerative-garden-planner/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-vercel-4c8a3a)](https://regenerative-garden-planner.vercel.app/)
 
+A playful, illustrated garden designer. Lay out beds and plants on a plot drawn to scale, and the planner tells you which plants help each other, which clash, which are too close, and which are in the wrong light, as you place them.
 
+Every piece of feedback comes from curated plant facts and deterministic rules, not from an LLM.
 
-**Live demo:** _Coming soon_
+**[Try it live →](https://regenerative-garden-planner.vercel.app/)** · Free · No account needed · Best on desktop
 
-**Screenshot/demo GIF:** ![Regenerative Garden Planner](./docs/images/garden-planner.png)
+![The planner: a 12 × 9 ft backyard garden with three raised beds, illustrated plants, and the inspector open on a tomato](./docs/images/planner.jpg)
 
-## Overview
+## What It Does
 
-The central product idea is: **the garden itself is the interface**.
+The central idea is that **the garden itself is the interface**. You don't fill in a questionnaire and get a static recommendation. You place and rearrange plants and see what those choices imply.
 
-Instead of completing a questionnaire and receiving a static recommendation, a user creates a garden, places and rearranges plants, and sees what those choices imply. Immediate feedback explains a recent action, while persistent inspection describes the current state of a placement. Garden-level summaries show which modeled ecological roles are represented and surface a deliberately small set of explainable opportunities.
+### Companion feedback while you drag
 
-The project is designed as a compact test bed for spatial interaction and transparent ecological reasoning. It favors explicit data and rules over opaque scoring or generated horticultural claims.
+Pick up a plant and its spacing envelope follows it. Nearby plants light up green for companions and red for incompatible pairs within 12 inches. Drop it and the planner says why.
 
-## Current Features
+![Dragging an onion: the pea outlines red (incompatible), then the cabbage pairs up green, and "Great pairing: Onion + Cabbage" appears](./docs/images/companion-drag.gif)
+
+### Beds, drawn to scale
+
+Draw raised beds by dragging on open ground, then move, resize, rename, or delete them. Plants belong to whichever bed they sit in, and beds move together with their plants. The plot runs from 4 × 4 to 30 × 30 ft and is modeled in real inches, with a scale bar, zoom, and pan.
+
+![Drawing a 3 ft × 1 ft 6 in bed, then planting a bell pepper and basil in it](./docs/images/beds.gif)
+
+### Inspect any plant
+
+Select a plant to see its lifecycle, ecological roles, bed, nearby relationships, same-species spacing, sunlight fit, and local companion suggestions. The inspector reflects the garden as it is now, not just your last action.
+
+![A carrot next to dill: the inspector flags "Incompatible: Dill" and suggests onion as a companion option](./docs/images/inspector.jpg)
+
+### Map the sunlight
+
+Paint full sun, partial sun, and shade onto the plot in 12-inch cells. Each plant is checked against its sourced sunlight requirement.
+
+![The sunlight brush over the garden, with a sunflower in shade flagged "May not suit the modeled sunlight here"](./docs/images/sunlight.jpg)
+
+### Pick from a curated catalog
+
+Sixteen vegetables, herbs, and flowers, each with sourced spacing, sunlight needs, lifecycle, and ecological roles. Search or filter, then click to arm a plant for placing. Plants you've used stay in the inventory bar.
+
+<img src="./docs/images/catalog.jpg" alt="The plant catalog popup with search and Vegetables / Herbs / Flowers filters" width="560">
+
+### Save anywhere
+
+Gardens save automatically in the browser. Sign in with Google or an emailed link to keep several gardens in your account.
+
+<details>
+<summary><strong>Full feature list</strong></summary>
 
 - Configurable rectangular gardens from 4×4 through 30×30 feet, modeled in physical inches
 - A free-placement garden canvas: click or drag plants to any position (whole-inch precision), drag them anywhere, erase, clear, and start new gardens
@@ -35,11 +69,16 @@ The project is designed as a compact test bed for spatial interaction and transp
 - Claim-level provenance metadata with validation against a source registry
 - User-declared sunlight mapping on 12-inch environmental cells for full sun, partial sun, and shade
 - Sunlight-fit evaluation against each plant's sourced sunlight requirement
-- Illustrated canvas: plant sprites and icons, grass around the plot, soil and bed-soil textures, wooden raised-bed frames
+- Illustrated canvas: plant sprites and icons, grass around the plot, soil and bed-soil textures, wooden raised-bed frames, and a wandering gardener (can be turned off)
 - Automatic saving in the browser, or, after signing in with Google or an emailed link, to an account with several gardens
 - Zoom (buttons, Cmd/Ctrl + = / − / 0, pinch), fit to screen, drag-to-pan, and a map-style scale bar
+- A landing page and a privacy page
 
-Sunlight mapping records the user's description of the site.
+Sunlight mapping records the user's description of the site; it is not a solar simulation.
+
+</details>
+
+<img src="./docs/images/landing.jpg" alt="The landing page: 'Design a garden where plants work together.'" width="720">
 
 ## How It Works
 
@@ -55,7 +94,7 @@ structured findings and aggregates
 transient feedback, inspection, composition, and opportunities
 ```
 
-`App.tsx` coordinates interaction state and garden mutations. The garden state contains dimensions, plant placements, and modeled environmental state. Framework-independent modules in `src/domain/` evaluate relationships, spacing, composition, and opportunities. Components render those structured results as user-facing explanations.
+`App.tsx` coordinates interaction state and garden mutations. The garden state contains dimensions, plant placements, beds, and modeled environmental state. Framework-independent modules in `src/domain/` evaluate relationships, spacing, sunlight fit, composition, and opportunities. Components render those structured results as user-facing explanations.
 
 Signed out, the garden is saved in the browser. Signing in (Google or an emailed link, through Supabase) saves gardens to an account. There is no custom backend server and no AI API.
 
@@ -67,19 +106,17 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for system boundaries and design decisi
 
 ## Data and Research
 
-Plant knowledge is curated from horticultural and agricultural references rather than generated dynamically. The repository distinguishes normalized application facts from evidence metadata so reasoning remains stable while provenance can become more complete over time.
+Plant knowledge is curated from horticultural and agricultural references, mostly university Extension pages, rather than generated dynamically. Spacing and sunlight values are sourced per plant. The repository keeps normalized application facts separate from evidence metadata, so reasoning stays stable while provenance becomes more complete over time.
 
 Current provenance is incomplete at the individual-claim level and is documented transparently in [docs/data-sources.md](./docs/data-sources.md).
 
 ## Tech Stack
 
-- React 19
-- TypeScript 6
-- Vite 8
-- CSS
-- Vitest 4
-- Oxlint
-- npm
+- React 19, TypeScript 6, Vite 8 (multi-page: landing, planner, privacy)
+- Plain CSS
+- Supabase (auth and saved gardens, with row level security)
+- Vitest 4, Oxlint, GitHub Actions
+- Deployed on Vercel
 
 ## Running Locally
 
@@ -109,27 +146,19 @@ npm run preview
 
 ## Testing
 
-Run the deterministic domain and data tests:
-
 ```bash
-npm test
-```
-
-Run all repository checks:
-
-```bash
-npm test
+npm test          # deterministic domain and data tests
 npm run lint
 npm run build
 ```
 
-The test suite covers garden-state invariants, coordinate boundaries, relationship symmetry and conflicts, spacing boundaries, composition, opportunity policies, and data/provenance integrity. Pure helpers behind the canvas and art build (screen↔inch conversion, spacing previews, scale-bar lengths, textures, background removal) are tested too. Drag interactions, zoom/pan, and visual layout are verified manually in the browser.
+The test suite covers garden-state invariants, coordinate boundaries, relationship symmetry and conflicts, spacing boundaries, sunlight fit, composition, opportunity policies, saved-plan validation, and data/provenance integrity. Pure helpers behind the canvas and art build (screen↔inch conversion, spacing previews, scale-bar lengths, textures, background removal) are tested too. Drag interactions, zoom/pan, and visual layout are verified manually in the browser.
 
-GitHub Actions runs the same checks (lint, tests, build) on every push and pull request (`.github/workflows/ci.yml`).
+GitHub Actions runs lint, tests, and build on every push and pull request (`.github/workflows/ci.yml`).
 
 ## Plant Art Pipeline
 
-Plant sprites and icons are generated with Google's Gemini image API from locked Tomato style references. The bed frame comes from a ChatGPT-made plank sheet; ground textures are generated in code. This is a development-time tool only; the API key is never used by the app. See [art/STYLE.md](./art/STYLE.md) for the art direction, folder layout, and approval workflow.
+The plant sprites and icons were generated with Google's Gemini image API from locked Tomato style references. Newer pieces (the mint icon, the bed planks, the gardener) come from ChatGPT-made sheets that are cut and processed in code. Ground textures are generated in code. This is development-time tooling only; no image API is used by the app. See [art/STYLE.md](./art/STYLE.md) for the art direction, folder layout, and approval workflow.
 
 ```bash
 cp .env.example .env.local          # then set GEMINI_API_KEY in .env.local
@@ -139,4 +168,4 @@ npm run art:build                   # approved art + textures + bed frame → pu
 
 ## Roadmap
 
-Near-term work described in [PRODUCT.md](./PRODUCT.md) is the rest of the canvas-first workspace: the Strengths / Issues / Opportunities inspector with Find plants / Show me, and short-lived canvas feedback. Longer-term directions include additional environmental context and richer ecological systems, but those remain planned rather than implemented.
+Near-term work described in [PRODUCT.md](./PRODUCT.md) is the rest of the canvas-first workspace: a Strengths / Issues / Opportunities inspector with Find plants / Show me actions, and short-lived canvas feedback. Longer-term directions include more environmental context and richer ecological systems. These are planned, not implemented.
