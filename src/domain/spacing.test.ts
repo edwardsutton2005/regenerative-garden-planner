@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { createGarden, placePlant } from './garden'
 import type { Position } from './garden'
-import { evaluateSpacing, evaluateSpacingForFocuses } from './spacing'
+import {
+  evaluateCrowding,
+  evaluateCrowdingForFocuses,
+  evaluateSpacing,
+  evaluateSpacingForFocuses,
+} from './spacing'
 import type { Plant } from './plant'
 
 const tomato: Plant = {
@@ -135,5 +140,65 @@ describe('evaluateSpacingForFocuses', () => {
     garden = placePlant(garden, 'b', 'tomato', at(0, 1))
 
     expect(evaluateSpacingForFocuses(garden, ['a', 'b'], plantsById)).toHaveLength(1)
+  })
+})
+
+describe('evaluateCrowding', () => {
+  // Tomato's footprint radius is 12", basil's 3": they crowd under 15".
+  it('reports a mixed pair whose footprints overlap, with the other plant', () => {
+    let garden = placePlant(createGarden(), 't', 'tomato', at(0, 0))
+    garden = placePlant(garden, 'b', 'basil', at(0, 1))
+
+    expect(evaluateCrowding(garden, 't', plantsById)).toEqual([
+      { placementId: 'b', plant: basil, distance: 12, requiredDistance: 15 },
+    ])
+  })
+
+  it('is symmetric', () => {
+    let garden = placePlant(createGarden(), 't', 'tomato', at(0, 0))
+    garden = placePlant(garden, 'b', 'basil', at(0, 1))
+
+    expect(evaluateCrowding(garden, 'b', plantsById)).toEqual([
+      { placementId: 't', plant: tomato, distance: 12, requiredDistance: 15 },
+    ])
+  })
+
+  it('is not crowding when footprints exactly touch', () => {
+    let garden = placePlant(createGarden(), 't', 'tomato', { x: 10, y: 10 })
+    garden = placePlant(garden, 'b', 'basil', { x: 25, y: 10 })
+
+    expect(evaluateCrowding(garden, 't', plantsById)).toEqual([])
+  })
+
+  it('leaves same-species pairs to evaluateSpacing', () => {
+    let garden = placePlant(createGarden(), 'a', 'tomato', at(0, 0))
+    garden = placePlant(garden, 'b', 'tomato', at(0, 1))
+
+    expect(evaluateCrowding(garden, 'a', plantsById)).toEqual([])
+  })
+
+  it('reports a pair between two focuses once, naming each focus plant', () => {
+    let garden = placePlant(createGarden(), 't', 'tomato', at(0, 0))
+    garden = placePlant(garden, 'b', 'basil', at(0, 1))
+
+    expect(evaluateCrowdingForFocuses(garden, ['t', 'b'], plantsById)).toEqual([
+      expect.objectContaining({ focusPlacementId: 't', focusPlant: tomato, plant: basil }),
+    ])
+  })
+
+  it('sizes footprints by mature width when curated', () => {
+    // Widths 12" and 4": footprints of 6" and 2" crowd under 8", not 15".
+    const sized = {
+      tomato: { ...tomato, matureWidthInches: { min: 12, max: 48 } },
+      basil: { ...basil, matureWidthInches: { min: 4, max: 14 } },
+    }
+    let garden = placePlant(createGarden(), 't', 'tomato', { x: 10, y: 10 })
+    garden = placePlant(garden, 'b', 'basil', { x: 19, y: 10 })
+    expect(evaluateCrowding(garden, 't', sized)).toEqual([])
+
+    garden = placePlant(garden, 'b2', 'basil', { x: 17, y: 10 })
+    expect(evaluateCrowding(garden, 't', sized)).toEqual([
+      expect.objectContaining({ placementId: 'b2', requiredDistance: 8 }),
+    ])
   })
 })

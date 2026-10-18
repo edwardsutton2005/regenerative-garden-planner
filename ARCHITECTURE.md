@@ -188,6 +188,7 @@ Each concern has a focused module instead of a generalized rule-engine abstracti
 - `spacing.ts` — same-species spacing evaluation
 - `composition.ts` — garden-wide aggregation of represented ecological roles
 - `opportunities.ts` — explicitly scoped opportunity policies
+- `issues.ts` — every current issue in the garden (clashes, spacing, crowding, sunlight), collected from the existing evaluators for the Issues overlay
 - `sunlightFit.ts` — placement-local sunlight-fit evaluation
 - `plant.ts` and `source.ts` — domain types
 
@@ -211,27 +212,35 @@ The spatial primitive is Euclidean distance between two placement positions, in 
 
 ### Relationships
 
-Companion and incompatible relationships are symmetric. They apply to placements whose Euclidean distance from the focus placement is **≤ 12 inches** (`COMPANION_INTERACTION_DISTANCE`, inclusive).
+Companion and incompatible relationships are symmetric. They apply to placements whose **footprints** (see [Footprints](#footprints)) are at most **12 inches** apart edge to edge (`COMPANION_INTERACTION_GAP`, inclusive): center distance minus both footprint radii. Bigger plants therefore reach farther; tomato and basil interact up to 20 inches apart, cucumber and dill up to 42.
 
-The 12-inch value is a product rule that preserves V1 behavior, not a horticulturally sourced distance. For plants at the centers of 12-inch cells, orthogonal neighbors are exactly 12 inches apart and diagonal neighbors about 16.97 inches apart, so the rule reproduces the original orthogonal-adjacency behavior for grid layouts; it applies to actual distances for free placement. It does not vary per plant or per pair.
+The 12-inch gap is a product rule, not a horticulturally sourced distance. It replaced a flat 12-inch center distance (2026-10-18), which could never both count a large companion pair and keep it uncrowded.
+
+A neighbor result carries the matched rule, so the UI can show the rule's `reason` and sources; the evaluators pass it along without reading its provenance.
 
 If conflicting rules exist for a pair, incompatibility wins defensively; data tests are intended to prevent such conflicts from being authored.
 
 ### Spacing
 
-Spacing applies only between placements with the same plant ID. A violation exists when the Euclidean distance between them is less than the plant's sourced minimum spacing in inches; a distance exactly equal to the minimum is valid. Cross-species spacing is not inferred from same-species horticultural guidance.
+Spacing applies only between placements with the same plant ID. A violation exists when the Euclidean distance between them is less than the plant's sourced minimum spacing in inches; a distance exactly equal to the minimum is valid.
+
+### Footprints
+
+A plant's footprint radius is half the low end of its sourced typical mature width (`matureWidthInches`, `footprintRadius`), falling back to half its same-species minimum spacing when width isn't curated (currently only Bush Bean). **Crowding** (`evaluateCrowding`) applies to mixed pairs: two different plants crowd when their footprints overlap, closer than the two radii combined. It is an estimate from each plant's own size, not a sourced cross-species distance, and the UI words it as "may crowd." Same-species pairs are left to the spacing rule.
+
+Spacing figures are not used as plant size because many are in-row spacings for row crops (carrot 2", pea 1"), which assume separate row spacing the garden doesn't model. Height is deliberately not modeled yet: sourced height ranges are too broad to drive layering or shade (tomato 1–10 ft), and nothing uses it.
 
 Spacing values are physical values from cited sources, not conversions of the former abstract tiers. `spacingInches` is currently required: every catalogue plant has sourced spacing, enforced by a data test. If a plant ever cannot be sourced, making the field optional must come with a distinct "not modeled" presentation. Missing spacing must never be shown as "no spacing problem."
 
 ### Composition
 
-Composition reports whether a modeled ecological role is represented by at least one placed plant type. It does not assign magnitude, coverage, or quality, and duplicate placements do not increase a role's strength.
+Composition reports whether a modeled ecological role is represented by at least one placed plant type. It does not assign magnitude, coverage, or quality, and duplicate placements do not increase a role's strength. `evaluateGardenDiversity` describes distinct plant types, families, and the category and lifecycle mix.
 
 ### Opportunities
 
 Opportunities are explicit product policies rather than deductions from every missing property:
 
-- a garden-wide suggestion when pollinator support is absent
+- opt-in suggestions, evaluated only while the Suggestions switch is on: garden-wide absent roles (`evaluateRoleSuggestions`), bed-scoped roles for planted beds (`evaluateBedRoleSuggestions`, `BED_SCOPED_ROLES`), and companions suited to each bed's plants that clash with none of them (`evaluateBedCompanionSuggestions`). Bed contents come from `getPlacementsInBed`; open-ground plants are not part of any bed.
 - local companion candidates for an inspected placement that currently has no modeled companion within the interaction distance
 
 The spatial scope of a conclusion cannot be more precise than its underlying data. A garden-wide observation cannot justify a location-specific recommendation.

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { createGarden, placePlant } from './garden'
 import type { Position } from './garden'
 import {
-  COMPANION_INTERACTION_DISTANCE,
+  COMPANION_INTERACTION_GAP,
   evaluateNeighbors,
   evaluateNeighborsForFocuses,
   getRelationship,
@@ -126,7 +126,13 @@ describe('evaluateNeighbors', () => {
     garden = placePlant(garden, 'b', 'basil', at(2, 3))
 
     expect(evaluateNeighbors(garden, 't', plantsById, rules)).toEqual([
-      { placementId: 'b', plant: plantsById.basil, distance: 12, relationship: 'companion' },
+      {
+        placementId: 'b',
+        plant: plantsById.basil,
+        distance: 12,
+        relationship: 'companion',
+        rule: rules[0],
+      },
     ])
   })
 
@@ -139,32 +145,45 @@ describe('evaluateNeighbors', () => {
     ])
   })
 
-  it('includes a neighbor exactly at the interaction distance', () => {
+  // Tomato's footprint radius is 12" and basil's 3", so they interact up to
+  // 12 + 3 + COMPANION_INTERACTION_GAP = 27" apart.
+  it('includes a neighbor whose footprint gap is exactly the interaction gap', () => {
     let garden = placePlant(createGarden(), 't', 'tomato', { x: 10, y: 10 })
-    garden = placePlant(garden, 'b', 'basil', { x: 10 + COMPANION_INTERACTION_DISTANCE, y: 10 })
+    garden = placePlant(garden, 'b', 'basil', { x: 10 + 15 + COMPANION_INTERACTION_GAP, y: 10 })
 
     expect(evaluateNeighbors(garden, 't', plantsById, rules)).toHaveLength(1)
   })
 
-  it('excludes a neighbor just beyond the interaction distance', () => {
+  it('excludes a neighbor just beyond the interaction gap', () => {
     let garden = placePlant(createGarden(), 't', 'tomato', { x: 10, y: 10 })
-    garden = placePlant(garden, 'b', 'basil', { x: 22.01, y: 10 })
+    garden = placePlant(garden, 'b', 'basil', { x: 37.01, y: 10 })
 
     expect(evaluateNeighbors(garden, 't', plantsById, rules)).toEqual([])
   })
 
-  it('excludes a diagonal neighbor under snapping (~16.97"), preserving V1 behavior', () => {
-    let garden = placePlant(createGarden(), 't', 'tomato', at(2, 2))
-    garden = placePlant(garden, 'b', 'basil', at(3, 3))
+  it('measures between footprint edges, so bigger plants reach farther', () => {
+    // Both pairs are 24" apart. Tomato + basil footprints are 9" apart;
+    // carrot (1") + mint (9") footprints are 14" apart.
+    let garden = placePlant(createGarden(), 't', 'tomato', at(0, 0))
+    garden = placePlant(garden, 'b', 'basil', at(0, 2))
+    garden = placePlant(garden, 'c', 'carrot', at(5, 0))
+    garden = placePlant(garden, 'm', 'mint', at(5, 2))
 
-    expect(evaluateNeighbors(garden, 't', plantsById, rules)).toEqual([])
+    expect(evaluateNeighbors(garden, 't', plantsById, rules)).toHaveLength(1)
+    expect(evaluateNeighbors(garden, 'c', plantsById, rules)).toEqual([])
   })
 
-  it('excludes a plant two cells away', () => {
-    let garden = placePlant(createGarden(), 't', 'tomato', at(2, 0))
-    garden = placePlant(garden, 'b', 'basil', at(2, 2))
+  it('carries the matched rule, and none for a neutral neighbor', () => {
+    let garden = placePlant(createGarden(), 'c', 'carrot', at(0, 0))
+    garden = placePlant(garden, 'm', 'mint', at(0, 1))
+    garden = placePlant(garden, 't', 'tomato', at(1, 0))
 
-    expect(evaluateNeighbors(garden, 't', plantsById, rules)).toEqual([])
+    const byId = Object.fromEntries(
+      evaluateNeighbors(garden, 'c', plantsById, rules).map((n) => [n.placementId, n]),
+    )
+    expect(byId.m.rule).toBe(rules[1])
+    expect(byId.t.relationship).toBe('neutral')
+    expect(byId.t.rule).toBeUndefined()
   })
 
   it('includes close non-grid neighbors in any direction', () => {

@@ -83,7 +83,8 @@ describe('reactionTo', () => {
   const react = (g: GardenState, ids: string[]) => reactionTo(g, ids, plantsById, relationshipRules)
 
   it('is happy at a companion pairing', () => {
-    const g = placePlant(placePlant(garden, 't', 'tomato', { x: 30, y: 30 }), 'b', 'basil', { x: 38, y: 30 })
+    // 14" apart: within reach (20"), but not crowding (tomato + basil need 8").
+    const g = placePlant(placePlant(garden, 't', 'tomato', { x: 30, y: 30 }), 'b', 'basil', { x: 44, y: 30 })
     expect(react(g, ['b'])).toBe('happy')
   })
 

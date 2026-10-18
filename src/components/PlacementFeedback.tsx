@@ -13,12 +13,14 @@ function formatEnumLabel(value: string): string {
 type PlacementFeedbackProps = {
   neighbors: FocusedNeighborRelationship[]
   spacingViolations: FocusedSpacingViolation[]
+  crowding: FocusedSpacingViolation[]
   sunlightMismatches: SunlightFitResult[]
 }
 
 function PlacementFeedback({
   neighbors,
   spacingViolations,
+  crowding,
   sunlightMismatches,
 }: PlacementFeedbackProps) {
   const notableNeighbors = neighbors.filter((n) => n.relationship !== 'neutral')
@@ -27,7 +29,7 @@ function PlacementFeedback({
   // announce feedback after a placement or keyboard move.
   return (
     <ul className="placement-feedback" aria-live="polite">
-      {notableNeighbors.map(({ plant, relationship, placementId, focusPlacementId, focusPlant }) => (
+      {notableNeighbors.map(({ plant, relationship, rule, placementId, focusPlacementId, focusPlant }) => (
         <li
           key={`relationship-${focusPlacementId}-${placementId}`}
           className={`placement-feedback__item placement-feedback__item--${relationship}`}
@@ -35,6 +37,7 @@ function PlacementFeedback({
           {relationship === 'companion'
             ? `Great pairing: ${focusPlant.name} + ${plant.name}`
             : `${focusPlant.name} and ${plant.name} may not grow well together.`}
+          {rule?.reason && <span className="placement-feedback__reason">{rule.reason}</span>}
         </li>
       ))}
       {spacingViolations.map(({ placementId, requiredDistance, focusPlacementId, focusPlant }) => (
@@ -43,6 +46,14 @@ function PlacementFeedback({
           className="placement-feedback__item placement-feedback__item--spacing"
         >
           {`Two ${focusPlant.name} plants are too close together — keep at least ${requiredDistance} inches apart.`}
+        </li>
+      ))}
+      {crowding.map(({ placementId, plant, requiredDistance, focusPlacementId, focusPlant }) => (
+        <li
+          key={`crowding-${focusPlacementId}-${placementId}`}
+          className="placement-feedback__item placement-feedback__item--spacing"
+        >
+          {`${focusPlant.name} and ${plant.name} may crowd each other — give them about ${requiredDistance} inches between centers.`}
         </li>
       ))}
       {sunlightMismatches.map(({ placementId, plant, cellSunlight }) => (

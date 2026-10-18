@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  evaluateBedCompanionSuggestions,
+  evaluateBedRoleSuggestions,
   evaluateCompanionOpportunityForPlacement,
-  evaluateGardenOpportunities,
+  evaluateRoleSuggestions,
 } from './opportunities'
-import { createGarden, placePlant } from './garden'
+import { addBed, createGarden, placePlant } from './garden'
 import type { GardenState, Position } from './garden'
 import type { Plant } from './plant'
 import type { PlantRelationshipRule } from './relationships'
@@ -14,7 +16,7 @@ function at(row: number, col: number): Position {
   return { x: col * 12 + 6, y: row * 12 + 6 }
 }
 
-describe('evaluateGardenOpportunities', () => {
+describe('evaluateRoleSuggestions', () => {
   const bushBean: Plant = {
     id: 'bush-bean',
     name: 'Bush Bean',
@@ -23,6 +25,7 @@ describe('evaluateGardenOpportunities', () => {
     lifecycle: 'annual',
     ecologicalRoles: ['nitrogen-fixation'],
   }
+  const pea: Plant = { ...bushBean, id: 'pea', name: 'Pea' }
   const marigold: Plant = {
     id: 'marigold',
     name: 'Marigold',
@@ -39,49 +42,35 @@ describe('evaluateGardenOpportunities', () => {
     lifecycle: 'biennial',
     ecologicalRoles: [],
   }
-  const plantsById: Record<string, Plant> = { 'bush-bean': bushBean, marigold, carrot }
+  // No catalogue plant here provides beneficial-insects.
+  const plantsById: Record<string, Plant> = { pea, 'bush-bean': bushBean, marigold, carrot }
 
-  it('surfaces the opportunity for an empty garden', () => {
-    expect(evaluateGardenOpportunities(createGarden(48, 48), plantsById)).toEqual([
-      { type: 'pollinator-support-absent' },
+  it('suggests every role an empty garden lacks, with its providers, in canonical order', () => {
+    expect(evaluateRoleSuggestions(createGarden(48, 48), plantsById)).toEqual([
+      { role: 'pollinator-support', candidatePlantIds: ['marigold'] },
+      { role: 'nitrogen-fixation', candidatePlantIds: ['bush-bean', 'pea'] },
     ])
   })
 
-  it('surfaces the opportunity when only roleless plants are placed', () => {
-    const garden = placePlant(createGarden(48, 48), '0,0', 'carrot', at(0, 0))
-    expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([
-      { type: 'pollinator-support-absent' },
+  it('drops a role once any placed plant provides it', () => {
+    const garden = placePlant(createGarden(48, 48), 'p', 'pea', at(0, 0))
+    expect(evaluateRoleSuggestions(garden, plantsById)).toEqual([
+      { role: 'pollinator-support', candidatePlantIds: ['marigold'] },
     ])
   })
 
-  it('still surfaces the opportunity when nitrogen-fixation is represented but pollinator-support is not', () => {
-    const garden = placePlant(createGarden(48, 48), '0,0', 'bush-bean', at(0, 0))
-    expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([
-      { type: 'pollinator-support-absent' },
-    ])
+  it('suggests nothing once every providable role is represented', () => {
+    let garden = placePlant(createGarden(48, 48), 'p', 'pea', at(0, 0))
+    garden = placePlant(garden, 'm', 'marigold', at(2, 2))
+    expect(evaluateRoleSuggestions(garden, plantsById)).toEqual([])
   })
 
-  it('does not surface the opportunity once pollinator-support is represented', () => {
-    const garden = placePlant(createGarden(48, 48), '0,0', 'marigold', at(0, 0))
-    expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([])
-  })
-
-  it('is unaffected by repeated pollinator-support placements', () => {
-    let garden = createGarden(48, 48)
-    garden = placePlant(garden, '0,0', 'marigold', at(0, 0))
-    garden = placePlant(garden, '1,1', 'marigold', at(1, 1))
-    garden = placePlant(garden, '2,2', 'marigold', at(2, 2))
-    expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([])
-  })
-
-  it('handles an unknown placed plant id defensively, reflecting the rest of the garden', () => {
-    const garden: GardenState = {
-      ...createGarden(48, 48),
-      placements: { '0,0': { id: '0,0', plantId: 'unknown-plant', position: at(0, 0) } },
-    }
-    expect(evaluateGardenOpportunities(garden, plantsById)).toEqual([
-      { type: 'pollinator-support-absent' },
-    ])
+  it('is unaffected by roleless or unknown placed plants', () => {
+    let garden = placePlant(createGarden(48, 48), 'c', 'carrot', at(0, 0))
+    garden = placePlant(garden, 'u', 'unknown-plant', at(2, 2))
+    expect(evaluateRoleSuggestions(garden, plantsById)).toEqual(
+      evaluateRoleSuggestions(createGarden(48, 48), plantsById),
+    )
   })
 })
 
@@ -222,5 +211,86 @@ describe('evaluateCompanionOpportunityForPlacement', () => {
     const garden = placePlant(createGarden(48, 48), '1,1', 'basil', at(1, 1))
     const result = evaluateCompanionOpportunityForPlacement(garden, '1,1', plantsById, rules)
     expect(result?.candidatePlantIds).toContain('tomato')
+  })
+})
+
+describe('bed suggestions', () => {
+  const base = { category: 'vegetable', lifecycle: 'annual' } as const
+  const plant = (id: string, roles: Plant['ecologicalRoles'] = []): Plant => ({
+    ...base,
+    id,
+    name: id,
+    spacingInches: { min: 6, max: 6 },
+    ecologicalRoles: roles,
+  })
+  const plantsById: Record<string, Plant> = {
+    tomato: plant('tomato'),
+    basil: plant('basil'),
+    onion: plant('onion'),
+    potato: plant('potato'),
+    pea: plant('pea', ['nitrogen-fixation']),
+    'bush-bean': plant('bush-bean', ['nitrogen-fixation']),
+  }
+  const rules: PlantRelationshipRule[] = [
+    { plantAId: 'tomato', plantBId: 'basil', relationship: 'companion' },
+    { plantAId: 'tomato', plantBId: 'onion', relationship: 'companion' },
+    { plantAId: 'onion', plantBId: 'pea', relationship: 'incompatible' },
+    { plantAId: 'onion', plantBId: 'bush-bean', relationship: 'incompatible' },
+    { plantAId: 'potato', plantBId: 'pea', relationship: 'incompatible' },
+  ]
+
+  // Four 36" beds in a row; a plant placed "in" a bed sits at its center.
+  function gardenWith(beds: Record<string, string[]>): GardenState {
+    let garden = createGarden(240, 120)
+    Object.entries(beds).forEach(([bedId, plantIds], i) => {
+      garden = addBed(garden, bedId, bedId, { position: { x: i * 48, y: 0 }, width: 36, height: 36 })
+      plantIds.forEach((plantId, j) => {
+        garden = placePlant(garden, `${bedId}-${j}`, plantId, { x: i * 48 + 6 + j * 12, y: 18 })
+      })
+    })
+    return garden
+  }
+
+  it('suggests a nitrogen fixer for planted beds without one, never one that clashes', () => {
+    const garden = gardenWith({ A: ['tomato'], B: ['onion'], C: ['pea'], D: [] })
+    expect(evaluateBedRoleSuggestions(garden, plantsById, rules)).toEqual([
+      { role: 'nitrogen-fixation', bedIds: ['A'], candidatePlantIds: ['bush-bean', 'pea'] },
+    ])
+  })
+
+  it('splits beds that suit different providers, so every candidate suits every listed bed', () => {
+    const garden = gardenWith({ A: ['tomato'], B: ['potato'], C: ['basil'] })
+    expect(evaluateBedRoleSuggestions(garden, plantsById, rules)).toEqual([
+      { role: 'nitrogen-fixation', bedIds: ['A', 'C'], candidatePlantIds: ['bush-bean', 'pea'] },
+      { role: 'nitrogen-fixation', bedIds: ['B'], candidatePlantIds: ['bush-bean'] },
+    ])
+  })
+
+  it('moves nitrogen fixing out of garden-wide suggestions once a bed is planted', () => {
+    const roles = (g: GardenState) => evaluateRoleSuggestions(g, plantsById).map((s) => s.role)
+    expect(roles(createGarden())).toContain('nitrogen-fixation')
+    expect(roles(gardenWith({ A: [] }))).toContain('nitrogen-fixation')
+    expect(roles(gardenWith({ A: ['tomato'] }))).not.toContain('nitrogen-fixation')
+  })
+
+  it('suggests companions of what each bed holds, most beds first', () => {
+    const garden = gardenWith({ A: ['tomato'], B: ['tomato', 'onion'] })
+    expect(evaluateBedCompanionSuggestions(garden, plantsById, rules)).toEqual([
+      { plantId: 'basil', bedIds: ['A', 'B'], companionOfPlantIds: ['tomato'] },
+      { plantId: 'onion', bedIds: ['A'], companionOfPlantIds: ['tomato'] },
+    ])
+  })
+
+  it('never suggests a companion that clashes with something else in the bed', () => {
+    const garden = gardenWith({ A: ['tomato', 'pea'] })
+    expect(
+      evaluateBedCompanionSuggestions(garden, plantsById, rules).map((s) => s.plantId),
+    ).toEqual(['basil'])
+  })
+
+  it('ignores plants in open ground', () => {
+    const garden = placePlant(gardenWith({ A: [] }), 'loose', 'tomato', { x: 200, y: 100 })
+    expect(evaluateBedCompanionSuggestions(garden, plantsById, rules)).toEqual([])
+    expect(evaluateBedRoleSuggestions(garden, plantsById, rules)).toEqual([])
   })
 })

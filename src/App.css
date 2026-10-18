@@ -1513,6 +1513,83 @@
   z-index: 4;
 }
 
+/* Issues overlay, drawn in garden inches (viewBox = the garden): dashed
+ * lines between plants that clash, soft footprints where plants crowd. Soft
+ * colors and "may" wording, as these are estimates and traditional advice. */
+.garden-issues {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.garden-issues__clash {
+  stroke: var(--issue);
+  stroke-width: 2.5;
+  stroke-dasharray: 6 5;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.garden-issues__crowd circle {
+  fill: color-mix(in srgb, var(--accent) 16%, transparent);
+  stroke: color-mix(in srgb, var(--accent) 85%, transparent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.garden-issues__sun {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  /* Up and to the right of the plant's center, clear of the sprite. */
+  transform: translate(25%, -125%);
+  color: #fff;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(30, 18, 8, 0.4);
+  pointer-events: none;
+}
+
+/* While an inspector card or issue is hovered, everything it doesn't point
+ * at fades back. */
+.garden-canvas--highlighting .plant-marker:not(.plant-marker--highlighted),
+.garden-canvas--highlighting .garden-bed:not(.garden-bed--glow) {
+  opacity: 0.45;
+}
+
+.plant-marker,
+.garden-bed {
+  transition: opacity 150ms var(--ease-out);
+}
+
+.garden-bed--glow {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--idea) 80%, transparent),
+    0 0 14px 4px color-mix(in srgb, var(--idea) 55%, transparent);
+}
+
+.plant-marker--highlighted .plant-marker__sprite {
+  filter: drop-shadow(0 0 2px #3fd05a) drop-shadow(0 0 2px #3fd05a);
+}
+
+.plant-marker--highlighted .plant-marker__dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--good) 80%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plant-marker,
+  .garden-bed {
+    transition: none;
+  }
+}
+
 /* A fixed-size marker (never scaled by inches, so it never suggests a
  * footprint), centered on the plant's position. */
 .plant-marker {
@@ -1871,7 +1948,7 @@
  * issue, or idea. Untoned items are neutral. */
 .placement-feedback__item,
 .garden-inspector__item,
-.garden-opportunities__item {
+.garden-suggestions__card {
   color: color-mix(in srgb, var(--tone, var(--text)) 65%, var(--text-h));
   background: color-mix(in srgb, var(--tone, var(--text)) 9%, var(--bg));
   border: 1px solid color-mix(in srgb, var(--tone, var(--text)) 32%, transparent);
@@ -1978,10 +2055,33 @@
   color: var(--text);
 }
 
-.garden-opportunities {
+.placement-feedback__reason,
+.garden-inspector__reason {
+  display: block;
+  margin-top: 2px;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.garden-inspector__item-title {
+  display: block;
+}
+
+.source-links {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.source-links a {
+  color: inherit;
+}
+
+.garden-suggestions {
   box-sizing: border-box;
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px 16px;
   color: var(--text-h);
   background: var(--bg);
   border: 1px solid var(--border-strong);
@@ -1989,29 +2089,208 @@
   box-shadow: var(--lip);
 }
 
-.garden-opportunities__title {
-  margin: 0 0 8px;
-  font-size: 12px;
+.garden-suggestions__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.garden-suggestions__title {
+  margin: 0;
+  font-size: 15px;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+}
+
+.garden-suggestions__done {
+  margin: 10px 0 0;
+  font-size: 13px;
   color: var(--text);
 }
 
-.garden-opportunities__list {
+.garden-suggestions__list {
   list-style: none;
-  margin: 0;
+  margin: 10px 0 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
-.garden-opportunities__item {
+.garden-suggestions__card {
   --tone: var(--idea);
-  padding: 6px 8px;
-  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
+  /* Cards arrive like feedback after placing. */
+  animation: suggestion-in 220ms var(--ease-out) both;
+}
+
+@keyframes suggestion-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.garden-suggestions__invite {
+  font-weight: 800;
+}
+
+.garden-suggestions__why {
+  font-weight: 400;
+}
+
+.garden-suggestions__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.garden-suggestions__chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  box-shadow: var(--lip);
+  cursor: pointer;
+  transition: transform var(--press);
+}
+
+.garden-issues__count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 6px;
+  padding: 0 6px;
+  font-size: 12px;
+  color: #fff;
+  background: var(--issue);
+  border-radius: 999px;
+  vertical-align: 1px;
+}
+
+.garden-issues__item {
+  --tone: var(--issue);
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  color: color-mix(in srgb, var(--tone) 65%, var(--text-h));
+  background: color-mix(in srgb, var(--tone) 9%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--tone) 32%, transparent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.garden-issues__item--spacing,
+.garden-issues__item--crowding,
+.garden-issues__item--sunlight {
+  --tone: var(--accent);
+}
+
+.garden-issues__item:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.garden-suggestions__chip--bed {
+  padding: 4px 10px;
+}
+
+.garden-suggestions__label {
+  align-self: center;
+  font-weight: 700;
+}
+
+.garden-suggestions__scope {
+  font-weight: 400;
+  color: var(--text);
+}
+
+.garden-suggestions__reason {
+  font-size: 12px;
+}
+
+.garden-suggestions__reason .source-links {
+  display: inline;
+}
+
+.garden-suggestions__chip .plant-swatch {
+  width: 22px;
+  height: 22px;
+}
+
+.garden-suggestions__chip:active {
+  transform: translateY(1px);
+}
+
+.garden-suggestions__owned {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--good);
+}
+
+/* An on/off switch (role="switch"). */
+.switch {
+  flex: none;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  padding: 0;
+  background: var(--inset);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 160ms var(--ease-out);
+}
+
+.switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--bg);
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(30, 18, 8, 0.35);
+  transition: transform 160ms var(--ease-out);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--leaf);
+}
+
+.switch[aria-checked='true'] .switch__thumb {
+  transform: translateX(16px);
+}
+
+.switch:focus-visible,
+.garden-suggestions__chip:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .garden-suggestions__card {
+    animation: none;
+  }
 }
 
 .garden-inspector {

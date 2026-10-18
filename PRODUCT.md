@@ -270,14 +270,15 @@ Tender perennials should not automatically be treated as durable "perennial stru
 
 ### Ecological Roles
 
-For this slice, the taxonomy is fixed to exactly:
+The taxonomy is fixed to exactly these roles (beneficial-insects added 2026-10-18 for [Garden Suggestions](#garden-suggestions)):
 
 - **pollinator-support** — credible horticultural guidance recognizes the plant as a meaningful floral/resource component for pollinators. This does not mean every plant whose flowers may be visited by bees receives the role — it represents curated strategic usefulness, not simple pollinator visitation.
 - **nitrogen-fixation** — the plant can participate in symbiotic biological nitrogen fixation with appropriate rhizobia. This must not be described as the plant actively giving nitrogen to its neighbors right now.
+- **beneficial-insects** — when flowering, the plant draws predatory or parasitic insects (ladybugs, lacewings, hoverflies, parasitic wasps) that prey on garden pests. Each assignment is sourced.
 
-Both roles represent a plant's supported capability, not a claim that the function is actively occurring at this exact moment. For example, Basil provides pollinator resources when allowed to flower; the app does not currently model flowering stage.
+All roles represent a plant's supported capability, not a claim that the function is actively occurring at this exact moment. For example, Basil provides pollinator resources when allowed to flower; the app does not currently model flowering stage.
 
-No other ecological roles are introduced in this slice. A larger taxonomy (beneficial-insect support, ground cover, habitat, biomass/soil-building, food production, etc.) remains a future possibility, to be added only when a slice actively needs it.
+A larger taxonomy (ground cover, habitat, biomass/soil-building, food production, etc.) remains a future possibility, to be added only when a slice actively needs it and each assignment can be sourced. Every plant also records its botanical **family**.
 
 The product should distinguish between:
 
@@ -318,7 +319,9 @@ For example:
 
 > Pollinator support — Marigold, Sunflower
 
-Representation is binary, not a magnitude: a role is either represented by at least one plant type or it is not. Composition does not report counts, strength, percentage, coverage, or quality — one Basil and ten Basil both simply mean pollinator support is represented.
+Representation is binary, not a magnitude: a role is either represented by at least one plant type or it is not. Composition does not report role counts, strength, percentage, coverage, or quality — one Basil and ten Basil both simply mean pollinator support is represented.
+
+Composition also describes the garden's **diversity** by distinct plant type: how many types, which botanical families, and the mix of categories (vegetable, herb, flower) and lifecycles (annual through perennial). These are counts of kinds of plant, never a score; repeated placements of one plant count once.
 
 As with the ecological roles introduced in Part 2B, a represented role means a plant with that curated capability is currently placed — it does not claim the function is biologically active in the garden at this exact moment.
 
@@ -351,19 +354,48 @@ The precision of a recommendation cannot exceed the precision of its underlying 
 - **Garden-wide** — supported when the underlying knowledge only tells us whether something is represented anywhere in the garden, not where.
 - **Placement-local** — supported when the underlying knowledge is itself local (e.g. companion/incompatible interaction, which is defined only for placements within the interaction distance of one placement).
 
-V1 does not model spatial coverage, zones, beds, or areas, so no opportunity may claim that a specific area of the garden needs something.
+- **Per bed** — supported when the underlying knowledge is about what grows together in one bed (2026-10-18): roles whose benefit stays in the bed's soil, and companions of what a bed already holds. A bed is a modeled area, so naming it is no more precise than the data.
+
+No opportunity may name a spot inside a bed or in open ground, or claim there is room for a plant.
 
 ### V1 Opportunity Families
 
 Exactly two families exist for now:
 
-1. **Garden-wide pollinator-support opportunity** — if pollinator-support is not represented anywhere in the current garden, surface a garden-wide opportunity to consider adding a pollinator-support plant. This is a specific, deliberate policy, not a generalization: nitrogen-fixation absence is explicitly **not** currently sufficient for a recommendation, and there is no generic "recommend any absent role" rule.
+1. **Role and companion suggestions (opt-in)** — suggest absent ecological roles with the catalogue plants that provide them, and companions that suit what each bed holds. This replaced the earlier pollinator-only policy (2026-10-18). Because absence is not deficiency, these appear only when the person switches suggestions on; see [Garden Suggestions](#garden-suggestions).
 
 2. **Local companion opportunity** — for the currently inspected placement, if none of the plants within its interaction distance have a modeled companion relationship with it, surface the catalogue's other companion options for that plant. Presence of at least one nearby modeled companion suppresses this opportunity — this is presence-based, not a quantity or quality judgment.
 
 Both families are framed as possibilities ("consider...") rather than as a claim that the current garden is deficient, that a suggested plant is required or best, or that it guarantees improved growth.
 
 Future opportunity families require their own deliberate product decision, not an extension of these two policies.
+
+## Garden Suggestions
+
+**Status:** implemented 2026-10-18.
+
+A **Suggestions** switch in the inspector, below Garden composition. Off by default, remembered per browser. When on, it shows three kinds of card, each with plant chips (a dot marks plants already in the inventory; clicking one arms the plant brush with it, as choosing it in the catalog does):
+
+- **Per-bed roles** — nitrogen fixing, whose benefit stays in the bed's soil. Lists the planted beds without a legume ("every planted bed" when that's all of them) and the legumes that clash with nothing there. A bed where every legume clashes (e.g. one with onions) is left out.
+- **Per-bed companions** — a catalogue plant that is a companion of something in a bed, clashes with nothing in it, and isn't already there. Shows what it's a companion of, the sourced reasons, and the beds; ordered by how many beds it suits, at most four cards.
+- **Garden-wide roles** — pollinator support and beneficial insects, which roam the whole garden. Nitrogen fixing is garden-wide too until a bed holds plants.
+
+Bed chips select that bed on the canvas. Plants in open ground don't count toward bed suggestions. With nothing to suggest, the section says so. Cards never name a spot within a bed or claim there is room (see Opportunity Scope).
+
+**On the garden:** hovering or focusing a per-bed card makes its beds glow and, for a companion card, highlights the plants it is a companion of within them; everything else fades back. Garden-wide cards highlight nothing, since they point at no area.
+
+**Noted for later:** drag a chip straight onto the garden instead of clicking it.
+
+## Garden Issues
+
+**Status:** implemented 2026-10-18.
+
+An **Issues** switch above Suggestions, with a count of current issues that shows even while it's off. Off by default, remembered per browser. When on:
+
+- **On the garden:** a dashed line links plants that clash; soft amber footprints mark plants of one kind that are too close or mixed plants that may crowd; a small sun badge marks a sunlight mismatch. Colors stay soft and the wording says "may", because clashes are traditional advice and crowding is an estimate.
+- **In the inspector:** every issue, with the sourced reason for a clash. Hovering one highlights its plants and fades the rest; clicking selects the plant.
+
+Issues cover every plant, in beds or open ground. They reuse the existing rules; nothing new is judged.
 
 ---
 
@@ -401,7 +433,7 @@ This is **not currently a required Part 2 feature**.
 
 ## Garden Areas / Beds
 
-Planting beds are implemented as spatial layout objects — see [Planting Beds](#planting-beds). Reasoning about beds (for example, per-bed composition) is still not a feature. Add it only if whole-garden reasoning proves too coarse in practice.
+Planting beds are implemented as spatial layout objects — see [Planting Beds](#planting-beds). Reasoning about beds is limited to per-bed suggestions (see [Garden Suggestions](#garden-suggestions)); per-bed composition and bed-aware feedback are still not features.
 
 ---
 
@@ -605,7 +637,7 @@ The **Beds** tool is for drawing: drag on open ground to draw a bed, with a live
 ## Not in This Slice
 
 - bed types (raised bed, in-ground, container), rotation, or non-rectangular shapes
-- reasoning about beds (per-bed composition, bed-aware feedback)
+- reasoning about beds beyond suggestions (per-bed composition, bed-aware feedback)
 - multi-select, duplicating beds
 
 ---

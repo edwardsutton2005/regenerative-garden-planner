@@ -24,7 +24,11 @@ The relationship dataset was assembled using a conservative cross-checking polic
 
 Pairs with material disagreement, such as Tomato/Carrot, were omitted. Incompatible relationships are held to the same standard as companion relationships.
 
-**Outstanding provenance issue:** existing relationship records do not yet identify which specific source supports each pair. Their `sourceIds` are therefore absent rather than populated with imprecise attribution. Newly researched relationships should record claim-level sources when added.
+**Claim-level sources (2026-10-18):** 25 of the 26 pairs now record `sourceIds` naming sources that list the pair; lettuce/marigold has none yet. A `reason` is recorded only where one of those sources says *why* (16 of the 26), paraphrased and hedged ("reported", "said to") because most companion advice is traditional rather than trial-tested. Penn State's basil/tomato hornworm finding is the one reason backed by cited trials. Pairs a source lists without a mechanism (e.g. tomato/onion, potato/bean) have no reason rather than an invented one.
+
+Sources: Penn State Extension (herb companions), Utah State University Extension (companion planting), Clemson HGIC (Plant Partners), UW–Madison Extension Kenosha County (companion plants, compiled from North Dakota State Extension), UC Master Gardeners of Contra Costa County, and The Old Farmer's Almanac (companion chart; potato companions). See `src/data/sources.ts`.
+
+Some sources disagree on details; for example, Clemson calls marigold's nematode effect a repellent while UW–Madison describes root compounds that kill some nematodes, and UC Master Gardeners note that sunflowers are allelopathic toward other vegetables (not yet modeled).
 
 ## Spacing
 
@@ -76,11 +80,17 @@ Researched 2026-10-15. Every value below was checked against the linked page's o
 
 Today's tiers warn more often, for example Tomato at up to three cells away.
 
+## Mature width
+
+`matureWidthInches` is the "Width" dimension from the North Carolina State Extension Plant Toolbox page for each species, converted to inches; the footprint uses its low end. Cabbage uses the general *Brassica oleracea* page, whose range covers the cultivated groups. The ranges are broad because they span cultivars (tomato 12–48", cucumber 36–96" for sprawling vines). Bush Bean has no width yet: the Toolbox's *Phaseolus vulgaris* page lists none, and the figures found were cultivar listings from seed sellers, so it falls back to its spacing.
+
 ## Lifecycle and Ecological Roles
 
 Lifecycle and the current roles—pollinator support and nitrogen fixation—are curated intrinsic plant facts. Roles represent supported capability, not proof that the function is active at a particular moment. For example, pollinator support may depend on flowering, and nitrogen fixation depends on appropriate biological conditions.
 
-**Outstanding provenance issue:** lifecycle and ecological-role assignments currently have no claim-level sources in the registry. They are regression-tested as curated values, but test coverage is not a substitute for published evidence. Source attribution remains data-quality work.
+**Beneficial insects and nitrogen fixation (2026-10-18)** carry claim-level sources in `evidence.ecologicalRoles`, enforced by a data test: dill and rosemary (Penn State, which names them among herbs attracting aphid predators or caterpillar-parasitizing wasps; Utah State for dill); basil, marigold, and sunflower (UC Master Gardeners, which lists them among plants attracting beneficial insects, basil when allowed to flower); bush bean and pea (UC Master Gardeners on legumes fixing nitrogen). Role explanations shown on suggestion cards live in `src/data/roles.ts` with their own sources. Botanical families are standard taxonomy and carry no per-plant source.
+
+**Outstanding provenance issue:** lifecycle and pollinator-support assignments currently have no claim-level sources in the registry. They are regression-tested as curated values, but test coverage is not a substitute for published evidence. Source attribution remains data-quality work.
 
 ## Sunlight
 

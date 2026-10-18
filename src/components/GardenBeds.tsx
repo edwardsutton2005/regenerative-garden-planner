@@ -39,6 +39,8 @@ type GardenBedsProps = {
   onResizeBed: (bedId: string, rect: BedRect) => void
   /** A bed to highlight, e.g. the one under a plant being dragged. */
   highlightedBedId?: string
+  /** Beds an inspector card points at, given a soft glow. */
+  glowBedIds?: string[]
 }
 
 const snap = (value: number) => snapTo(value, BED_SNAP)
@@ -105,6 +107,7 @@ function GardenBeds({
   onMoveBed,
   onResizeBed,
   highlightedBedId,
+  glowBedIds,
 }: GardenBedsProps) {
   const layerRef = useRef<HTMLDivElement>(null)
   const [drag, setDrag] = useState<Drag | null>(null)
@@ -200,7 +203,7 @@ function GardenBeds({
               aria-label={editing ? `${bed.name}, ${formatSize(bed.width, bed.height)}` : undefined}
               className={`garden-bed${isDragged && previewInvalid ? ' garden-bed--invalid' : ''}${
                 bed.id === highlightedBedId ? ' garden-bed--highlighted' : ''
-              }`}
+              }${glowBedIds?.includes(bed.id) ? ' garden-bed--glow' : ''}`}
               style={percentRect(garden, rect)}
               onPointerDown={(e) => {
                 if (!editing) return

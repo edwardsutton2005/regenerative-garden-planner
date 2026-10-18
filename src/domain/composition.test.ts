@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluateGardenComposition } from './composition'
+import { evaluateGardenComposition, evaluateGardenDiversity } from './composition'
 import { createGarden, placePlant, removePlant, type GardenState, type Position } from './garden'
 import type { Plant } from './plant'
 
@@ -142,5 +142,39 @@ describe('evaluateGardenComposition', () => {
     }
 
     expect(evaluateGardenComposition(garden, plantsById)).toEqual([])
+  })
+})
+
+describe('evaluateGardenDiversity', () => {
+  const withFamilies: Record<string, Plant> = {
+    'bush-bean': { ...bushBean, family: 'Fabaceae' },
+    pea: { ...pea, family: 'Fabaceae' },
+    marigold: { ...marigold, family: 'Asteraceae' },
+    carrot, // no family curated
+  }
+
+  it('is empty for an empty garden', () => {
+    expect(evaluateGardenDiversity(createGarden(), withFamilies)).toEqual({
+      plantTypes: 0,
+      families: [],
+      categories: {},
+      lifecycles: {},
+    })
+  })
+
+  it('counts distinct plant types, families, categories, and lifecycles', () => {
+    let garden = placePlant(createGarden(), '0,0', 'bush-bean', at(0, 0))
+    garden = placePlant(garden, '0,1', 'bush-bean', at(0, 1))
+    garden = placePlant(garden, '0,2', 'pea', at(0, 2))
+    garden = placePlant(garden, '0,3', 'marigold', at(0, 3))
+    garden = placePlant(garden, '0,4', 'carrot', at(0, 4))
+    garden = placePlant(garden, '0,5', 'unknown-plant', at(0, 5))
+
+    expect(evaluateGardenDiversity(garden, withFamilies)).toEqual({
+      plantTypes: 4,
+      families: ['Asteraceae', 'Fabaceae'],
+      categories: { vegetable: 3, flower: 1 },
+      lifecycles: { annual: 3, biennial: 1 },
+    })
   })
 })

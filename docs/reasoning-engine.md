@@ -35,7 +35,7 @@ Current evaluators include:
 - local companion candidates for an inspected placement
 - sunlight fit for an inspected placement
 
-Each evaluator is deliberately narrow and decides for itself whether distance matters. The garden supplies spatial facts (positions and Euclidean distance); each rule interprets them. Relationship evaluation uses a 12-inch interaction distance, which is a product rule preserving V1's orthogonal-adjacency behavior, not a sourced horticultural distance. Spacing compares Euclidean distance against a plant's sourced minimum spacing in inches. Sunlight fit reads the environmental cell containing a placement's position. Composition reports representation, not quantity or quality. Opportunity logic is limited to explicitly approved policies rather than treating every absent fact as a deficiency. Sunlight fit is a categorical set-membership test, not an ordered scale — it reports `fit`, `mismatch`, or one of two distinct "not modeled" outcomes (unmodeled cell sunlight, unmodeled plant requirement), and the two "not modeled" outcomes are never presented as a mismatch.
+Each evaluator is deliberately narrow and decides for itself whether distance matters. The garden supplies spatial facts (positions and Euclidean distance); each rule interprets them. Relationship evaluation uses a 12-inch gap between plant footprints, a product rule rather than a sourced horticultural distance. Spacing compares Euclidean distance against a plant's sourced minimum spacing in inches; crowding estimates the same for mixed pairs from each plant's footprint. Sunlight fit reads the environmental cell containing a placement's position. Composition reports representation, not quantity or quality. Opportunity logic is limited to explicitly approved policies; garden-wide role suggestions are shown only when the person asks for them, so an absent role is never presented as a deficiency. Sunlight fit is a categorical set-membership test, not an ordered scale — it reports `fit`, `mismatch`, or one of two distinct "not modeled" outcomes (unmodeled cell sunlight, unmodeled plant requirement), and the two "not modeled" outcomes are never presented as a mismatch.
 
 The functions return structured results with the placement ids, plant identities, distances, relationship type, role, sunlight-fit status, or required distance needed to explain a conclusion. Results, including which plants are near each other, are recomputed from current state instead of cached in the garden.
 
@@ -47,8 +47,9 @@ React components currently provide deterministic, template-based explanations:
 
 - `PlacementFeedback` explains the latest placement or movement
 - `GardenInspector` explains the current inspected placement
-- `GardenComposition` lists represented ecological roles and contributing plant types
-- `GardenOpportunities` presents scoped strategies to consider
+- `GardenComposition` lists represented ecological roles and contributing plant types, plus the garden's diversity
+- `GardenSuggestions` offers opt-in role suggestions with example plants
+- relationship findings show the rule's sourced reason, and `SourceLinks` cites it
 
 `GardenInspector` also reports the inspected placement's sunlight fit (all four statuses); `PlacementFeedback` surfaces only a sunlight mismatch, mirroring how it already surfaces only notable relationship/spacing findings rather than every possible status.
 

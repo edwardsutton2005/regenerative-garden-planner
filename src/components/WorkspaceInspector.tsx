@@ -1,20 +1,26 @@
 import { relationshipRules } from '../data/relationships'
-import { evaluateGardenComposition } from '../domain/composition'
+import { evaluateGardenComposition, evaluateGardenDiversity } from '../domain/composition'
 import type { GardenBed, GardenState } from '../domain/garden'
+import type { GardenIssue } from '../domain/issues'
 import { getBedAt, getPlacement, getPlacementsInBed } from '../domain/garden'
 import {
+  evaluateBedCompanionSuggestions,
+  evaluateBedRoleSuggestions,
   evaluateCompanionOpportunityForPlacement,
-  evaluateGardenOpportunities,
+  evaluateRoleSuggestions,
+  plantedBeds,
 } from '../domain/opportunities'
 import type { Plant } from '../domain/plant'
 import { evaluateNeighborsForFocuses } from '../domain/relationships'
-import { evaluateSpacingForFocuses } from '../domain/spacing'
+import { evaluateCrowdingForFocuses, evaluateSpacingForFocuses } from '../domain/spacing'
 import { evaluateSunlightFit } from '../domain/sunlightFit'
 import type { SunlightFitResult } from '../domain/sunlightFit'
 import BedPanel from './BedPanel'
 import GardenComposition from './GardenComposition'
 import GardenInspector from './GardenInspector'
-import GardenOpportunities from './GardenOpportunities'
+import type { CanvasHighlight } from './GardenCanvas'
+import GardenIssues from './GardenIssues'
+import GardenSuggestions from './GardenSuggestions'
 import Icon from './Icon'
 import PlacementFeedback from './PlacementFeedback'
 
@@ -31,11 +37,22 @@ type WorkspaceInspectorProps = {
   onRenameBed: (bedId: string, name: string) => void
   onDeleteBed: (bedId: string) => void
   onCloseSelection: () => void
+  inventory: string[]
+  showSuggestions: boolean
+  onToggleSuggestions: () => void
+  /** Arms the plant brush with a suggested plant. */
+  onChoosePlant: (plantId: string) => void
+  onSelectBed: (bedId: string) => void
+  issues: GardenIssue[]
+  showIssues: boolean
+  onToggleIssues: () => void
+  onSelectPlant: (placementId: string) => void
+  onHighlight: (highlight: CanvasHighlight | null) => void
 }
 
 /**
  * The collapsible right-hand panel: the selected bed or plant, feedback on
- * the last change, and garden-wide composition and opportunities. It asks the
+ * the last change, garden-wide composition, and opt-in suggestions. It asks the
  * domain for each of these; nothing here decides a gardening fact.
  */
 function WorkspaceInspector({
@@ -49,6 +66,16 @@ function WorkspaceInspector({
   onRenameBed,
   onDeleteBed,
   onCloseSelection,
+  inventory,
+  showSuggestions,
+  onToggleSuggestions,
+  onChoosePlant,
+  onSelectBed,
+  issues,
+  showIssues,
+  onToggleIssues,
+  onSelectPlant,
+  onHighlight,
 }: WorkspaceInspectorProps) {
   return (
     <aside className="workspace__inspector" aria-label="Inspector">
@@ -71,6 +98,16 @@ function WorkspaceInspector({
           onRenameBed={onRenameBed}
           onDeleteBed={onDeleteBed}
           onCloseSelection={onCloseSelection}
+          inventory={inventory}
+          showSuggestions={showSuggestions}
+          onToggleSuggestions={onToggleSuggestions}
+          onChoosePlant={onChoosePlant}
+          onSelectBed={onSelectBed}
+          issues={issues}
+          showIssues={showIssues}
+          onToggleIssues={onToggleIssues}
+          onSelectPlant={onSelectPlant}
+          onHighlight={onHighlight}
         />
       )}
     </aside>
@@ -87,6 +124,16 @@ function InspectorBody({
   onRenameBed,
   onDeleteBed,
   onCloseSelection,
+  inventory,
+  showSuggestions,
+  onToggleSuggestions,
+  onChoosePlant,
+  onSelectBed,
+  issues,
+  showIssues,
+  onToggleIssues,
+  onSelectPlant,
+  onHighlight,
 }: Omit<WorkspaceInspectorProps, 'open' | 'onToggleOpen'>) {
   const neighbors = evaluateNeighborsForFocuses(
     garden,
@@ -95,12 +142,20 @@ function InspectorBody({
     relationshipRules,
   )
   const spacingViolations = evaluateSpacingForFocuses(garden, lastPlacementIds, plantsById)
+  const crowding = evaluateCrowdingForFocuses(garden, lastPlacementIds, plantsById)
   const sunlightMismatches = lastPlacementIds
     .map((id) => evaluateSunlightFit(garden, id, plantsById))
     .filter((r): r is SunlightFitResult => r !== null && r.status === 'mismatch')
 
   const composition = evaluateGardenComposition(garden, plantsById)
-  const gardenOpportunities = evaluateGardenOpportunities(garden, plantsById)
+  const diversity = evaluateGardenDiversity(garden, plantsById)
+  const suggestions = showSuggestions
+    ? {
+        garden: evaluateRoleSuggestions(garden, plantsById),
+        bedRoles: evaluateBedRoleSuggestions(garden, plantsById, relationshipRules),
+        companions: evaluateBedCompanionSuggestions(garden, plantsById, relationshipRules),
+      }
+    : null
 
   const inspectedPlacement = inspectedPlacementId
     ? getPlacement(garden, inspectedPlacementId)
@@ -140,10 +195,40 @@ function InspectorBody({
       <PlacementFeedback
         neighbors={neighbors}
         spacingViolations={spacingViolations}
+        crowding={crowding}
         sunlightMismatches={sunlightMismatches}
       />
-      <GardenComposition composition={composition} plantsById={plantsById} />
-      <GardenOpportunities opportunities={gardenOpportunities} />
+      <GardenComposition composition={composition} diversity={diversity} plantsById={plantsById} />
+      <GardenIssues
+        issues={issues}
+        show={showIssues}
+        onToggle={onToggleIssues}
+        onSelectPlant={onSelectPlant}
+        onHighlight={onHighlight}
+      />
+      <GardenSuggestions
+        suggestions={suggestions}
+        plantsById={plantsById}
+        beds={garden.beds}
+        plantedBedCount={showSuggestions ? plantedBeds(garden, plantsById).length : 0}
+        inventory={inventory}
+        onToggle={onToggleSuggestions}
+        onChoosePlant={onChoosePlant}
+        onSelectBed={onSelectBed}
+        onHighlight={(target) =>
+          onHighlight(
+            target && {
+              bedIds: target.bedIds,
+              // The plants a card is about: those of its plant types in its beds.
+              placementIds: target.bedIds.flatMap((bedId) =>
+                getPlacementsInBed(garden, bedId)
+                  .filter((p) => target.plantIds.includes(p.plantId))
+                  .map((p) => p.id),
+              ),
+            },
+          )
+        }
+      />
     </div>
   )
 }
@@ -181,6 +266,7 @@ function PlantInspection({
       bedName={bedName}
       neighbors={evaluateNeighborsForFocuses(garden, ids, plantsById, relationshipRules)}
       spacingViolations={evaluateSpacingForFocuses(garden, ids, plantsById)}
+      crowding={evaluateCrowdingForFocuses(garden, ids, plantsById)}
       sunlightFit={evaluateSunlightFit(garden, placementId, plantsById)}
       companionCandidates={companionCandidates}
       onClose={onClose}

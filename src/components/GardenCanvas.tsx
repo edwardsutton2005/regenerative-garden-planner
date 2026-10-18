@@ -9,12 +9,15 @@ import type {
 } from 'react'
 import type { GardenState, PlacedPlant, Position } from '../domain/garden'
 import { cellAt, getAllPlacements, getBedAt } from '../domain/garden'
+import type { GardenIssue } from '../domain/issues'
 import type { Plant } from '../domain/plant'
+import { footprintRadius } from '../domain/plant'
 import type { PlantRelationshipRule } from '../domain/relationships'
 import { clientToGarden, percentCircle, percentPoint, percentRect, toPlantPosition } from './canvasGeometry'
 import { PLANT_DRAG_MIME_TYPE, isPlantDragPayload } from './dragPayload'
 import GardenBeds from './GardenBeds'
 import Gardener from './Gardener'
+import Icon from './Icon'
 import { candidateFeedback, inspectedEnvelope } from './spacingPreview'
 import type { DragCandidate } from './spacingPreview'
 import { plantSpriteUrl } from './plantArt'
@@ -44,6 +47,8 @@ type PlantDrag = {
   active: boolean
 }
 
+export type CanvasHighlight = { bedIds: string[]; placementIds: string[] }
+
 type GardenCanvasProps = {
   garden: GardenState
   plantsById: Record<string, Plant>
@@ -66,9 +71,13 @@ type GardenCanvasProps = {
   /** Keyboard placement; returns the new placement id, to focus it. */
   onPlaceAtCenter: () => string | null
   /** Props for the planting-bed layers, minus garden and highlight. */
-  beds: Omit<ComponentProps<typeof GardenBeds>, 'garden' | 'highlightedBedId'>
+  beds: Omit<ComponentProps<typeof GardenBeds>, 'garden' | 'highlightedBedId' | 'glowBedIds'>
   /** The decorative gardener, or null when hidden. */
   gardener: { lastPlacementIds: string[] } | null
+  /** Issues to mark on the garden, or null while the overlay is off. */
+  issues: GardenIssue[] | null
+  /** Beds and plants an inspector card points at; the rest is dimmed. */
+  highlight: CanvasHighlight | null
 }
 
 /**
@@ -96,6 +105,8 @@ function GardenCanvas({
   onPlaceAtCenter,
   beds,
   gardener,
+  issues,
+  highlight,
 }: GardenCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [plantDrag, setPlantDrag] = useState<PlantDrag | null>(null)
@@ -298,6 +309,31 @@ function GardenCanvas({
     candidatePlant ??
     (selectedPlacementId ? plantsById[garden.placements[selectedPlacementId]?.plantId] : undefined)
 
+  // Issue marks, in garden inches (the overlay's viewBox is the garden): a
+  // dashed line between plants that clash, and the footprints of plants
+  // that are too close.
+  const positionOf = (id: string) => garden.placements[id]?.position
+  const issueMarks = (issue: GardenIssue, i: number) => {
+    if (issue.kind === 'sunlight') return null
+    const [a, b] = issue.placementIds.map(positionOf)
+    if (!a || !b) return null
+    if (issue.kind === 'incompatible') {
+      return (
+        <line key={i} className="garden-issues__clash" x1={a.x} y1={a.y} x2={b.x} y2={b.y} />
+      )
+    }
+    const radii =
+      issue.kind === 'spacing'
+        ? [issue.requiredDistance / 2, issue.requiredDistance / 2]
+        : issue.plants.map(footprintRadius)
+    return (
+      <g key={i} className="garden-issues__crowd">
+        <circle cx={a.x} cy={a.y} r={radii[0]} />
+        <circle cx={b.x} cy={b.y} r={radii[1]} />
+      </g>
+    )
+  }
+
   // Top-to-bottom, then left-to-right: a predictable keyboard order, and
   // lower plants draw over higher ones.
   const placements = getAllPlacements(garden).sort(
@@ -321,7 +357,9 @@ function GardenCanvas({
   return (
     <div
       ref={canvasRef}
-      className={`garden-canvas garden-canvas--${mode}`}
+      className={`garden-canvas garden-canvas--${mode}${
+        highlight ? ' garden-canvas--highlighting' : ''
+      }`}
       style={{
         aspectRatio: `${garden.width} / ${garden.height}`,
         // Fit the available space in both directions (the viewport is a
@@ -363,7 +401,12 @@ function GardenCanvas({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <GardenBeds garden={garden} {...beds} highlightedBedId={feedback?.bedId} />
+      <GardenBeds
+        garden={garden}
+        {...beds}
+        highlightedBedId={feedback?.bedId}
+        glowBedIds={highlight?.bedIds}
+      />
 
       <div className="garden-sunlight" aria-hidden="true">
         {Object.entries(garden.environment.sunlightByCell).map(([key, level]) => {
@@ -393,6 +436,17 @@ function GardenCanvas({
           />
         ))}
       </div>
+
+      {issues && issues.length > 0 && (
+        <svg
+          className="garden-issues"
+          viewBox={`0 0 ${garden.width} ${garden.height}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {issues.map(issueMarks)}
+        </svg>
+      )}
 
       {gardener && (
         <Gardener
@@ -429,7 +483,9 @@ function GardenCanvas({
                 placement.id === selectedPlacementId ? ' plant-marker--inspected' : ''
               }${isDragged ? ' plant-marker--dragging' : ''}${
                 relationship ? ` plant-marker--${relationship}` : ''
-              }${spacingViolatorIds.has(placement.id) ? ' plant-marker--spacing' : ''}`}
+              }${spacingViolatorIds.has(placement.id) ? ' plant-marker--spacing' : ''}${
+                highlight?.placementIds.includes(placement.id) ? ' plant-marker--highlighted' : ''
+              }`}
               style={percentPoint(garden, position)}
               onPointerDown={(e) => handleMarkerPointerDown(e, placement)}
               onPointerMove={handleMarkerPointerMove}
@@ -456,6 +512,22 @@ function GardenCanvas({
           </div>
         )}
       </div>
+
+      {issues
+        ?.filter((issue) => issue.kind === 'sunlight')
+        .map((issue) => {
+          const position = positionOf(issue.placementIds[0])
+          return position ? (
+            <span
+              key={`sun-${issue.placementIds[0]}`}
+              className="garden-issues__sun"
+              style={percentPoint(garden, position)}
+              aria-hidden="true"
+            >
+              <Icon name="sun" size={12} />
+            </span>
+          ) : null
+        })}
 
       {/* The own envelope's caption sits just above the circle (anchored no
           higher than the garden's top edge), drawn after the plants and

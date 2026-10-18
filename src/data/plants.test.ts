@@ -122,6 +122,34 @@ describe('plants seed data', () => {
     }
   })
 
+  it('backs every matureWidthInches with a source and a valid range', () => {
+    for (const plant of plants) {
+      const width = plant.matureWidthInches
+      if (!width) continue // not curated yet: footprints fall back to spacing
+      expect(width.min, `${plant.name} width`).toBeGreaterThan(0)
+      expect(width.min, `${plant.name} width`).toBeLessThanOrEqual(width.max)
+      expect(plant.evidence?.matureWidth?.length ?? 0, `${plant.name} width source`).toBeGreaterThan(0)
+    }
+  })
+
+  it('gives every plant a botanical family', () => {
+    for (const plant of plants) {
+      expect(plant.family, `${plant.name} has no family`).toBeDefined()
+    }
+  })
+
+  it('backs every beneficial-insects and nitrogen-fixation role with a source', () => {
+    for (const plant of plants) {
+      for (const role of plant.ecologicalRoles) {
+        if (role === 'pollinator-support') continue // predates per-claim citation
+        expect(
+          plant.evidence?.ecologicalRoles?.[role]?.length ?? 0,
+          `${plant.name}'s ${role} role has no source`,
+        ).toBeGreaterThan(0)
+      }
+    }
+  })
+
   // Regression coverage for the curated Part 2B lifecycle/ecologicalRoles
   // assignments — these are horticultural judgment calls, not something
   // TypeScript's union types can verify, so a future edit that silently
@@ -153,7 +181,7 @@ describe('plants seed data', () => {
     },
     basil: {
       lifecycle: 'annual',
-      ecologicalRoles: ['pollinator-support'],
+      ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
       sunlightRequirement: ['full-sun'],
     },
     mint: {
@@ -163,17 +191,17 @@ describe('plants seed data', () => {
     },
     rosemary: {
       lifecycle: 'tender-perennial',
-      ecologicalRoles: ['pollinator-support'],
+      ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
       sunlightRequirement: ['full-sun'],
     },
     marigold: {
       lifecycle: 'annual',
-      ecologicalRoles: ['pollinator-support'],
+      ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
       sunlightRequirement: ['full-sun'],
     },
     sunflower: {
       lifecycle: 'annual',
-      ecologicalRoles: ['pollinator-support'],
+      ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
       sunlightRequirement: ['full-sun'],
     },
     onion: { lifecycle: 'biennial', ecologicalRoles: [], sunlightRequirement: ['full-sun'] },
@@ -205,7 +233,7 @@ describe('plants seed data', () => {
     },
     dill: {
       lifecycle: 'annual',
-      ecologicalRoles: ['pollinator-support'],
+      ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
       sunlightRequirement: ['full-sun'],
     },
   }

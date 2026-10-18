@@ -16,9 +16,23 @@ export type PlantLifecycle = 'annual' | 'biennial' | 'perennial' | 'tender-peren
  * yet still carries the role). Kept deliberately small — see
  * ARCHITECTURE.md for why this stays curated data, not a rule engine.
  */
-export const ECOLOGICAL_ROLES = ['pollinator-support', 'nitrogen-fixation'] as const
+export const ECOLOGICAL_ROLES = ['pollinator-support', 'nitrogen-fixation', 'beneficial-insects'] as const
 
 export type EcologicalRole = (typeof ECOLOGICAL_ROLES)[number]
+
+/** The botanical families in the catalogue, with their common names. */
+export const PLANT_FAMILIES = {
+  Amaryllidaceae: 'Onion family',
+  Apiaceae: 'Carrot family',
+  Asteraceae: 'Daisy family',
+  Brassicaceae: 'Cabbage family',
+  Cucurbitaceae: 'Gourd family',
+  Fabaceae: 'Legume family',
+  Lamiaceae: 'Mint family',
+  Solanaceae: 'Nightshade family',
+} as const
+
+export type PlantFamily = keyof typeof PLANT_FAMILIES
 
 /**
  * A sourced plant-to-plant spacing range, in inches. When a source states a
@@ -43,6 +57,11 @@ export type Plant = {
    */
   spacingInches: SpacingRange
   /**
+   * Sourced typical mature width (spread) of one plant, in inches. Sizes the
+   * plant's footprint (see footprintRadius); absent means not curated yet.
+   */
+  matureWidthInches?: SpacingRange
+  /**
    * How this plant normally completes its life cycle. 'tender-perennial'
    * means biologically capable of persisting multiple years but frost-
    * sensitive and commonly grown as an annual in colder climates — do not
@@ -50,6 +69,9 @@ export type Plant = {
    * climate context (relevant once garden composition exists).
    */
   lifecycle: PlantLifecycle
+  /** Botanical family. Absent means not curated yet; the data test requires
+   * it for every catalogue plant. */
+  family?: PlantFamily
   /**
    * Curated ecological capabilities this plant contributes (may be empty).
    * Not a claim of real-time occurrence — see EcologicalRole.
@@ -82,6 +104,8 @@ export type PlantEvidence = {
   lifecycle?: SourceId[]
   /** Sources stating this plant's spacingInches. */
   spacingGuidance?: SourceId[]
+  /** Sources stating this plant's matureWidthInches. */
+  matureWidth?: SourceId[]
   ecologicalRoles?: Partial<Record<EcologicalRole, SourceId[]>>
   /**
    * Sources supporting this plant's curated sunlightRequirement. The
@@ -91,4 +115,16 @@ export type PlantEvidence = {
    * Separate From Reasoning."
    */
   sunlightRequirement?: SourceId[]
+}
+
+/**
+ * The room a plant needs around its center: half its sourced typical mature
+ * width, using the low end of the range so "may crowd" stays conservative.
+ * Falls back to half its same-species minimum spacing when width isn't
+ * curated. Crowding between different plants is an estimate from each
+ * plant's own size, not a sourced cross-species distance. See
+ * ARCHITECTURE.md "Footprints".
+ */
+export function footprintRadius(plant: Plant): number {
+  return (plant.matureWidthInches ?? plant.spacingInches).min / 2
 }

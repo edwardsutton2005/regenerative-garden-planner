@@ -1,7 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react'
 import CanvasViewport from './components/CanvasViewport'
 import GardenCanvas from './components/GardenCanvas'
-import type { CanvasMode } from './components/GardenCanvas'
+import type { CanvasHighlight, CanvasMode } from './components/GardenCanvas'
 import GardenSetup from './components/GardenSetup'
 import Icon from './components/Icon'
 import InventoryBar from './components/InventoryBar'
@@ -36,6 +36,7 @@ import {
   setSunlightAt,
 } from './domain/garden'
 import type { BedRect, GardenState, Position } from './domain/garden'
+import { evaluateGardenIssues } from './domain/issues'
 import type { Plant } from './domain/plant'
 import {
   EMPTY_HISTORY,
@@ -76,20 +77,24 @@ type Selection = { kind: 'plant'; id: string } | { kind: 'bed'; id: string } | n
 
 const SELECT: ActiveTool = { kind: 'select' }
 
-// Whether the decorative gardener is shown: a per-browser preference.
+// Per-browser on/off preferences: the decorative gardener (on by default),
+// and garden suggestions and the issues overlay (off by default).
 const SHOW_GARDENER_KEY = 'regenerative-garden:show-gardener'
+const SHOW_SUGGESTIONS_KEY = 'regenerative-garden:show-suggestions'
+const SHOW_ISSUES_KEY = 'regenerative-garden:show-issues'
 
-function loadShowGardener(): boolean {
+function loadFlag(key: string, fallback: boolean): boolean {
   try {
-    return localStorage.getItem(SHOW_GARDENER_KEY) !== 'false'
+    const stored = localStorage.getItem(key)
+    return stored === null ? fallback : stored === 'true'
   } catch {
-    return true
+    return fallback
   }
 }
 
-function saveShowGardener(show: boolean) {
+function saveFlag(key: string, value: boolean) {
   try {
-    localStorage.setItem(SHOW_GARDENER_KEY, String(show))
+    localStorage.setItem(key, String(value))
   } catch {
     // Without storage the choice lasts until the page reloads.
   }
@@ -140,7 +145,13 @@ function App({
       ? "1 saved plant couldn't be restored and was left out."
       : `${dropped} saved plants couldn't be restored and were left out.`
   })
-  const [showGardener, setShowGardener] = useState(loadShowGardener)
+  const [showGardener, setShowGardener] = useState(() => loadFlag(SHOW_GARDENER_KEY, true))
+  const [showSuggestions, setShowSuggestions] = useState(() =>
+    loadFlag(SHOW_SUGGESTIONS_KEY, false),
+  )
+  const [showIssues, setShowIssues] = useState(() => loadFlag(SHOW_ISSUES_KEY, false))
+  // What an inspector card or issue being hovered points at on the canvas.
+  const [highlight, setHighlight] = useState<CanvasHighlight | null>(null)
   const [catalogOpen, setCatalogOpen] = useState(false)
   const [inspectorOpen, setInspectorOpen] = useState(true)
   // Placement ids to show transient feedback for: the plant just placed or
@@ -362,6 +373,7 @@ function App({
     .map((id) => plantsById[id])
     .filter((p): p is Plant => p !== undefined)
   const activePlant = activeTool.kind === 'plant' ? plantsById[activeTool.plantId] : undefined
+  const issues = evaluateGardenIssues(garden, plantsById, relationshipRules)
 
   // The status line: what tool and setting are active and what a click does.
   const status = (() => {
@@ -410,7 +422,7 @@ function App({
         gardenerVisible={showGardener}
         onToggleGardener={() => {
           setShowGardener(!showGardener)
-          saveShowGardener(!showGardener)
+          saveFlag(SHOW_GARDENER_KEY, !showGardener)
         }}
       />
 
@@ -459,6 +471,8 @@ function App({
               onResizeBed: (id, rect) => updateGarden((current) => resizeBed(current, id, rect)),
             }}
             gardener={showGardener ? { lastPlacementIds } : null}
+            issues={showIssues ? issues : null}
+            highlight={highlight}
           />
         </CanvasViewport>
       </main>
@@ -467,13 +481,34 @@ function App({
         garden={garden}
         plantsById={plantsById}
         open={inspectorOpen}
-        onToggleOpen={() => setInspectorOpen((open) => !open)}
+        onToggleOpen={() => {
+          setInspectorOpen((open) => !open)
+          setHighlight(null)
+        }}
         lastPlacementIds={lastPlacementIds}
         inspectedPlacementId={selectedPlacementId}
         selectedBed={selectedBed}
         onRenameBed={(id, name) => updateGarden((current) => renameBed(current, id, name))}
         onDeleteBed={deleteBed}
         onCloseSelection={() => setSelection(null)}
+        inventory={inventory}
+        showSuggestions={showSuggestions}
+        onToggleSuggestions={() => {
+          setShowSuggestions(!showSuggestions)
+          saveFlag(SHOW_SUGGESTIONS_KEY, !showSuggestions)
+          setHighlight(null)
+        }}
+        onChoosePlant={handleChooseCatalogPlant}
+        onSelectBed={(id) => setSelection({ kind: 'bed', id })}
+        issues={issues}
+        showIssues={showIssues}
+        onToggleIssues={() => {
+          setShowIssues(!showIssues)
+          saveFlag(SHOW_ISSUES_KEY, !showIssues)
+          setHighlight(null)
+        }}
+        onSelectPlant={(id) => setSelection({ kind: 'plant', id })}
+        onHighlight={setHighlight}
       />
 
       <InventoryBar

@@ -1,13 +1,9 @@
 import type { KnowledgeSource } from '../domain/source'
 
 // Registered only when actually attached to a specific curated claim
-// elsewhere (currently: every plant's spacingGuidance and
-// sunlightRequirement, in data/plants.ts) — not merely because a source is
-// named in an existing dataset-wide sourcing comment. Dataset-wide
-// vetting-policy sources (e.g. the companion-planting source pool described
-// in data/relationships.ts) are
-// deliberately not registered here until a specific claim can be honestly
-// attributed to one of them.
+// elsewhere (plant evidence in data/plants.ts, relationship sourceIds in
+// data/relationships.ts, role explanations in data/roles.ts) — not merely
+// because a source is named in a dataset-wide sourcing comment.
 //
 // The spacingGuidance and sunlightRequirement sources below are the
 // machine-readable source of truth for their provenance; see
@@ -184,5 +180,131 @@ export const sources: KnowledgeSource[] = [
     title: 'Growing dill in home gardens',
     publisher: 'University of Minnesota Extension',
     url: 'https://extension.umn.edu/vegetables/growing-dill',
+  },
+  {
+    id: 'pennstate-extension-herb-companions',
+    title: 'Herbs Make Good Plant Partners and Companions',
+    publisher: 'Penn State Extension',
+    url: 'https://extension.psu.edu/herbs-make-good-plant-partners-and-companions',
+  },
+  {
+    id: 'usu-extension-companion-planting',
+    title: 'Creating Sustainable School and Home Gardens: Companion Planting',
+    publisher: 'Utah State University Extension',
+    url: 'https://extension.usu.edu/utah4h/research/creating-sustainable-school-and-home-gardens-companion-planting',
+  },
+  {
+    id: 'clemson-hgic-plant-partners',
+    title: 'Plant Partners: 5 Benefits of Companion Planting',
+    publisher: 'Clemson Cooperative Extension Home & Garden Information Center',
+    url: 'https://hgic.clemson.edu/plant-partners-5-benefits-of-companion-planting/',
+  },
+  {
+    id: 'uw-extension-kenosha-companion-plants',
+    title: 'Companion Plants for the Vegetable Garden',
+    publisher: 'University of Wisconsin–Madison Extension, Kenosha County',
+    url: 'https://kenosha.extension.wisc.edu/files/2020/05/Companion-plants-article.pdf',
+  },
+  {
+    id: 'ucanr-contra-costa-companion-planting',
+    title: 'Companion Planting in the Vegetable Garden',
+    publisher: 'UC Master Gardener Program of Contra Costa County',
+    url: 'https://ucanr.edu/blog/hort-coco-uc-master-gardener-program-contra-costa/article/companion-planting-vegetable-garden',
+  },
+  {
+    id: 'almanac-companion-chart',
+    title: 'Companion Planting Chart for the Vegetable Garden',
+    publisher: 'The Old Farmer’s Almanac',
+    url: 'https://www.almanac.com/companion-planting-guide-vegetables',
+  },
+  {
+    id: 'almanac-potato-companions',
+    title: 'Potato Companion Plants: What to Grow Nearby',
+    publisher: 'The Old Farmer’s Almanac',
+    url: 'https://www.almanac.com/potato-companion-plants',
+  },
+  {
+    id: 'ncsu-toolbox-solanum-lycopersicum',
+    title: 'Solanum lycopersicum',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/solanum-lycopersicum/',
+  },
+  {
+    id: 'ncsu-toolbox-daucus-carota-subsp-sativus',
+    title: 'Daucus carota subsp. sativus',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/daucus-carota-subsp-sativus/',
+  },
+  {
+    id: 'ncsu-toolbox-lactuca-sativa',
+    title: 'Lactuca sativa',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/lactuca-sativa/',
+  },
+  {
+    id: 'ncsu-toolbox-ocimum-basilicum',
+    title: 'Ocimum basilicum',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/ocimum-basilicum/',
+  },
+  {
+    id: 'ncsu-toolbox-salvia-rosmarinus',
+    title: 'Salvia rosmarinus',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/salvia-rosmarinus/',
+  },
+  {
+    id: 'ncsu-toolbox-tagetes-patula',
+    title: 'Tagetes patula',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/tagetes-patula/',
+  },
+  {
+    id: 'ncsu-toolbox-helianthus-annuus',
+    title: 'Helianthus annuus',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/helianthus-annuus/',
+  },
+  {
+    id: 'ncsu-toolbox-allium-cepa',
+    title: 'Allium cepa',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/allium-cepa/',
+  },
+  {
+    id: 'ncsu-toolbox-pisum-sativum',
+    title: 'Pisum sativum',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/pisum-sativum/',
+  },
+  {
+    id: 'ncsu-toolbox-capsicum-annuum',
+    title: 'Capsicum annuum',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/capsicum-annuum/',
+  },
+  {
+    id: 'ncsu-toolbox-cucumis-sativus',
+    title: 'Cucumis sativus',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/cucumis-sativus/',
+  },
+  {
+    id: 'ncsu-toolbox-brassica-oleracea',
+    title: 'Brassica oleracea',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/brassica-oleracea/',
+  },
+  {
+    id: 'ncsu-toolbox-solanum-tuberosum',
+    title: 'Solanum tuberosum',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/solanum-tuberosum/',
+  },
+  {
+    id: 'ncsu-toolbox-anethum-graveolens',
+    title: 'Anethum graveolens',
+    publisher: 'North Carolina State Extension Plant Toolbox',
+    url: 'https://plants.ces.ncsu.edu/plants/anethum-graveolens/',
   },
 ]

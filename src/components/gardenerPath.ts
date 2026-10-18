@@ -3,7 +3,7 @@ import { getAllBeds } from '../domain/garden'
 import type { Plant } from '../domain/plant'
 import type { PlantRelationshipRule } from '../domain/relationships'
 import { evaluateNeighborsForFocuses } from '../domain/relationships'
-import { evaluateSpacingForFocuses } from '../domain/spacing'
+import { evaluateCrowdingForFocuses, evaluateSpacingForFocuses } from '../domain/spacing'
 import { evaluateSunlightFit } from '../domain/sunlightFit'
 
 // Where the decorative gardener can walk, and how it reacts. UI-only: the
@@ -164,7 +164,7 @@ export type Reaction = 'happy' | 'puzzled'
 /**
  * How the gardener reacts to the plants just placed or moved, from the
  * domain's own findings: puzzled at any issue (a poor pairing, plants too
- * close, a sunlight mismatch), happy at a companion pairing, otherwise none.
+ * close or crowding, a sunlight mismatch), happy at a companion pairing, otherwise none.
  */
 export function reactionTo(
   garden: GardenState,
@@ -177,6 +177,7 @@ export function reactionTo(
   const issue =
     neighbors.some((n) => n.relationship === 'incompatible') ||
     evaluateSpacingForFocuses(garden, placementIds, plantsById).length > 0 ||
+    evaluateCrowdingForFocuses(garden, placementIds, plantsById).length > 0 ||
     placementIds.some((id) => evaluateSunlightFit(garden, id, plantsById)?.status === 'mismatch')
   if (issue) return 'puzzled'
   return neighbors.some((n) => n.relationship === 'companion') ? 'happy' : null

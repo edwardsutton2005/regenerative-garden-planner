@@ -4,6 +4,7 @@ import type { SunlightFitResult } from '../domain/sunlightFit'
 import type { Plant } from '../domain/plant'
 import Icon from './Icon'
 import PlantSwatch from './PlantSwatch'
+import SourceLinks from './SourceLinks'
 
 type GardenInspectorProps = {
   plant: Plant
@@ -11,6 +12,7 @@ type GardenInspectorProps = {
   bedName: string | undefined
   neighbors: FocusedNeighborRelationship[]
   spacingViolations: FocusedSpacingViolation[]
+  crowding: FocusedSpacingViolation[]
   sunlightFit: SunlightFitResult | null
   companionCandidates: Plant[]
   onClose: () => void
@@ -41,6 +43,7 @@ function GardenInspector({
   bedName,
   neighbors,
   spacingViolations,
+  crowding,
   sunlightFit,
   companionCandidates,
   onClose,
@@ -89,14 +92,18 @@ function GardenInspector({
           <p className="garden-inspector__empty">No notable nearby relationships</p>
         ) : (
           <ul className="garden-inspector__list">
-            {notableNeighbors.map(({ plant: neighborPlant, relationship, placementId }) => (
+            {notableNeighbors.map(({ plant: neighborPlant, relationship, rule, placementId }) => (
               <li
                 key={placementId}
                 className={`garden-inspector__item garden-inspector__item--${relationship}`}
               >
-                {relationship === 'companion'
-                  ? `Companion: ${neighborPlant.name}`
-                  : `Incompatible: ${neighborPlant.name}`}
+                <span className="garden-inspector__item-title">
+                  {relationship === 'companion'
+                    ? `Companion: ${neighborPlant.name}`
+                    : `Incompatible: ${neighborPlant.name}`}
+                </span>
+                {rule?.reason && <span className="garden-inspector__reason">{rule.reason}</span>}
+                <SourceLinks ids={rule?.sourceIds} />
               </li>
             ))}
           </ul>
@@ -104,9 +111,9 @@ function GardenInspector({
       </section>
 
       <section className="garden-inspector__section">
-        <h3>Same-species spacing</h3>
-        {spacingViolations.length === 0 ? (
-          <p className="garden-inspector__ok">No same-species spacing issues</p>
+        <h3>Spacing</h3>
+        {spacingViolations.length === 0 && crowding.length === 0 ? (
+          <p className="garden-inspector__ok">Room to grow</p>
         ) : (
           <ul className="garden-inspector__list">
             {spacingViolations.map(({ placementId, requiredDistance }) => (
@@ -115,6 +122,14 @@ function GardenInspector({
                 className="garden-inspector__item garden-inspector__item--spacing"
               >
                 {`Too close to another ${plant.name} (same-species spacing) — keep at least ${requiredDistance} inches apart.`}
+              </li>
+            ))}
+            {crowding.map(({ placementId, plant: other, requiredDistance }) => (
+              <li
+                key={`crowding-${placementId}`}
+                className="garden-inspector__item garden-inspector__item--spacing"
+              >
+                {`May crowd ${other.name} — about ${requiredDistance} inches between centers gives each room (an estimate from each plant’s typical width).`}
               </li>
             ))}
           </ul>

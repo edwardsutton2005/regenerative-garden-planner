@@ -21,6 +21,17 @@ import type { Plant } from '../domain/plant'
 // what each source does and does not explicitly state, and the V1
 // full-sun/partial-sun/shade normalization policy the sets below follow.
 //
+// matureWidthInches is the typical spread of one mature plant, from the NC
+// State Extension Plant Toolbox page for each species (see
+// docs/data-sources.md "Mature width"); it sizes footprints for crowding and
+// companion reach. Bush Bean has no extension source yet and falls back to
+// its spacing.
+//
+// family is the standard botanical family; beneficial-insects and
+// nitrogen-fixation roles carry evidence.ecologicalRoles (see
+// docs/data-sources.md "Roles"). pollinator-support predates per-claim
+// citation and has none yet.
+//
 // evidence (Part 2E) records claim-level provenance where it's actually
 // attributable — see domain/plant.ts. Most entries below have none for
 // lifecycle/ecologicalRoles/spacing: the comments above predate per-claim
@@ -38,10 +49,13 @@ export const plants: Plant[] = [
     name: 'Tomato',
     category: 'vegetable',
     spacingInches: { min: 24, max: 36 },
+    matureWidthInches: { min: 12, max: 48 },
     lifecycle: 'tender-perennial',
+    family: 'Solanaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-solanum-lycopersicum'],
       spacingGuidance: ['umn-extension-tomatoes'],
       sunlightRequirement: ['umn-extension-tomatoes'],
     },
@@ -53,10 +67,13 @@ export const plants: Plant[] = [
     name: 'Carrot',
     category: 'vegetable',
     spacingInches: { min: 2, max: 3 },
+    matureWidthInches: { min: 2, max: 3 },
     lifecycle: 'biennial',
+    family: 'Apiaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun', 'partial-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-daucus-carota-subsp-sativus'],
       spacingGuidance: ['usu-extension-carrots'],
       sunlightRequirement: ['illinois-extension-salad-in-the-shade'],
     },
@@ -68,10 +85,13 @@ export const plants: Plant[] = [
     name: 'Lettuce',
     category: 'vegetable',
     spacingInches: { min: 4, max: 4 },
+    matureWidthInches: { min: 6, max: 12 },
     lifecycle: 'annual',
+    family: 'Asteraceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun', 'partial-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-lactuca-sativa'],
       spacingGuidance: ['illinois-extension-lettuce'],
       sunlightRequirement: ['illinois-extension-salad-in-the-shade', 'illinois-extension-lettuce'],
     },
@@ -84,10 +104,16 @@ export const plants: Plant[] = [
     name: 'Basil',
     category: 'herb',
     spacingInches: { min: 6, max: 12 },
+    matureWidthInches: { min: 4, max: 14 },
     lifecycle: 'annual',
-    ecologicalRoles: ['pollinator-support'],
+    family: 'Lamiaceae',
+    ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'beneficial-insects': ['ucanr-contra-costa-companion-planting'],
+      },
+      matureWidth: ['ncsu-toolbox-ocimum-basilicum'],
       spacingGuidance: ['umn-extension-basil'],
       sunlightRequirement: [
         'umn-extension-herbs',
@@ -103,10 +129,13 @@ export const plants: Plant[] = [
     name: 'Mint',
     category: 'herb',
     spacingInches: { min: 18, max: 18 },
+    matureWidthInches: { min: 12, max: 24 },
     lifecycle: 'perennial',
+    family: 'Lamiaceae',
     ecologicalRoles: ['pollinator-support'],
     sunlightRequirement: ['full-sun', 'partial-sun'],
     evidence: {
+      matureWidth: ['ncsu-extension-peppermint'],
       spacingGuidance: ['ncsu-extension-peppermint'],
       sunlightRequirement: ['usu-extension-mint'],
     },
@@ -119,10 +148,16 @@ export const plants: Plant[] = [
     name: 'Rosemary',
     category: 'herb',
     spacingInches: { min: 24, max: 24 },
+    matureWidthInches: { min: 36, max: 48 },
     lifecycle: 'tender-perennial',
-    ecologicalRoles: ['pollinator-support'],
+    family: 'Lamiaceae',
+    ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'beneficial-insects': ['pennstate-extension-herb-companions'],
+      },
+      matureWidth: ['ncsu-toolbox-salvia-rosmarinus'],
       spacingGuidance: ['pennstate-extension-rosemary'],
       sunlightRequirement: ['illinois-extension-rosemary'],
     },
@@ -134,10 +169,16 @@ export const plants: Plant[] = [
     name: 'Marigold',
     category: 'flower',
     spacingInches: { min: 8, max: 10 },
+    matureWidthInches: { min: 6, max: 18 },
     lifecycle: 'annual',
-    ecologicalRoles: ['pollinator-support'],
+    family: 'Asteraceae',
+    ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'beneficial-insects': ['ucanr-contra-costa-companion-planting'],
+      },
+      matureWidth: ['ncsu-toolbox-tagetes-patula'],
       spacingGuidance: ['clemson-hgic-marigolds'],
       sunlightRequirement: ['umn-extension-marigolds'],
     },
@@ -149,10 +190,16 @@ export const plants: Plant[] = [
     name: 'Sunflower',
     category: 'flower',
     spacingInches: { min: 18, max: 24 },
+    matureWidthInches: { min: 18, max: 36 },
     lifecycle: 'annual',
-    ecologicalRoles: ['pollinator-support'],
+    family: 'Asteraceae',
+    ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'beneficial-insects': ['ucanr-contra-costa-companion-planting'],
+      },
+      matureWidth: ['ncsu-toolbox-helianthus-annuus'],
       spacingGuidance: ['umn-extension-sunflowers'],
       sunlightRequirement: ['illinois-extension-sunflowers'],
     },
@@ -164,10 +211,13 @@ export const plants: Plant[] = [
     name: 'Onion',
     category: 'vegetable',
     spacingInches: { min: 3, max: 4 },
+    matureWidthInches: { min: 6, max: 12 },
     lifecycle: 'biennial',
+    family: 'Amaryllidaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-allium-cepa'],
       spacingGuidance: ['umn-extension-onions'],
       sunlightRequirement: ['umn-extension-onions'],
     },
@@ -181,9 +231,13 @@ export const plants: Plant[] = [
     category: 'vegetable',
     spacingInches: { min: 2, max: 3 },
     lifecycle: 'annual',
+    family: 'Fabaceae',
     ecologicalRoles: ['nitrogen-fixation'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'nitrogen-fixation': ['ucanr-contra-costa-companion-planting'],
+      },
       spacingGuidance: ['usu-extension-beans'],
       sunlightRequirement: ['usu-extension-beans'],
     },
@@ -195,10 +249,16 @@ export const plants: Plant[] = [
     name: 'Pea',
     category: 'vegetable',
     spacingInches: { min: 1, max: 2 },
+    matureWidthInches: { min: 6, max: 12 },
     lifecycle: 'annual',
+    family: 'Fabaceae',
     ecologicalRoles: ['nitrogen-fixation'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'nitrogen-fixation': ['ucanr-contra-costa-companion-planting'],
+      },
+      matureWidth: ['ncsu-toolbox-pisum-sativum'],
       spacingGuidance: ['usu-extension-peas'],
       sunlightRequirement: ['umn-extension-peas'],
     },
@@ -211,10 +271,13 @@ export const plants: Plant[] = [
     name: 'Bell Pepper',
     category: 'vegetable',
     spacingInches: { min: 18, max: 18 },
+    matureWidthInches: { min: 6, max: 12 },
     lifecycle: 'tender-perennial',
+    family: 'Solanaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-capsicum-annuum'],
       spacingGuidance: ['usu-extension-peppers'],
       sunlightRequirement: ['umn-extension-raised-bed-gardens'],
     },
@@ -226,10 +289,13 @@ export const plants: Plant[] = [
     name: 'Cucumber',
     category: 'vegetable',
     spacingInches: { min: 24, max: 24 },
+    matureWidthInches: { min: 36, max: 96 },
     lifecycle: 'annual',
+    family: 'Cucurbitaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-cucumis-sativus'],
       spacingGuidance: ['usu-extension-cucumber'],
       sunlightRequirement: ['illinois-extension-get-started'],
     },
@@ -241,10 +307,13 @@ export const plants: Plant[] = [
     name: 'Cabbage',
     category: 'vegetable',
     spacingInches: { min: 12, max: 18 },
+    matureWidthInches: { min: 12, max: 24 },
     lifecycle: 'biennial',
+    family: 'Brassicaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-brassica-oleracea'],
       spacingGuidance: ['usu-extension-cabbage'],
       sunlightRequirement: ['usu-extension-cabbage'],
     },
@@ -257,10 +326,13 @@ export const plants: Plant[] = [
     name: 'Potato',
     category: 'vegetable',
     spacingInches: { min: 10, max: 12 },
+    matureWidthInches: { min: 12, max: 18 },
     lifecycle: 'tender-perennial',
+    family: 'Solanaceae',
     ecologicalRoles: [],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      matureWidth: ['ncsu-toolbox-solanum-tuberosum'],
       spacingGuidance: ['umn-extension-potatoes'],
       sunlightRequirement: ['umn-extension-potatoes'],
     },
@@ -272,10 +344,16 @@ export const plants: Plant[] = [
     name: 'Dill',
     category: 'herb',
     spacingInches: { min: 10, max: 12 },
+    matureWidthInches: { min: 24, max: 36 },
     lifecycle: 'annual',
-    ecologicalRoles: ['pollinator-support'],
+    family: 'Apiaceae',
+    ecologicalRoles: ['pollinator-support', 'beneficial-insects'],
     sunlightRequirement: ['full-sun'],
     evidence: {
+      ecologicalRoles: {
+        'beneficial-insects': ['pennstate-extension-herb-companions', 'usu-extension-companion-planting'],
+      },
+      matureWidth: ['ncsu-toolbox-anethum-graveolens'],
       spacingGuidance: ['umn-extension-dill'],
       sunlightRequirement: ['illinois-extension-dill'],
     },
